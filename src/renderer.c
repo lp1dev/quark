@@ -77,7 +77,8 @@ void render_text(char *text, SDL_Rect rect) {
     printf("Rendering text '%s'\n", text);
     print_rect(rect);
     rect.w = DEFAULT_FONT_SIZE * strlen(text);
-    rect.h = DEFAULT_FONT_SIZE;
+    rect.h = DEFAULT_FONT_SIZE * 2; // TODO update
+
     SDL_Surface* surfaceMessage = TTF_RenderText_Solid(font, text, Black); 
 
     SDL_Texture* Message = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage);
@@ -120,7 +121,6 @@ SDL_Rect render_single_node(lxb_dom_node_t* node, SDL_Rect root_rect, int num_el
     return elem_rect;
 }
 
-
 void render_node_subnodes(lxb_dom_node_t* node, SDL_Rect rect, int depth) {
     int containers = 0;
     int i = 0;
@@ -139,8 +139,10 @@ void render_node_subnodes(lxb_dom_node_t* node, SDL_Rect rect, int depth) {
     node = root_node;
 
     while (node != NULL) {
+        printf("Handling node %s\n", get_tag_name(node));
         if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
             last_rendered_rect = render_single_node(node, rect, i, elements, depth);
+            i++;
         }
         if (node->first_child != NULL) {
             render_node_subnodes(node->first_child, last_rendered_rect, depth + 1);
@@ -152,12 +154,10 @@ void render_node_subnodes(lxb_dom_node_t* node, SDL_Rect rect, int depth) {
             }
         }
         node = node->next;
-        i++;
     }
 }
 
 void render_body(lxb_dom_node_t *body) {
-    
     SDL_Rect rect = { 10, 10, SCREEN_WIDTH - 20, SCREEN_HEIGHT - 20};
     SDL_RenderFillRect( gRenderer, &rect);
     render_node_subnodes(body, rect, 0);
@@ -165,8 +165,6 @@ void render_body(lxb_dom_node_t *body) {
 
 void render_document(lxb_html_document_t *document) {
     render_body((lxb_dom_node_t*)document->body);
-    // list_nodes("document", (lxb_dom_node_t*)document->body);
-    //
     SDL_RenderPresent( gRenderer );
     SDL_Delay(5000);
 }
