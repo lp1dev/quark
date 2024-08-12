@@ -13,7 +13,9 @@ int main(int argc, const char *argv[])
     const lxb_char_t *tag_name;
     lxb_html_document_t *document;
 
-    static const lxb_char_t html[] = "<div><h1>Works fine!</h1></div><div><p><h2>TestTitle</h2>TestParagraph</p>TEST</div>";
+    // static const lxb_char_t html[] = "<div><h1>Works fine!</h1></div><div><p><h2>TestTitle</h2>TestParagraph</p>TEST</div>";
+    // static const lxb_char_t html[] = "<div></div><div><div></div><div></div>Test</div>";
+    static const lxb_char_t html[] = "<!DOCTYPE html><html><body><h1>MyFirstHeading</h1><p>Myfirstparagraph.</p></body></html>";
     size_t html_len = sizeof(html) - 1;
 
     document = lxb_html_document_create();
