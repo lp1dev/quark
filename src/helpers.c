@@ -31,3 +31,21 @@ void list_nodes(char* parent, lxb_dom_node_t *node) {
         node = node->next;
     }
 }
+
+int get_css_selectors(lxb_html_document_t *document) {
+    int i = 0;
+
+    // Listing all stylesheets
+    size_t array_size = lexbor_array_length(document->css.stylesheets);
+
+    while (i < array_size) {
+        lxb_css_stylesheet_t * stylesheet = lexbor_array_get(document->css.stylesheets, i);
+        printf("Found one stylesheet at addr %p\n", stylesheet);
+        lxb_css_rule_t * rule = stylesheet->root;
+        printf("Its root is at addr %p\n", rule);
+        while (rule != NULL) {
+            rule = rule->next;
+        }
+        i++;
+    }
+}

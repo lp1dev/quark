@@ -1,4 +1,5 @@
 #include <lexbor/html/interfaces/document.h>
+#include <lexbor/html/interfaces/element.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_timer.h>
@@ -121,13 +122,70 @@ SDL_Rect render_single_node(lxb_dom_node_t* node, SDL_Rect root_rect, int num_el
     return elem_rect;
 }
 
+static lxb_status_t
+callback(const lxb_char_t *data, size_t len, void *ctx)
+{
+    printf("%.*s", (int) len, (const char *) data);
+
+    return LXB_STATUS_OK;
+}
+
+
+static lxb_status_t
+style_walk(lxb_html_element_t *element, const lxb_css_rule_declaration_t *declr,
+        void *ctx, lxb_css_selector_specificity_t spec, bool is_weak) {
+    lxb_status_t status;
+
+    status = lxb_css_rule_declaration_serialize(declr, callback, NULL);
+    if (status != LXB_STATUS_OK) {
+        return EXIT_FAILURE;
+    }
+
+    printf("\n");
+
+    printf("    Name: ");
+
+    status = lxb_css_property_serialize_name(declr->u.user, declr->type,
+                                             callback, NULL);
+    if (status != LXB_STATUS_OK) {
+        return EXIT_FAILURE;
+    }
+
+    printf("\n    Value: ");
+
+    status = lxb_css_property_serialize(declr->u.user, declr->type,
+                                        callback, NULL);
+    if (status != LXB_STATUS_OK) {
+        return EXIT_FAILURE;
+    }
+
+    printf("\n    Primary: %s\n", (is_weak) ? "false" : "true");
+    printf("    Specificity (priority): %d %d %d %d %d\n",
+           lxb_css_selector_sp_i(spec), lxb_css_selector_sp_s(spec),
+           lxb_css_selector_sp_a(spec), lxb_css_selector_sp_b(spec),
+           lxb_css_selector_sp_c(spec));
+
+    printf("        Important: %d\n", lxb_css_selector_sp_i(spec));
+    printf("        From Style Attribute: %d\n", lxb_css_selector_sp_s(spec));
+    printf("        A: %d\n", lxb_css_selector_sp_a(spec));
+    printf("        B: %d\n", lxb_css_selector_sp_b(spec));
+    printf("        C: %d\n", lxb_css_selector_sp_c(spec));
+
+    printf("\n");
+
+    return LXB_STATUS_OK;
+}
+
+
 void render_node_subnodes(lxb_dom_node_t* node, SDL_Rect rect, int depth) {
     int containers = 0;
     int i = 0;
     int elements = 0;
     SDL_Rect last_rendered_rect;
 
+    lxb_html_element_t *el;
     lxb_dom_node_t* root_node = node;
+
 
     while (node != NULL) {
         if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
@@ -140,6 +198,23 @@ void render_node_subnodes(lxb_dom_node_t* node, SDL_Rect rect, int depth) {
 
     while (node != NULL) {
         printf("Handling node %s\n", get_tag_name(node));
+        //
+        el = lxb_html_interface_element(node);
+        printf("Created html element %p\n", el);
+        //
+        if (el->style != NULL) {
+            lxb_html_element_style_walk(el, style_walk, NULL, true);
+        } else {
+            printf("Element has NULL style at %p\n", el->style);
+        }
+        //
+        printf("Its css rules list is %p\n", el->list);
+
+        if (el->list != NULL && el->list->count > 0) {
+            printf("List is of type %i and of length %i\n", el->list->first->type, el->list->count);
+        }
+
+
         if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
             last_rendered_rect = render_single_node(node, rect, i, elements, depth);
             i++;
@@ -164,7 +239,9 @@ void render_body(lxb_dom_node_t *body) {
 }
 
 void render_document(lxb_html_document_t *document) {
+    get_css_selectors(document);
     render_body((lxb_dom_node_t*)document->body);
+
     SDL_RenderPresent( gRenderer );
     SDL_Delay(5000);
 }

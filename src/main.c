@@ -82,6 +82,9 @@ int main(int argc, const char *argv[])
     lxb_dom_collection_t *collection;
 
     lxb_html_document_t *document = parse_html("index.html");
+    lxb_html_element_t *element = lxb_html_element_interface_create(document);
+
+    printf("Created element from document %p\n", element);
     /* Init all CSS objects and mem for document. */
     int status = lxb_html_document_css_init(document);
     if (status != LXB_STATUS_OK) {
@@ -89,7 +92,14 @@ int main(int argc, const char *argv[])
     }
     lxb_css_stylesheet_t *css = parse_css("browser.css");
     // Attach stylesheet to document
+
+
     status = lxb_html_document_stylesheet_attach(document, css);
+    if (status != LXB_STATUS_OK) {
+        return EXIT_FAILURE;
+    }
+
+    status = lxb_html_document_stylesheet_apply(document, css);
     if (status != LXB_STATUS_OK) {
         return EXIT_FAILURE;
     }

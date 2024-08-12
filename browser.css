@@ -199,7 +199,7 @@ img.pr-icons {position: absolute; top: 0.9em; left: 15px; height: 64px; line-hei
 
 /* Footer
 ---------------------------------------- */
-.footer {height: 55px; margin: -55px 0 0; background: url(../img/head_bg.png) repeat-x 0 44px #323841; color: #fff; text-shadow: 0 1px #12333d}
+.footer {height: 55px; margin: -55px 0 0; color: #fff; text-shadow: 0 1px #12333d}
 .footer a {color: #fff}
 .footer-content {margin: 0 auto; width: 90%; padding: 20px 6px 0; overflow: hidden}
 .copy {font-style: normal}
