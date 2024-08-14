@@ -9,10 +9,22 @@ typedef struct {
     int depth;
 } future_render_properties;
 
-typedef struct {
+
+/*
+
+css_property is a linked list
+
+ */
+
+typedef struct css_property css_property;
+
+struct css_property {
     char *value;
     char *name;
-} css_property;
+    bool important;
+    css_property *next;
+    css_property *prev;
+};
 
 typedef struct {
     SDL_Rect rect;
@@ -20,6 +32,7 @@ typedef struct {
     future_render_properties *properties;
     SDL_Color color;
     css_property *style;
+    int style_size;
     char *tag;
     char *innerText;
 } future_render;

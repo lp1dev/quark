@@ -1,5 +1,6 @@
 #include <lexbor/html/interfaces/document.h>
 #include <SDL2/SDL.h>
+#include "rendering/interfaces.h"
 
 struct item {
   int type;
