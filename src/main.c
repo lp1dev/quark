@@ -1,5 +1,6 @@
 #include <lexbor/html/parser.h>
 #include <lexbor/dom/interfaces/element.h>
+#include <lexbor/html/interfaces/element.h>
 #include <lexbor/html/interfaces/document.h>
 #include <lexbor/core/fs.h>
 #include <lexbor/css/css.h>
@@ -84,21 +85,20 @@ int main(int argc, const char *argv[])
     lxb_html_document_t *document = parse_html("index.html");
     lxb_html_element_t *element = lxb_html_element_interface_create(document);
 
-    printf("Created element from document %p\n", element);
     /* Init all CSS objects and mem for document. */
     int status = lxb_html_document_css_init(document);
     if (status != LXB_STATUS_OK) {
         return EXIT_FAILURE;
     }
     lxb_css_stylesheet_t *css = parse_css("browser.css");
+
     // Attach stylesheet to document
-
-
     status = lxb_html_document_stylesheet_attach(document, css);
     if (status != LXB_STATUS_OK) {
         return EXIT_FAILURE;
     }
 
+    // Not 100% sure what apply does differently
     status = lxb_html_document_stylesheet_apply(document, css);
     if (status != LXB_STATUS_OK) {
         return EXIT_FAILURE;
@@ -109,7 +109,6 @@ int main(int argc, const char *argv[])
         return EXIT_FAILURE;
     }
 
-    // printf("CSS -> %.*s\n", css->root);
     printf("Document parsed!\nGraph init...");
     graph_init();
     printf("Graph init done! Rendering.\n");
