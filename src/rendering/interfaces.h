@@ -19,7 +19,10 @@ css_property is a linked list
 typedef struct css_property css_property;
 
 struct css_property {
-    char *value;
+    char *str_value;
+    int int_value;
+    float float_value;
+    char *unit;
     char *name;
     bool important;
     css_property *next;

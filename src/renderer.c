@@ -4,6 +4,7 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_ttf.h>
+#include <ctype.h> 
 #include "helpers.h"
 #include "browser/config.h"
 #include "browser/colors.h"
@@ -21,9 +22,17 @@ future_render *render_queue[255];
 static lxb_status_t
 callback(const lxb_char_t *data, size_t len, void *ctx)
 {
-    // css_property *last = item_buffer->style;
-    // while (last != NULL) {
-    //     last = last->next;
+    lxb_status_t status;
+    size_t c_length;
+
+    if (data == NULL) {
+        LXB_STATUS_CONTINUE;
+    }
+    css_property *last = get_last_css_property(item_buffer->style);
+    if (last->name == NULL) {
+        last->name = data;
+    } else if (strcmp(last->name, "height") == 0) {
+    }
     // }
     // if (strcmp(data, item_buffer->style[item_buffer->style_size - 1]) == 0) {
     //     printf("STYLE IS STYLE NAME");
@@ -37,7 +46,6 @@ callback(const lxb_char_t *data, size_t len, void *ctx)
 static lxb_status_t synchronous_serialize(const lxb_css_rule_declaration_t* declaration) {
     lxb_status_t status;
     const lxb_css_entry_data_t *data, *undata;
-    const lxb_css_property__undef_t *undef;
     const lxb_css_property__custom_t *custom;
 
     static const lxb_char_t cl_str[] = ": ";
@@ -48,43 +56,58 @@ static lxb_status_t synchronous_serialize(const lxb_css_rule_declaration_t* decl
     if (data == NULL) {
         return LXB_STATUS_ERROR_NOT_EXISTS;
     }
-
-
-    if (item_buffer->style_size > 0) {
-        if (item_buffer->style_size == 1) {
-            printf("SECOND INIT");
-            item_buffer->style->next = (css_property *) malloc(sizeof(css_property));
-            item_buffer->style->next->prev = item_buffer->style;
-            item_buffer->style->next->name = data->name;
-            item_buffer->style->next->important = declaration->important;
-            item_buffer->style->next->next = NULL;
-            item_buffer->style_size++;
-        } else {
-            css_property * last = item_buffer->style;
-            while (last->next != NULL) {
-                last = last->next;
-            }
-            last->next = (css_property *) malloc(sizeof(css_property));
-            last->next->prev = item_buffer->style;
-            last->next->name = data->name;
-            last->next->important = declaration->important;
-            last->next->next = NULL;
-            item_buffer->style_size++;
-            // printf("Last is number %i, pointer %p, data_name [%s]\n", item_buffer->style_size, last, data->name);
-
-
-        }
-
-    } else {
-        printf("FIRST INIT");
+    css_property * last = get_last_css_property(item_buffer->style);
+    if (last == NULL) {
         item_buffer->style = (css_property *) malloc(sizeof(css_property));
         item_buffer->style->prev = item_buffer->style;
         item_buffer->style->name = data->name;
         item_buffer->style->important = declaration->important;
         item_buffer->style->next = NULL;
         item_buffer->style_size++;
+    } else {
+        last->next = (css_property *) malloc(sizeof(css_property));
+        last->next->prev = item_buffer->style;
+        last->next->name = data->name;
+        last->next->important = declaration->important;
+        last->next->next = NULL;
         item_buffer->style_size++;
     }
+
+    // if (item_buffer->style_size > 0) {
+    //     if (item_buffer->style_size == 1) {
+    //         printf("SECOND INIT");
+    //         item_buffer->style->next = (css_property *) malloc(sizeof(css_property));
+    //         item_buffer->style->next->prev = item_buffer->style;
+    //         item_buffer->style->next->name = data->name;
+    //         item_buffer->style->next->important = declaration->important;
+    //         item_buffer->style->next->next = NULL;
+    //         item_buffer->style_size++;
+    //     } else {
+    //         css_property * last = item_buffer->style;
+    //         while (last->next != NULL) {
+    //             last = last->next;
+    //         }
+    //         last->next = (css_property *) malloc(sizeof(css_property));
+    //         last->next->prev = item_buffer->style;
+    //         last->next->name = data->name;
+    //         last->next->important = declaration->important;
+    //         last->next->next = NULL;
+    //         item_buffer->style_size++;
+    //         // printf("Last is number %i, pointer %p, data_name [%s]\n", item_buffer->style_size, last, data->name);
+
+
+    //     }
+
+    // } else {
+    //     printf("FIRST INIT");
+    //     item_buffer->style = (css_property *) malloc(sizeof(css_property));
+    //     item_buffer->style->prev = item_buffer->style;
+    //     item_buffer->style->name = data->name;
+    //     item_buffer->style->important = declaration->important;
+    //     item_buffer->style->next = NULL;
+    //     item_buffer->style_size++;
+    //     item_buffer->style_size++;
+    // }
 
     return LXB_STATUS_OK;
 }
@@ -105,9 +128,6 @@ style_walk(lxb_html_element_t *element, const lxb_css_rule_declaration_t *declr,
     //     return EXIT_FAILURE;
     // }
 
-    printf("\n    Value: ");
-
-    // Test 
     const lxb_css_entry_data_t *data;
 
     data = lxb_css_property_by_id(declr->type);
@@ -252,7 +272,16 @@ SDL_Rect render_single_node(lxb_dom_node_t* node, SDL_Rect root_rect, int num_el
     }
 
 
+    // TO AVOID WALKING
+    // if (el->style != NULL) {
+    //     printf("LIST COUNT %i\n", el->list->count);
+    //     exit(1);    
+
+    // }
+    // 
+
     create_future_render_item(get_tag_name(node), elem_rect, num_element, max_elements, depth, *chosen_color, get_node_text(node));
+
 
     if (el != NULL && el->style != NULL && el->style->value != NULL) {
         lxb_status_t status = lxb_html_element_style_walk(el, style_walk, NULL, true);

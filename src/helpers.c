@@ -35,3 +35,19 @@ void list_nodes(const char* parent, lxb_dom_node_t *node) {
   }
 }
 
+css_property *get_last_css_property(css_property *property) {
+  if (property == NULL) {
+    return NULL;
+  }
+  while (property->next != NULL) {
+    property = property->next;
+  }
+  return property;
+}
+
+void print_property(css_property *property) {
+  printf("p->Name: %s\n", property->name);
+  printf("p->str_value: %s\n", property->str_value);
+  printf("p->int_value: %i\n", property->int_value);
+  printf("p->float_value: %f\n", property->float_value);
+}
