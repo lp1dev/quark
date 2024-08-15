@@ -22,6 +22,7 @@ struct css_property {
     char *str_value;
     int int_value;
     float float_value;
+    int value_length;
     char *unit;
     char *name;
     bool important;

@@ -7,12 +7,6 @@
 #include "helpers.h"
 #include "renderer.h"
 
-static lxb_status_t
-callback(const lxb_char_t *data, size_t len, void *ctx)
-{
-    // printf("%.*s", (int) len, (const char *) data);
-    return LXB_STATUS_OK;
-}
 
 lxb_html_document_t *parse_html(char *filename) {
     lxb_status_t status;
@@ -70,10 +64,6 @@ lxb_css_stylesheet_t *parse_css(char *filename) {
         FAILED("Failed to parse CSS");
     }
 
-    status = lxb_css_rule_serialize(sst->root, callback, NULL);
-    if (status != LXB_STATUS_OK) {
-        FAILED("Failed to serialize StyleSheet");
-    }
     return sst;
 }
 

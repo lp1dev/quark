@@ -20,5 +20,7 @@ void print_rect(SDL_Rect rect);
 int get_css_selectors(lxb_dom_node_t *node);
 css_property *get_last_css_property(css_property *property);
 void print_property(css_property *property);
-
+bool is_numeric(char *string, int length);
+bool is_unit(char *string, int length);
+void add_value_str(css_property *property, const unsigned char *value, int len);
 #endif

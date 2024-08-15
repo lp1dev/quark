@@ -2,6 +2,14 @@
 #include <SDL2/SDL.h>
 #include "rendering/interfaces.h"
 
+static char *UNITS[] = {
+  "pt",
+  "px",
+  "%",
+  "vh",
+  "vw"
+};
+
 struct item {
   int type;
   char *contents;
@@ -51,3 +59,53 @@ void print_property(css_property *property) {
   printf("p->int_value: %i\n", property->int_value);
   printf("p->float_value: %f\n", property->float_value);
 }
+
+bool is_numeric(char *string, int length) {
+  for (int i = 0; i < length;i++) {
+    if (string[i] < '0' || string[i] > '9') {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool is_unit(char *string, int length) {
+  for (int i = 0; UNITS[i]; i++) {
+    if (strcmp(string, UNITS[i]) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void add_value_str(css_property *property, const unsigned char * value, int len) {
+  int i = 0;
+
+  if (property->str_value == NULL) {
+    return;
+  }
+  printf("IN ADD VALUE, %p %s %i\n", property, value, len);
+  if (property->value_length <= 0) {
+    property->str_value = (char *)value;
+    property->str_value[len - 1] = '\0';
+    property->value_length = len;
+
+  } else {
+
+    int total_length = property->value_length + len;
+    char *new_str = malloc(sizeof(char) * (total_length + 1));
+    
+    while (i < property->value_length + len) {
+      if (i < property->value_length) {
+        new_str[i] = property->str_value[i]; 
+      } else {
+        new_str[i] = value[i - property->value_length];
+      }
+      i++;
+    }
+    new_str[i - 1] = '\0';
+    property->str_value = new_str;
+    property->value_length += len;
+  }
+}
+
