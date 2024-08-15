@@ -33,7 +33,7 @@ style_callback(const lxb_char_t *data, size_t len, void *ctx)
 
     css_property *last = get_last_css_property(item_buffer->style);
 
-    printf("=STYLE_CALLBACK= last->%p\n", last);
+    printf("=STYLE_CALLBACK= last->%p (%s) length=%i\n", last, last->str_value, last->value_length);
     char * data_str = (char *) data;
     if (last->value_length == 0) {
         if (strncmp(last->name, data, len) != 0) {
@@ -45,7 +45,7 @@ style_callback(const lxb_char_t *data, size_t len, void *ctx)
         } else {
             last->value_length = 0;
         }
-            
+
     } else if (is_unit(data_str, len)) {
         printf("WE HAVE A UNIT %s\n", data_str);
         last->unit = malloc(sizeof(char) * (len + 1));
@@ -100,7 +100,7 @@ static lxb_status_t synchronous_serialize(const lxb_css_rule_declaration_t* decl
         last->next->str_value = NULL;
         last->next->important = declaration->important;
         last->next->next = NULL;
-        item_buffer->style->value_length = 0;
+        last->next->value_length = 0;
         item_buffer->style_size++;
     }
     return LXB_STATUS_OK;
