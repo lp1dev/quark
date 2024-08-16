@@ -33,15 +33,16 @@ style_callback(const lxb_char_t *data, size_t len, void *ctx)
 
     css_property *last = get_last_css_property(item_buffer->style);
 
-    printf("=STYLE_CALLBACK= last->%p (%s) length=%i\n", last, last->str_value, last->value_length);
+    // printf("=STYLE_CALLBACK= last->%p (%s) length=%i\n", last, last->str_value, last->value_length);
     char * data_str = (char *) data;
     if (last->value_length == 0) {
         if (strncmp(last->name, data, len) != 0) {
-            printf("First init %s %p data = %s\n", last->name, last, data);
+            // printf("First init %s %p data = %s\n", last->name, last, data);
             last->str_value = malloc(sizeof(char) * (len + 1));
             strncpy(last->str_value, data, len);
             last->str_value[len] = '\0';
             last->value_length = len;
+            last->unit = NULL;
         } else {
             last->value_length = 0;
         }
@@ -51,15 +52,14 @@ style_callback(const lxb_char_t *data, size_t len, void *ctx)
         last->unit = malloc(sizeof(char) * (len + 1));
         strncpy(last->unit, data_str, len);
         last->unit[len] = '\0';
-        printf("property{name:%s, value:%s, unit: %s, value_length:%i} data=%s\n", last->name, last->str_value, last->unit, last->value_length, data);
+        // printf("property{name:%s, value:%s, unit: %s, value_length:%i} data=%s\n", last->name, last->str_value, last->unit, last->value_length, data);
 
     } else if (is_numeric(data_str, len)) {
-        printf("WE HAVE A NUMBER %s\n", data_str);
         add_value_str(last, data, len);
     } else if (data[0] == '#') {
         printf("STARTING A COLOR");
     } else {
-        printf("IN ELSE %s\n", data_str);
+        // printf("IN ELSE %s\n", data_str); // a printf of this value seems to end in a segfault
     }
 
     return LXB_STATUS_OK;
@@ -74,7 +74,7 @@ int synchronous_serialize(const lxb_css_rule_declaration_t* declaration)
     Stores the data contained in the document's style in qwark's custom css_property structs.
 
 */
-static lxb_status_t synchronous_serialize(const lxb_css_rule_declaration_t* declaration) {
+static lxb_status_t synchronous_serialize(const lxb_css_rule_declaration_t* declaration, bool is_weak) {
     lxb_status_t status;
     css_property * last;
     const lxb_css_entry_data_t *data;
@@ -85,22 +85,10 @@ static lxb_status_t synchronous_serialize(const lxb_css_rule_declaration_t* decl
     }
     last = get_last_css_property(item_buffer->style);
     if (last == NULL) {
-        item_buffer->style = (css_property *) malloc(sizeof(css_property));
-        item_buffer->style->prev = item_buffer->style;
-        item_buffer->style->name = data->name;
-        item_buffer->style->str_value = NULL;
-        item_buffer->style->important = declaration->important;
-        item_buffer->style->next = NULL;
-        item_buffer->style->value_length = 0;
+        item_buffer->style = create_css_property(NULL, data->name, NULL, declaration->important, !is_weak);
         item_buffer->style_size++;
     } else {
-        last->next = (css_property *) malloc(sizeof(css_property));
-        last->next->prev = item_buffer->style;
-        last->next->name = data->name;
-        last->next->str_value = NULL;
-        last->next->important = declaration->important;
-        last->next->next = NULL;
-        last->next->value_length = 0;
+        last->next = create_css_property(last, data->name, NULL, declaration->important, !is_weak);
         item_buffer->style_size++;
     }
     return LXB_STATUS_OK;
@@ -118,7 +106,7 @@ style_walk(lxb_html_element_t *element, const lxb_css_rule_declaration_t *declr,
     static lxb_status_t status;
     const lxb_css_entry_data_t *data;
 
-    status = synchronous_serialize(declr);
+    status = synchronous_serialize(declr, is_weak);
     if (status != LXB_STATUS_OK) {
         return EXIT_FAILURE;
     }
@@ -127,6 +115,7 @@ style_walk(lxb_html_element_t *element, const lxb_css_rule_declaration_t *declr,
     if (data == NULL) {
         return LXB_STATUS_ERROR_NOT_EXISTS;
     }
+
 
     data->serialize(declr->u.user, style_callback, NULL);
     return LXB_STATUS_OK;
@@ -300,6 +289,10 @@ SDL_Rect render_single_node(lxb_dom_node_t* node, SDL_Rect root_rect, int num_el
     if (el != NULL && el->style != NULL && el->style->value != NULL) {
         lxb_status_t status = lxb_html_element_style_walk(el, style_walk, NULL, true);
     }
+
+    printf("ELEMENT STYLE %s\n", get_tag_name(node));
+
+    print_style(item_buffer->style);
 
     return elem_rect;
 }

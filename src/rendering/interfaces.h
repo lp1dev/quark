@@ -1,6 +1,7 @@
 #ifndef _RENDERING_INTERFACES_H_
 #define _RENDERING_INTERFACES_H_
 
+#include "../browser/css.h"
 #include <SDL2/SDL.h>
 
 typedef struct {
@@ -9,26 +10,6 @@ typedef struct {
     int depth;
 } future_render_properties;
 
-
-/*
-
-css_property is a linked list
-
- */
-
-typedef struct css_property css_property;
-
-struct css_property {
-    char *str_value;
-    int int_value;
-    float float_value;
-    int value_length;
-    char *unit;
-    char *name;
-    bool important;
-    css_property *next;
-    css_property *prev;
-};
 
 typedef struct {
     SDL_Rect rect;
