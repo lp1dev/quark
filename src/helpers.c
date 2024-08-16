@@ -84,7 +84,6 @@ void add_value_str(css_property *property, const unsigned char * value, int len)
   if (property->str_value == NULL) {
     return;
   }
-  // printf("IN ADD VALUE, %p %s %i\n", property, value, len);
   if (property->value_length <= 0) {
     property->str_value = (char *)value;
     property->str_value[len - 1] = '\0';
@@ -111,14 +110,24 @@ void add_value_str(css_property *property, const unsigned char * value, int len)
 
 void print_style(css_property *style) {
   while (style != NULL) {
-    printf("property{");
-    printf("\n\tname:%s", style->name);
+    printf("\nproperty {");
+    printf("\n\tname:%s,", style->name);
     printf("\n\tvalue:%s,", style->str_value);
     if (style->unit != NULL) {
-      printf("unit:%s", style->unit);
+      printf("\n\tunit:%s,", style->unit);
     }
-    printf("\n\tvalue_length: %i,", style->value_length);
+    printf("\n\tvalue_length: %i", style->value_length);
     printf("\n}\n");
     style = style->next;
   }
+}
+
+bool is_empty(char *string) {
+  for (int i = 0; string[i] != NULL;i++) {
+    if (string[i] != ' ' && string[i] != '\t' \
+       && string[i] != '\n' && string[i] != '\r') {
+        return false;
+    }
+  }
+  return true;
 }

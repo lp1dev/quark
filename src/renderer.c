@@ -30,38 +30,39 @@ style_callback(const lxb_char_t *data, size_t len, void *ctx)
 {
     lxb_status_t status;
     size_t c_length;
+    css_property *last;
+    
+    last = get_last_css_property(item_buffer->style);
 
-    css_property *last = get_last_css_property(item_buffer->style);
-
-    // printf("=STYLE_CALLBACK= last->%p (%s) length=%i\n", last, last->str_value, last->value_length);
     char * data_str = (char *) data;
+    printf("data_string = [%.*s]\n", (int) len, data_str);
+
+    if (is_empty(data_str)) {
+        return LXB_STATUS_OK;
+    }
+
     if (last->value_length == 0) {
         if (strncmp(last->name, data, len) != 0) {
-            // printf("First init %s %p data = %s\n", last->name, last, data);
             last->str_value = malloc(sizeof(char) * (len + 1));
             strncpy(last->str_value, data, len);
             last->str_value[len] = '\0';
             last->value_length = len;
             last->unit = NULL;
-        } else {
-            last->value_length = 0;
         }
 
     } else if (is_unit(data_str, len)) {
-        printf("WE HAVE A UNIT %s\n", data_str);
+        printf("\t[%.*s] is a unit\n", (int) len, data_str);
         last->unit = malloc(sizeof(char) * (len + 1));
         strncpy(last->unit, data_str, len);
         last->unit[len] = '\0';
-        // printf("property{name:%s, value:%s, unit: %s, value_length:%i} data=%s\n", last->name, last->str_value, last->unit, last->value_length, data);
 
     } else if (is_numeric(data_str, len)) {
         add_value_str(last, data, len);
-    } else if (data[0] == '#') {
-        printf("STARTING A COLOR");
+        printf("\t[%.*s] is a number\n", (int) len, data_str);
     } else {
-        // printf("IN ELSE %s\n", data_str); // a printf of this value seems to end in a segfault
+        add_value_str(last, data, len);
+        printf("\t[%.*s] was not identified\n", (int) len, data_str);
     }
-
     return LXB_STATUS_OK;
 }
 
@@ -121,7 +122,6 @@ style_walk(lxb_html_element_t *element, const lxb_css_rule_declaration_t *declr,
     return LXB_STATUS_OK;
 
     // TODO add those params to my css_property as well
-    printf("\n    Primary: %s\n", (is_weak) ? "false" : "true");
     printf("    Specificity (priority): %d %d %d %d %d\n",
            lxb_css_selector_sp_i(spec), lxb_css_selector_sp_s(spec),
            lxb_css_selector_sp_a(spec), lxb_css_selector_sp_b(spec),
@@ -262,7 +262,7 @@ SDL_Rect render_single_node(dom_node *node, SDL_Rect root_rect, int num_element,
 SDL_Rect render_single_node(lxb_dom_node_t* node, SDL_Rect root_rect, int num_element, int max_elements, int depth) {
     lxb_html_element_t *el;
 
-    printf("Rendering a single node (depth:%i) [%i/%i] %s\n", depth, num_element, max_elements, get_tag_name(node));
+    printf("Rendering a single node (depth:%i) [%i/%i] %s\n", depth, num_element+1, max_elements, get_tag_name(node));
 
     el = lxb_html_interface_element(node);
     printf("\tCreated html element %p\n", el);
@@ -289,8 +289,6 @@ SDL_Rect render_single_node(lxb_dom_node_t* node, SDL_Rect root_rect, int num_el
     if (el != NULL && el->style != NULL && el->style->value != NULL) {
         lxb_status_t status = lxb_html_element_style_walk(el, style_walk, NULL, true);
     }
-
-    printf("ELEMENT STYLE %s\n", get_tag_name(node));
 
     print_style(item_buffer->style);
 
@@ -323,7 +321,7 @@ void render_node_subnodes(lxb_dom_node_t* node, SDL_Rect rect, int depth) {
     node = root_node;
 
     while (node != NULL) {
-        printf("Handling node %s\n", get_tag_name(node));
+        printf("\n~---===---~\nHandling node %s\n", get_tag_name(node));
 
         if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
             last_rendered_rect = render_single_node(node, rect, i, elements, depth);
