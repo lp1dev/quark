@@ -10,7 +10,6 @@
 #include "browser/colors.h"
 #include "rendering/interfaces.h"
 
-static int SELECTED_COLOR = 0;
 static int QUEUE_LENGTH = 0;
 static future_render *item_buffer;
 
@@ -67,7 +66,6 @@ style_callback(const lxb_char_t *data, size_t len, void *ctx)
 }
 
 
-
 /*
 
 int synchronous_serialize(const lxb_css_rule_declaration_t* declaration)
@@ -98,7 +96,7 @@ static lxb_status_t synchronous_serialize(const lxb_css_rule_declaration_t* decl
 /* 
 int style_walk()
 
-    Iterating over style items and adding them to the
+    Iterating over style items and adding them to the element
 
 */
 static lxb_status_t
@@ -223,6 +221,7 @@ void render_element
 */
 void render_element(lxb_dom_node_t *node, SDL_Rect root_rect, SDL_Color *color, int num_element, int max_elements) {
     SDL_Rect elem_rect;
+
     elem_rect.x = root_rect.x;
     elem_rect.y = ((root_rect.h / max_elements) * num_element) + root_rect.y;
     // Elements take all available width by default if no style override is specified
@@ -239,7 +238,8 @@ void create_future_render_item()
 
     Create an item to add to the renderer_queue buffer
 */
-void create_future_render_item(char *tag, SDL_Rect rect, int num_element, int max_elements, int depth, SDL_Color color, char * text) {
+void create_future_render_item(char *tag, SDL_Rect rect, int num_element, int max_elements, int depth, char * text) {
+    
     item_buffer = malloc(sizeof(future_render));
     item_buffer->tag = tag;
     item_buffer->rect = rect;
@@ -247,7 +247,7 @@ void create_future_render_item(char *tag, SDL_Rect rect, int num_element, int ma
     item_buffer->properties->depth = depth;
     item_buffer->properties->num_element = num_element;
     item_buffer->properties->max_elements = max_elements;
-    item_buffer->color = color;
+    item_buffer->color = Default;
     item_buffer->innerText = text;
     item_buffer->style_size = 0;
     item_buffer->style = NULL;
@@ -261,6 +261,9 @@ SDL_Rect render_single_node(dom_node *node, SDL_Rect root_rect, int num_element,
 */
 SDL_Rect render_single_node(lxb_dom_node_t* node, SDL_Rect root_rect, int num_element, int max_elements, int depth) {
     lxb_html_element_t *el;
+    SDL_Rect elem_rect;
+    const lxb_css_rule_declaration_t *background_color;
+    lxb_status_t status;
 
     printf("Rendering a single node (depth:%i) [%i/%i] %s\n", depth, num_element+1, max_elements, get_tag_name(node));
 
@@ -271,26 +274,23 @@ SDL_Rect render_single_node(lxb_dom_node_t* node, SDL_Rect root_rect, int num_el
     printf("\tEl style is at %p\n", el->style);
 
     // Defining the Rect properties
-    SDL_Rect elem_rect;
     elem_rect.x = root_rect.x;
     elem_rect.y = ((root_rect.h / max_elements) * num_element) + root_rect.y;
     elem_rect.w = root_rect.w; // Elements take all available width by default
     elem_rect.h = (root_rect.h / max_elements);
 
     // Choosing a color for the Rect (debug)
-    SDL_Color *chosen_color = colors[SELECTED_COLOR++];
 
-    if (SELECTED_COLOR > 3) {
-        SELECTED_COLOR = 0;
-    }
-
-    create_future_render_item(get_tag_name(node), elem_rect, num_element, max_elements, depth, *chosen_color, get_node_text(node));
+    create_future_render_item(get_tag_name(node), elem_rect, num_element, max_elements, depth, get_node_text(node));
 
     if (el != NULL && el->style != NULL && el->style->value != NULL) {
         lxb_status_t status = lxb_html_element_style_walk(el, style_walk, NULL, true);
     }
 
     print_style(item_buffer->style);
+
+    apply_style(&elem_rect, &root_rect, el, item_buffer, item_buffer->style);
+
 
     return elem_rect;
 }
