@@ -1,5 +1,6 @@
 #include <lexbor/html/interfaces/document.h>
 #include <SDL2/SDL.h>
+#include "browser/config.h"
 #include "rendering/interfaces.h"
 
 static char *UNITS[] = {
@@ -7,7 +8,9 @@ static char *UNITS[] = {
   "px",
   "%",
   "vh",
-  "vw"
+  "vw",
+  "em",
+  "rem"
 };
 
 struct item {
@@ -123,7 +126,7 @@ void print_style(css_property *style) {
 }
 
 bool is_empty(char *string) {
-  for (int i = 0; string[i] != NULL;i++) {
+  for (int i = 0; string[i] != '\0';i++) {
     if (string[i] != ' ' && string[i] != '\t' \
        && string[i] != '\n' && string[i] != '\r') {
         return false;
@@ -131,3 +134,4 @@ bool is_empty(char *string) {
   }
   return true;
 }
+

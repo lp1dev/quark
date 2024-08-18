@@ -196,50 +196,36 @@ void render_text(char* text, SDL_Rect rect)
 
     Rendering text element
 */
-void render_text(char *text, SDL_Rect rect) {
+void render_text(future_render *item) {
     SDL_Surface *surfaceMessage;
     SDL_Texture *Message;
+    SDL_Rect text_rect;
 
-    printf("Rendering text '%s'\n", text);
-    print_rect(rect);
-    rect.w = DEFAULT_FONT_SIZE * strlen(text);
-    rect.h = DEFAULT_FONT_SIZE * 3;
+    print_style(item->style);
 
-    surfaceMessage = TTF_RenderText_Solid(font, text, Black); 
+    printf("Rendering text '%s' of size %i\n", item->innerText, item->font_size);
+    // print_rect(rect);
+ 
+    font = TTF_OpenFont("/usr/share/fonts/opentype/Sans.ttf", item->font_size);
+    text_rect.x = item->rect.x;
+    text_rect.y = item->rect.y;
+    text_rect.w = item->font_size * strlen(item->innerText);
+    text_rect.h = item->font_size * 3;
+
+    surfaceMessage = TTF_RenderText_Solid(font, item->innerText, Black); 
     Message = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage);
 
-    SDL_RenderCopy(gRenderer, Message, NULL, &rect);
+    SDL_RenderCopy(gRenderer, Message, NULL, &text_rect);
     SDL_FreeSurface(surfaceMessage);
     SDL_DestroyTexture(Message);
 }
-
-/*
-void render_element
-
-    Render a single dom_node, does not seem to be used anymore?
-
-*/
-void render_element(lxb_dom_node_t *node, SDL_Rect root_rect, SDL_Color *color, int num_element, int max_elements) {
-    SDL_Rect elem_rect;
-
-    elem_rect.x = root_rect.x;
-    elem_rect.y = ((root_rect.h / max_elements) * num_element) + root_rect.y;
-    // Elements take all available width by default if no style override is specified
-    elem_rect.w = root_rect.w; 
-    elem_rect.h = (root_rect.h / max_elements);
-    print_rect(elem_rect);
-    SDL_SetRenderDrawColor(gRenderer, color->r, color->g, color->b, color->a);
-    SDL_RenderFillRect(gRenderer, &elem_rect);
-}
-
 
 /* 
 void create_future_render_item()
 
     Create an item to add to the renderer_queue buffer
 */
-void create_future_render_item(char *tag, SDL_Rect rect, int num_element, int max_elements, int depth, char * text) {
-    
+void create_future_render_item(char *tag, SDL_Rect rect, int num_element, int max_elements, int depth) {
     if (QUEUE_LENGTH >= 255) {
         printf("Rendering too many items! Exiting.\n");
         exit(-1);
@@ -252,9 +238,10 @@ void create_future_render_item(char *tag, SDL_Rect rect, int num_element, int ma
     item_buffer->properties->num_element = num_element;
     item_buffer->properties->max_elements = max_elements;
     item_buffer->color = Default;
-    item_buffer->innerText = text;
+    item_buffer->innerText = NULL;
     item_buffer->style_size = 0;
     item_buffer->style = NULL;
+    item_buffer->font_size = DEFAULT_FONT_SIZE;
     render_queue[QUEUE_LENGTH++] = item_buffer;
 }
 
@@ -285,13 +272,11 @@ SDL_Rect render_single_node(lxb_dom_node_t* node, SDL_Rect root_rect, int num_el
 
     // Choosing a color for the Rect (debug)
 
-    create_future_render_item(get_tag_name(node), elem_rect, num_element, max_elements, depth, get_node_text(node));
+    create_future_render_item(get_tag_name(node), elem_rect, num_element, max_elements, depth);
 
     if (el != NULL && el->style != NULL && el->style->value != NULL) {
         lxb_status_t status = lxb_html_element_style_walk(el, style_walk, NULL, true);
     }
-
-    // print_style(item_buffer->style);
 
     apply_style(&elem_rect, &root_rect, el, item_buffer, item_buffer->style);
 
@@ -303,8 +288,7 @@ void render_node_subnodes(dom_node *node, SDL_Rect rect, int depth)
 
     Render a node and its subnodes recursively
 */
-void render_node_subnodes(lxb_dom_node_t* node, SDL_Rect rect, int depth) {
-    SDL_Rect last_rendered_rect;
+void render_node_subnodes(lxb_dom_node_t* node, future_render *last_rendered_item, int depth) {
     lxb_dom_node_t* root_node;
 
     int i;
@@ -327,16 +311,72 @@ void render_node_subnodes(lxb_dom_node_t* node, SDL_Rect rect, int depth) {
         printf("\n~---===---~\nHandling node %s\n", get_tag_name(node));
 
         if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
-            last_rendered_rect = render_single_node(node, rect, i, elements, depth);
+            // last_rendered_item = render_single_node(node, rect, i, elements, depth);
             i++;
         } else {
             printf("\tGot non element node type %i\n", node->type);
             // TODO handle other node types;
         }
         if (node->first_child != NULL) {
-            render_node_subnodes(node->first_child, last_rendered_rect, depth + 1);
+            render_node_subnodes(node->first_child, last_rendered_item, depth + 1);
         }
         node = node->next;
+    }
+}
+
+void render_node_subnodes2(lxb_dom_node_t* node, SDL_Rect rect, int depth) {
+    int i;
+    int elements;
+    char *text_buffer;
+    lxb_dom_node_t *root_node;
+    SDL_Rect last_rect;
+
+    i = 0;
+    elements = 0;
+    root_node = node;
+    last_rect = rect;
+
+    // Counting the number of elements in the current depth
+    while (node != NULL) {
+        if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
+            elements++;
+        }
+        node = node->next;
+    }
+
+    node = root_node;
+
+    while (node != NULL) {
+        lxb_html_element_t *html_element;
+
+        html_element = lxb_html_interface_element(node);
+        printf("Element qualified name %i\n", html_element->element.qualified_name);
+        printf("Node type is %i\n", node->type);
+        printf("Tag name is %s\n", get_tag_name(node));
+        printf("Number of elements = [%i/%i]\n", i, elements);
+
+        // If it's an element, we add it to the render queue
+        if (html_element->element.qualified_name == LXB_DOM_ATTR__UNDEF) { // ATTR undef aren't attributes but tags
+            if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
+                last_rect = render_single_node(node, rect, i, elements, depth + 1);
+                i++;
+            }
+        // If it's a text, we add it to the current item's innerText
+        } else if (node->type == LXB_DOM_NODE_TYPE_TEXT) {
+            text_buffer = get_node_text(node);
+            if (!is_empty(text_buffer)) {
+                item_buffer->innerText = get_node_text(node);
+            }
+        } else if (node->type == LXB_DOM_NODE_TYPE_ATTRIBUTE) {
+            printf("WE HAVE AN ATTRIBUTE %s\n", get_tag_name(node));
+        }
+        // If our node has children, we render them
+        if (node->first_child != NULL) {
+            render_node_subnodes2(node->first_child, last_rect, depth + 1);
+        }
+
+        node = node->next;
+
     }
 }
 
@@ -351,7 +391,7 @@ void render_body(lxb_dom_node_t *body) {
 
     SDL_RenderFillRect(gRenderer, &rect);
 
-    render_node_subnodes(body, rect, 0);
+    render_node_subnodes2(body, rect, 0);
 
     item = render_queue[0];
     // Rendering future_render items
@@ -360,14 +400,15 @@ void render_body(lxb_dom_node_t *body) {
             printf("ERROR: TOO MANY ITEMS TO RENDER");
             exit(1);
         }
-        printf("item->tag = %s\n", item->tag);
+        if (item->tag == NULL) {
+            continue;
+        }
         print_rect(item->rect);
         SDL_SetRenderDrawColor(gRenderer, item->color.r, item->color.g, item->color.b, item->color.a);
         SDL_RenderFillRect(gRenderer, &item->rect);
         if (item->innerText != NULL) {
-            render_text(item->innerText, item->rect);
+            render_text(item);
         }
-        // free(item);
         item = render_queue[i];
     }
 }

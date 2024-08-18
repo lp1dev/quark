@@ -80,7 +80,7 @@ int main(int argc, const char *argv[])
     if (status != LXB_STATUS_OK) {
         return EXIT_FAILURE;
     }
-    lxb_css_stylesheet_t *css = parse_css("browser.css");
+    lxb_css_stylesheet_t *css = parse_css("style.css");
 
     // Attach stylesheet to document
     status = lxb_html_document_stylesheet_attach(document, css);

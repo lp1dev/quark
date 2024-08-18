@@ -30,7 +30,9 @@ struct css_property {
     css_property *prev;
 };
 
-typedef struct {
+typedef struct future_render future_render;
+
+struct future_render {
     SDL_Rect rect;
     SDL_Surface surface;
     future_render_properties *properties;
@@ -39,10 +41,11 @@ typedef struct {
     int style_size;
     char *tag;
     char *innerText;
-} future_render;
+    int font_size;
+};
 
 css_property *create_css_property(css_property *prev, char *name, char *str_value, int important, int primary);
 SDL_Color apply_style(SDL_Rect *rect, SDL_Rect *root_rect, lxb_html_element_t *el, future_render *item, css_property *style);
-
+int unit_to_px(css_property *style);
 
 #endif
