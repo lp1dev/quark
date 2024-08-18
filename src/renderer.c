@@ -240,6 +240,10 @@ void create_future_render_item()
 */
 void create_future_render_item(char *tag, SDL_Rect rect, int num_element, int max_elements, int depth, char * text) {
     
+    if (QUEUE_LENGTH >= 255) {
+        printf("Rendering too many items! Exiting.\n");
+        exit(-1);
+    }
     item_buffer = malloc(sizeof(future_render));
     item_buffer->tag = tag;
     item_buffer->rect = rect;
@@ -287,10 +291,9 @@ SDL_Rect render_single_node(lxb_dom_node_t* node, SDL_Rect root_rect, int num_el
         lxb_status_t status = lxb_html_element_style_walk(el, style_walk, NULL, true);
     }
 
-    print_style(item_buffer->style);
+    // print_style(item_buffer->style);
 
     apply_style(&elem_rect, &root_rect, el, item_buffer, item_buffer->style);
-
 
     return elem_rect;
 }
