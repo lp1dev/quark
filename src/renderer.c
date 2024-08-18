@@ -34,7 +34,8 @@ style_callback(const lxb_char_t *data, size_t len, void *ctx)
     last = get_last_css_property(item_buffer->style);
 
     char *data_str = (char *)data;
-    printf("data_string = [%.*s]\n", (int)len, data_str);
+
+    // printf("data_string = [%.*s]\n", (int)len, data_str);
 
     if (is_empty(data_str))
     {
@@ -54,7 +55,7 @@ style_callback(const lxb_char_t *data, size_t len, void *ctx)
     }
     else if (is_unit(data_str, len))
     {
-        printf("\t[%.*s] is a unit\n", (int)len, data_str);
+        // printf("\t[%.*s] is a unit\n", (int)len, data_str);
         last->unit = malloc(sizeof(char) * (len + 1));
         strncpy(last->unit, data_str, len);
         last->unit[len] = '\0';
@@ -62,7 +63,7 @@ style_callback(const lxb_char_t *data, size_t len, void *ctx)
     else if (is_numeric(data_str, len))
     {
         add_value_str(last, data, len);
-        printf("\t[%.*s] is a number\n", (int)len, data_str);
+        // printf("\t[%.*s] is a number\n", (int)len, data_str);
     }
     else
     {
@@ -206,6 +207,7 @@ int graph_init()
         exit(-6);
     }
 
+    SDL_SetRenderDrawBlendMode(gRenderer, SDL_BLENDMODE_BLEND);
     SDL_UpdateWindowSurface(window);
 }
 
@@ -222,14 +224,14 @@ void render_text(future_render *item)
 
     print_style(item->style);
 
-    printf("Rendering text '%s' with font size %i\n", item->innerText, item->font_size);
+    printf("Rendering text '%s' with font size %i\n", item->innerText, item->render_properties->font_size);
     // print_rect(rect);
 
-    font = TTF_OpenFont("/usr/share/fonts/opentype/Sans.ttf", item->font_size);
+    font = TTF_OpenFont("/usr/share/fonts/opentype/Sans.ttf", item->render_properties->font_size);
     text_rect.x = item->rect.x;
     text_rect.y = item->rect.y;
-    text_rect.w = item->font_size * strlen(item->innerText);
-    text_rect.h = item->font_size * 3;
+    text_rect.w = item->render_properties->font_size * strlen(item->innerText);
+    text_rect.h = item->render_properties->font_size * 3;
 
     surfaceMessage = TTF_RenderText_Solid(font, item->innerText, Black);
     Message = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage);
@@ -246,23 +248,23 @@ void create_future_render_item()
 */
 void create_future_render_item(char *tag, SDL_Rect rect, int num_element, int max_elements, int depth)
 {
+    css_color default_color = {255, 255, 255, 0};
     if (QUEUE_LENGTH >= 255)
     {
         printf("Rendering too many items! Exiting.\n");
         exit(-1);
     }
+
     item_buffer = malloc(sizeof(future_render));
     item_buffer->tag = tag;
     item_buffer->rect = rect;
-    item_buffer->properties = malloc(sizeof(future_render_properties));
-    item_buffer->properties->depth = depth;
-    item_buffer->properties->num_element = num_element;
-    item_buffer->properties->max_elements = max_elements;
+    item_buffer->render_properties = malloc(sizeof(render_properties));
+    item_buffer->render_properties->font_size = DEFAULT_FONT_SIZE;
+    item_buffer->render_properties->background_color = default_color;
     item_buffer->color = Default;
     item_buffer->innerText = NULL;
     item_buffer->style_size = 0;
     item_buffer->style = NULL;
-    item_buffer->font_size = DEFAULT_FONT_SIZE;
     render_queue[QUEUE_LENGTH++] = item_buffer;
 }
 
@@ -282,9 +284,6 @@ SDL_Rect render_single_node(lxb_dom_node_t *node, SDL_Rect root_rect, int num_el
 
     el = lxb_html_interface_element(node);
     printf("\tCreated html element %p\n", el);
-    //
-
-    printf("\tEl style is at %p\n", el->style);
 
     // Defining the Rect properties
     elem_rect.x = root_rect.x;
@@ -299,7 +298,7 @@ SDL_Rect render_single_node(lxb_dom_node_t *node, SDL_Rect root_rect, int num_el
         lxb_status_t status = lxb_html_element_style_walk(el, style_walk, NULL, true);
     }
 
-    // apply_style(&elem_rect, &root_rect, el, item_buffer, item_buffer->style);
+    apply_style(&elem_rect, &root_rect, el, item_buffer->style, item_buffer->render_properties);
 
     return elem_rect;
 }
@@ -339,10 +338,12 @@ void render_node_subnodes(lxb_dom_node_t *node, SDL_Rect rect, int depth)
         lxb_html_element_t *html_element;
 
         html_element = lxb_html_interface_element(node);
-        printf("Element qualified name %i\n", (int)html_element->element.qualified_name);
-        printf("Node type is %i\n", node->type);
-        printf("Tag name is %s\n", get_tag_name(node));
-        printf("Number of elements = [%i/%i]\n", i, elements);
+
+        // DEBUG
+        // printf("Element qualified name %i\n", (int)html_element->element.qualified_name);
+        // printf("Node type is %i\n", node->type);
+        // printf("Tag name is %s\n", get_tag_name(node));
+        // printf("Number of elements = [%i/%i]\n", i, elements);
 
         // If it's an element, we add it to the render queue
         if (html_element->element.qualified_name == LXB_DOM_ATTR__UNDEF)
@@ -355,11 +356,9 @@ void render_node_subnodes(lxb_dom_node_t *node, SDL_Rect rect, int depth)
         // If it's a text, we add it to the current item's innerText
         else if (node->type == LXB_DOM_NODE_TYPE_TEXT)
         {
-            printf("WE HAVE A TEXT ATTRIBUTE %s -> %s\n", get_tag_name(node), get_node_text(node));
             text_buffer = get_node_text(node);
             if (!is_empty(text_buffer))
             {
-                printf("AND IT'S NOT EMPTY\n");
                 item_buffer->innerText = text_buffer;
             }
 
@@ -395,6 +394,7 @@ void render_body(lxb_dom_node_t *body)
     // Rendering all future_render items
     for (int i = 0; item != NULL; i++)
     {
+
         if (i >= 255)
         {
             printf("ERROR: TOO MANY ITEMS TO RENDER");
@@ -404,13 +404,22 @@ void render_body(lxb_dom_node_t *body)
         {
             continue;
         }
+
         printf("Rendering %s\n", item->tag);
         print_rect(item->rect);
-        SDL_SetRenderDrawColor(gRenderer, item->color.r, item->color.g, item->color.b, item->color.a);
+        printf("RGBA COLOR IS (%i, %i, %i, %i)\n", \
+        item->render_properties->background_color.r, \
+        item->render_properties->background_color.g,
+        item->render_properties->background_color.b,
+        item->render_properties->background_color.a);
+        SDL_SetRenderDrawColor(gRenderer, \
+            item->render_properties->background_color.r, \
+            item->render_properties->background_color.g, \
+            item->render_properties->background_color.b, \
+            item->render_properties->background_color.a);
         SDL_RenderFillRect(gRenderer, &item->rect);
         if (item->innerText != NULL)
         {
-            printf("innerText is %p %s\n", item->innerText, item->innerText);
             render_text(item);
         }
         item = render_queue[i];

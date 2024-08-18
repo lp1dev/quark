@@ -6,6 +6,11 @@ p {
     font-size: 12px;
 }
 
+body,i {
+    background-color: #000000;
+    color: #e2e2e2;    
+}
+
 #test {
-    background-color: blue;
+    background-color: #006677;
 }

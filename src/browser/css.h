@@ -7,14 +7,6 @@ css_property is a linked list
 
  */
 
-typedef struct
-{
-    int num_element;
-    int max_elements;
-    int depth;
-} future_render_properties;
-
-
 typedef struct css_property css_property;
 
 struct css_property
@@ -53,14 +45,12 @@ struct future_render
 {
     SDL_Rect rect;
     SDL_Surface surface;
-    future_render_properties *properties;
     render_properties *render_properties;
     SDL_Color color;
     css_property *style;
     int style_size;
     char *tag;
     char *innerText;
-    css_color background_color;
 };
 
 css_property *create_css_property(css_property *prev, char *name, char *str_value, int important, int primary);

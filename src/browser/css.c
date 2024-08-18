@@ -41,7 +41,7 @@ int unit_to_px(css_property *style)
 
 css_color parse_color(char *color)
 {
-        css_color output = {255, 255, 255, 0};
+        css_color output = {255, 255, 255, 255};
         char *buffer;
 
         if (color[0] == '#')
@@ -64,11 +64,11 @@ css_color parse_color(char *color)
                 buffer[0] = color[5];
                 buffer[1] = color[6];
                 output.b = strtol(buffer, NULL, 16);
-                // if (strlen(color) == 9) {
-                //         buffer[0] = color[7];
-                //         buffer[1] = color[8];
-                //         output.a = strtol(buffer, NULL, 16);
-                // }
+                if (strlen(color) == 9) {
+                        buffer[0] = color[7];
+                        buffer[1] = color[8];
+                        output.a = strtol(buffer, NULL, 16);
+                }
         }
         return output;
 }
@@ -83,7 +83,7 @@ css_color apply_style(SDL_Rect *rect, SDL_Rect *root_rect, lxb_html_element_t *e
                 if (strcmp(style->name, "background-color") == 0)
                 {
                         printf("BACKGROUND COLOR IS %s\n", style->str_value);
-                        render_properties->background_color = color;
+                        render_properties->background_color = parse_color(style->str_value);
                 }
                 else if (strcmp(style->name, "margin") == 0)
                 {    
