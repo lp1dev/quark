@@ -1,23 +1,23 @@
 #ifndef _CSS_H_
 #define _CSS_H_
 
-
 /*
 
 css_property is a linked list
 
  */
 
-
-typedef struct {
-    int num_element; 
+typedef struct
+{
+    int num_element;
     int max_elements;
     int depth;
 } future_render_properties;
 
 typedef struct css_property css_property;
 
-struct css_property {
+struct css_property
+{
     char *str_value;
     int int_value;
     float float_value;
@@ -30,9 +30,20 @@ struct css_property {
     css_property *prev;
 };
 
+typedef struct css_color css_color;
+
+struct css_color
+{
+    int r;
+    int g;
+    int b;
+    int a;
+};
+
 typedef struct future_render future_render;
 
-struct future_render {
+struct future_render
+{
     SDL_Rect rect;
     SDL_Surface surface;
     future_render_properties *properties;
@@ -42,10 +53,11 @@ struct future_render {
     char *tag;
     char *innerText;
     int font_size;
+    css_color background_color;
 };
 
 css_property *create_css_property(css_property *prev, char *name, char *str_value, int important, int primary);
-SDL_Color apply_style(SDL_Rect *rect, SDL_Rect *root_rect, lxb_html_element_t *el, future_render *item, css_property *style);
-int unit_to_px(css_property *style);
+css_color apply_style(SDL_Rect *rect, SDL_Rect *root_rect, lxb_html_element_t *el, future_render *item, css_property *style);
+int unit_to_px(css_property * style);
 
 #endif
