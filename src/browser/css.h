@@ -14,6 +14,7 @@ typedef struct
     int depth;
 } future_render_properties;
 
+
 typedef struct css_property css_property;
 
 struct css_property
@@ -40,6 +41,12 @@ struct css_color
     int a;
 };
 
+typedef struct render_properties
+{
+    css_color background_color;
+    int font_size;
+} render_properties;
+
 typedef struct future_render future_render;
 
 struct future_render
@@ -47,17 +54,17 @@ struct future_render
     SDL_Rect rect;
     SDL_Surface surface;
     future_render_properties *properties;
+    render_properties *render_properties;
     SDL_Color color;
     css_property *style;
     int style_size;
     char *tag;
     char *innerText;
-    int font_size;
     css_color background_color;
 };
 
 css_property *create_css_property(css_property *prev, char *name, char *str_value, int important, int primary);
-css_color apply_style(SDL_Rect *rect, SDL_Rect *root_rect, lxb_html_element_t *el, future_render *item, css_property *style);
+css_color apply_style(SDL_Rect *rect, SDL_Rect *root_rect, lxb_html_element_t *el, css_property *style, render_properties *render_properties);
 int unit_to_px(css_property * style);
 
 #endif

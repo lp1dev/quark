@@ -8,7 +8,7 @@
 
 css_property *create_css_property(css_property *prev, char *name, char *str_value, int important, int primary)
 {
-        css_property *prop = (css_property *)malloc(sizeof(css_property));
+        css_property *prop = (css_property *) malloc(sizeof(css_property));
         prop->prev = prev;
         prop->name = name;
         prop->str_value = str_value;
@@ -73,27 +73,27 @@ css_color parse_color(char *color)
         return output;
 }
 
-css_color apply_style(SDL_Rect *rect, SDL_Rect *root_rect, lxb_html_element_t *el, future_render *item, css_property *style)
+css_color apply_style(SDL_Rect *rect, SDL_Rect *root_rect, lxb_html_element_t *el, css_property *style, render_properties *render_properties)
 {
         css_color color = {255, 255, 255, 0};
 
         while (style != NULL)
         {
-                printf("STYLE->NAME IS %s\n", style->name);
+                printf("item->style->NAME IS %s\n", style->name);
                 if (strcmp(style->name, "background-color") == 0)
                 {
                         printf("BACKGROUND COLOR IS %s\n", style->str_value);
-                        item->background_color = parse_color(style->str_value);
+                        render_properties->background_color = color;
                 }
                 else if (strcmp(style->name, "margin") == 0)
-                {
+                {    
                         style->int_value = unit_to_px(style);
                         printf("MARGIN IS %i\n", style->int_value);
                 }
                 else if (strcmp(style->name, "font-size") == 0)
                 {
                         style->int_value = unit_to_px(style);
-                        item->font_size = style->int_value;
+                        render_properties->font_size = style->int_value;
                         printf("GOT FONT-SIZE %i\n", style->int_value);
                 }
                 style = style->next;
