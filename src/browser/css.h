@@ -36,6 +36,7 @@ struct css_color
 typedef struct render_properties
 {
     css_color background_color;
+    css_color color;
     int font_size;
 } render_properties;
 
@@ -46,7 +47,6 @@ struct future_render
     SDL_Rect rect;
     SDL_Surface surface;
     render_properties *render_properties;
-    SDL_Color color;
     css_property *style;
     int style_size;
     char *tag;

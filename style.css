@@ -6,11 +6,12 @@ p {
     font-size: 12px;
 }
 
-body,i {
+body {
     background-color: #000000;
-    color: #e2e2e2;    
+    color: #e2e2e2 !important;
 }
 
-#test {
+#footer {
     background-color: #006677;
+    color: #000000;
 }

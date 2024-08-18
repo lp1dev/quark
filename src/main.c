@@ -27,6 +27,11 @@ lxb_html_document_t *parse_html(char *filename) {
         exit(EXIT_FAILURE);
     }
 
+    status = lxb_html_document_css_init(document);
+    if (status != LXB_STATUS_OK) {
+        FAILED("Failed to CSS initialization");
+    }
+
     status = lxb_html_document_parse(document, input, html_len);
     if (status != LXB_STATUS_OK) {
         exit(EXIT_FAILURE);
@@ -70,25 +75,14 @@ lxb_css_stylesheet_t *parse_css(char *filename) {
 
 int main(int argc, const char *argv[])
 {   
+    lexbor_status_t status;
     lxb_dom_collection_t *collection;
 
     lxb_html_document_t *document = parse_html("index.html");
     lxb_html_element_t *element = lxb_html_element_interface_create(document);
 
-    /* Init all CSS objects and mem for document. */
-    int status = lxb_html_document_css_init(document);
-    if (status != LXB_STATUS_OK) {
-        return EXIT_FAILURE;
-    }
     lxb_css_stylesheet_t *css = parse_css("style.css");
 
-    // Attach stylesheet to document
-    status = lxb_html_document_stylesheet_attach(document, css);
-    if (status != LXB_STATUS_OK) {
-        return EXIT_FAILURE;
-    }
-
-    // Not 100% sure what apply does differently
     status = lxb_html_document_stylesheet_apply(document, css);
     if (status != LXB_STATUS_OK) {
         return EXIT_FAILURE;

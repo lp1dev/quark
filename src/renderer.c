@@ -220,6 +220,7 @@ void render_text(future_render *item)
 {
     SDL_Surface *surfaceMessage;
     SDL_Texture *Message;
+    SDL_Color text_color;
     SDL_Rect text_rect;
 
     print_style(item->style);
@@ -233,7 +234,7 @@ void render_text(future_render *item)
     text_rect.w = item->render_properties->font_size * strlen(item->innerText);
     text_rect.h = item->render_properties->font_size * 3;
 
-    surfaceMessage = TTF_RenderText_Solid(font, item->innerText, Black);
+    surfaceMessage = TTF_RenderText_Solid(font, item->innerText, css_color_to_sdl(&item->render_properties->color));
     Message = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage);
 
     SDL_RenderCopy(gRenderer, Message, NULL, &text_rect);
@@ -248,7 +249,8 @@ void create_future_render_item()
 */
 void create_future_render_item(char *tag, SDL_Rect rect, int num_element, int max_elements, int depth)
 {
-    css_color default_color = {255, 255, 255, 0};
+    css_color default_bg_color = {255, 255, 255, 0};
+    css_color default_color = {0, 0, 0, 255};
     if (QUEUE_LENGTH >= 255)
     {
         printf("Rendering too many items! Exiting.\n");
@@ -260,8 +262,8 @@ void create_future_render_item(char *tag, SDL_Rect rect, int num_element, int ma
     item_buffer->rect = rect;
     item_buffer->render_properties = malloc(sizeof(render_properties));
     item_buffer->render_properties->font_size = DEFAULT_FONT_SIZE;
-    item_buffer->render_properties->background_color = default_color;
-    item_buffer->color = Default;
+    item_buffer->render_properties->background_color = default_bg_color;
+    item_buffer->render_properties->color = default_color;
     item_buffer->innerText = NULL;
     item_buffer->style_size = 0;
     item_buffer->style = NULL;

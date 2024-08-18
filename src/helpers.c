@@ -119,7 +119,9 @@ void print_style(css_property *style) {
     if (style->unit != NULL) {
       printf("\n\tunit:%s,", style->unit);
     }
-    printf("\n\tvalue_length: %i", style->value_length);
+    printf("\n\tvalue_length: %i,", style->value_length);
+    printf("\n\tprimary: %i", style->primary);
+    printf("\n\timportant: %i", style->important);
     printf("\n}\n");
     style = style->next;
   }
@@ -135,3 +137,11 @@ bool is_empty(char *string) {
   return true;
 }
 
+SDL_Color css_color_to_sdl(css_color *color) {
+  SDL_Color new_color;
+  new_color.r = color->r;
+  new_color.g = color->g;
+  new_color.b = color->b;
+  new_color.a = color->a;
+  return new_color;
+}

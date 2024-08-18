@@ -80,15 +80,22 @@ css_color apply_style(SDL_Rect *rect, SDL_Rect *root_rect, lxb_html_element_t *e
         while (style != NULL)
         {
                 printf("item->style->NAME IS %s\n", style->name);
+                if (!style->primary && !style->important) {
+                        style = style->next;
+                        continue;
+                }
                 if (strcmp(style->name, "background-color") == 0)
                 {
-                        printf("BACKGROUND COLOR IS %s\n", style->str_value);
                         render_properties->background_color = parse_color(style->str_value);
+                }
+                else if (strcmp(style->name, "color") == 0) 
+                {
+                        render_properties->color = parse_color(style->str_value);
                 }
                 else if (strcmp(style->name, "margin") == 0)
                 {    
                         style->int_value = unit_to_px(style);
-                        printf("MARGIN IS %i\n", style->int_value);
+                        // printf("MARGIN IS %i\n", style->int_value);
                 }
                 else if (strcmp(style->name, "font-size") == 0)
                 {
