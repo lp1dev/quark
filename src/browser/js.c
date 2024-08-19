@@ -16,12 +16,3 @@ duk_context *js_init() {
     duk_console_init(ctx, 0 /*flags*/);
     return ctx;
 }
-
-
-void eval(duk_context *ctx, char *str) {
-    // duk_push_c_function(ctx, get_element_by_id, 1 /*nargs*/);
-    // duk_put_global_string(ctx, "get_element_by_id");
-    duk_eval_string(ctx, str);
-    // exit(0);
-}
-

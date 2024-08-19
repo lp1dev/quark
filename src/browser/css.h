@@ -1,5 +1,6 @@
 #ifndef _CSS_H_
 #define _CSS_H_
+#include <lexbor/html/interfaces/element.h>
 
 /*
 
@@ -48,8 +49,10 @@ struct future_render
     SDL_Surface surface;
     render_properties *render_properties;
     css_property *style;
+    lxb_html_element_t *el;
     int style_size;
     char *tag;
+    char *id;
     char *innerText;
 };
 

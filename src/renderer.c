@@ -9,14 +9,16 @@
 #include "browser/config.h"
 #include "browser/colors.h"
 #include "rendering/interfaces.h"
+#include "renderer.h"
 #include "browser/js.h"
 
 static int QUEUE_LENGTH = 0;
 static future_render *item_buffer;
+static lxb_html_document_t *document;
+static lxb_dom_collection_t *collection;
 
 SDL_Renderer *gRenderer = NULL;
-TTF_Font *font = NULL;
-future_render *render_queue[255];
+future_render *render_queue[LIST_SIZE];
 
 /*
 int style_callback(char *data, void *ctx)
@@ -175,13 +177,6 @@ int graph_init()
         printf("TTF_Init error : %s\n", TTF_GetError());
         exit(-2);
     }
-    font = TTF_OpenFont("/usr/share/fonts/opentype/Sans.ttf", DEFAULT_FONT_SIZE);
-
-    if (font == NULL)
-    {
-        printf("TTF_OpenFont Error: %s\n", TTF_GetError());
-        exit(-3);
-    }
 
     window = SDL_CreateWindow("Qwark",
                               SDL_WINDOWPOS_CENTERED,
@@ -223,11 +218,17 @@ void render_text(future_render *item)
     SDL_Texture *Message;
     SDL_Color text_color;
     SDL_Rect text_rect;
+    TTF_Font *font;
 
     printf("Rendering text '%s' with font size %i\n", item->innerText, item->render_properties->font_size);
-    // print_rect(rect);
 
     font = TTF_OpenFont("/usr/share/fonts/opentype/Sans.ttf", item->render_properties->font_size);
+    if (font == NULL)
+    {
+        printf("TTF_OpenFont Error: %s\n", TTF_GetError());
+        exit(-3);
+    }
+
     text_rect.x = item->rect.x;
     text_rect.y = item->rect.y;
     text_rect.w = item->render_properties->font_size * strlen(item->innerText);
@@ -246,11 +247,11 @@ void create_future_render_item()
 
     Create an item to add to the renderer_queue buffer
 */
-void create_future_render_item(char *tag, SDL_Rect rect, int num_element, int max_elements, int depth)
+void create_future_render_item(char *tag, SDL_Rect rect, lxb_html_element_t *el, int num_element, int max_elements, int depth)
 {
     css_color default_bg_color = {255, 255, 255, 0};
     css_color default_color = {0, 0, 0, 255};
-    if (QUEUE_LENGTH >= 255)
+    if (QUEUE_LENGTH >= LIST_SIZE)
     {
         printf("Rendering too many items! Exiting.\n");
         exit(-1);
@@ -264,6 +265,8 @@ void create_future_render_item(char *tag, SDL_Rect rect, int num_element, int ma
     item_buffer->render_properties->background_color = default_bg_color;
     item_buffer->render_properties->color = default_color;
     item_buffer->innerText = NULL;
+    item_buffer->el = el;
+    item_buffer->id = NULL;
     item_buffer->style_size = 0;
     item_buffer->style = NULL;
     render_queue[QUEUE_LENGTH++] = item_buffer;
@@ -292,7 +295,7 @@ SDL_Rect render_single_node(lxb_dom_node_t *node, SDL_Rect root_rect, int num_el
     elem_rect.w = root_rect.w; // Elements take all available width by default
     elem_rect.h = (root_rect.h / max_elements);
 
-    create_future_render_item(get_tag_name(node), elem_rect, num_element, max_elements, depth);
+    create_future_render_item(get_tag_name(node), elem_rect, el, num_element, max_elements, depth);
 
     if (el != NULL && el->style != NULL && el->style->value != NULL)
     {
@@ -346,10 +349,10 @@ void render_node_subnodes(lxb_dom_node_t *node, SDL_Rect rect, int depth)
         html_element = lxb_html_interface_element(node);
 
         // DEBUG
-        // printf("Element qualified name %i\n", (int)html_element->element.qualified_name);
-        // printf("Node type is %i\n", node->type);
-        // printf("Tag name is %s\n", get_tag_name(node));
-        // printf("Number of elements = [%i/%i]\n", i, elements);
+        printf("------\nElement qualified name %i\n", (int)html_element->element.qualified_name);
+        printf("Node type is %i\n", node->type);
+        printf("Tag name is %s\n", get_tag_name(node));
+        printf("Number of elements = [%i/%i]\n", i, elements);
 
         // If it's an element, we add it to the render queue
         if (html_element->element.qualified_name == LXB_DOM_ATTR__UNDEF)
@@ -375,9 +378,8 @@ void render_node_subnodes(lxb_dom_node_t *node, SDL_Rect rect, int depth)
             }
 
         }
-        else if (node->type == LXB_DOM_NODE_TYPE_ATTRIBUTE)
-        {
-            printf("WE HAVE AN ATTRIBUTE %s\n", get_tag_name(node));
+        else {
+            printf("IN ELSE\n");
         }
         // If our node has children, we render them
         if (node->first_child != NULL)
@@ -420,10 +422,10 @@ void render_futures(duk_context *ctx) {
             item->render_properties->background_color.b, \
             item->render_properties->background_color.a);
         SDL_RenderFillRect(gRenderer, &item->rect);
-        if (item->innerText != NULL)
+        if (item->innerText != NULL && !is_empty(item->innerText))
         {
             if (strcmp(item->tag, "script") == 0) {
-                eval(ctx, item->innerText);
+                duk_eval_string_noresult(ctx, item->innerText);
             } else {
                 render_text(item);
             }
@@ -447,9 +449,43 @@ void render_body(lxb_dom_node_t *body)
 
 }
 
-/* void init_dom*/
-void init_dom(duk_context *ctx) {
+static duk_ret_t get_element_by_id(duk_context *ctx)
+{
+    lxb_dom_attr_t *attr;
+    const lxb_char_t *tmp;
+    size_t value_len, tmp_len;
+    const char *id;
 
+    id = duk_get_string(ctx, 0);
+
+    for (int i = 0; render_queue[i] != NULL; i++)
+    {
+        attr = lxb_dom_element_first_attribute(&render_queue[i]->el->element);
+
+        while (attr != NULL)
+        {
+            tmp = lxb_dom_attr_qualified_name(attr, &tmp_len); // Attribute name
+            if (strcmp(tmp, "id") == 0) {
+                tmp = lxb_dom_attr_value(attr, &tmp_len); // Attribute value
+                if (tmp != NULL && strcmp(tmp, id) == 0)
+                {
+                    duk_push_string(ctx, render_queue[i]->tag);
+                }
+            }
+
+            attr = lxb_dom_element_next_attribute(attr);
+        }
+    }
+    return (duk_ret_t)1;
+}
+
+/* void init_dom
+
+    Initializing dom objects in the JS context
+*/
+void init_dom(duk_context *ctx) {
+    duk_push_c_function(ctx, get_element_by_id, 1 /*nargs*/);
+    duk_put_global_string(ctx, "get_element_by_id");
 }
 
 /*
@@ -457,11 +493,16 @@ void render_document(html_document *document)
 
     Rendering the DOM document item
 */
-void render_document(lxb_html_document_t *document)
-{
+void render_document(lxb_html_document_t *document_param) {
+    document = document_param;
     duk_context *ctx = js_init();
     init_dom(ctx);
-    render_body((lxb_dom_node_t *)document->body);
+    render_body((lxb_dom_node_t *) document->body);
+    collection = lxb_dom_collection_make(&document->dom_document, LIST_SIZE);
+    if (collection == NULL) {
+        FAILED("Failed to create Collection object");
+    }
+
     render_futures(ctx);
     SDL_RenderPresent(gRenderer);
     SDL_Delay(5000);
