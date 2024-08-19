@@ -90,6 +90,7 @@ css_color apply_style(SDL_Rect *rect, SDL_Rect *root_rect, lxb_html_element_t *e
                 }
                 else if (strcmp(style->name, "color") == 0) 
                 {
+                        printf("Applying color %s\n", style->str_value);
                         render_properties->color = parse_color(style->str_value);
                 }
                 else if (strcmp(style->name, "margin") == 0)

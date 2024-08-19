@@ -6,7 +6,16 @@
 #include <lexbor/css/css.h>
 #include "helpers.h"
 #include "renderer.h"
+#include "browser/js.h"
 
+void init_js() {
+    // duk_context *ctx = duk_create_heap_default();
+
+    // duk_eval_string_noresult(ctx, "log('hello!');");
+    // exit(0);
+    // duk_destroy_heap(ctx); // Crashes because of realloc of 0
+    // Probably because the heap is unused
+}
 
 lxb_html_document_t *parse_html(char *filename) {
     lxb_status_t status;
@@ -97,6 +106,7 @@ int main(int argc, const char *argv[])
     graph_init();
     printf("Graph init done! Rendering.\n");
     render_document(document);
+    init_js();
     (void) lxb_html_document_destroy(document);
     (void) lxb_css_stylesheet_destroy(css, true);
     return EXIT_SUCCESS;

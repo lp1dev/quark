@@ -9,6 +9,7 @@
 #include "browser/config.h"
 #include "browser/colors.h"
 #include "rendering/interfaces.h"
+#include "browser/js.h"
 
 static int QUEUE_LENGTH = 0;
 static future_render *item_buffer;
@@ -223,8 +224,6 @@ void render_text(future_render *item)
     SDL_Color text_color;
     SDL_Rect text_rect;
 
-    print_style(item->style);
-
     printf("Rendering text '%s' with font size %i\n", item->innerText, item->render_properties->font_size);
     // print_rect(rect);
 
@@ -300,6 +299,11 @@ SDL_Rect render_single_node(lxb_dom_node_t *node, SDL_Rect root_rect, int num_el
         lxb_status_t status = lxb_html_element_style_walk(el, style_walk, NULL, true);
     }
 
+    printf("Applying style to %s\n", get_tag_name(node));
+
+    // I have an issue here, which is that style inheritance 
+    // Does not really work, I should also check the parents and 
+    // add their own style to their children (regarding the color)
     apply_style(&elem_rect, &root_rect, el, item_buffer->style, item_buffer->render_properties);
 
     return elem_rect;
@@ -408,6 +412,7 @@ void render_body(lxb_dom_node_t *body)
         }
 
         printf("Rendering %s\n", item->tag);
+        print_style(item->style);
         print_rect(item->rect);
         printf("RGBA COLOR IS (%i, %i, %i, %i)\n", \
         item->render_properties->background_color.r, \
@@ -422,7 +427,11 @@ void render_body(lxb_dom_node_t *body)
         SDL_RenderFillRect(gRenderer, &item->rect);
         if (item->innerText != NULL)
         {
-            render_text(item);
+            if (strcmp(item->tag, "script") == 0) {
+                eval(item->innerText);
+            } else {
+                render_text(item);
+            }
         }
         item = render_queue[i];
     }
