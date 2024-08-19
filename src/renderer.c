@@ -356,6 +356,12 @@ void render_node_subnodes(lxb_dom_node_t *node, SDL_Rect rect, int depth)
         { // ATTR undef aren't attributes but tags
             if (node->type == LXB_DOM_NODE_TYPE_ELEMENT)
             {
+                if (strcmp(get_tag_name(node), "script") == 0) {
+                    i--;
+                    elements--;
+                    // TODO Fix this
+                }
+
                 last_rect = render_single_node(node, rect, i++, elements, depth + 1);
             }
         }
@@ -382,19 +388,8 @@ void render_node_subnodes(lxb_dom_node_t *node, SDL_Rect rect, int depth)
     }
 }
 
-/*
-void render_body(dom_node *body)
-
-    Rendering the document's body.
-*/
-void render_body(lxb_dom_node_t *body)
-{
-    SDL_Rect rect = {10, 10, SCREEN_WIDTH - 20, SCREEN_HEIGHT - 20};
+void render_futures() {
     future_render *item;
-
-    SDL_RenderFillRect(gRenderer, &rect);
-
-    render_node_subnodes(body, rect, 0);
 
     item = render_queue[0];
     // Rendering all future_render items
@@ -438,6 +433,22 @@ void render_body(lxb_dom_node_t *body)
 }
 
 /*
+void render_body(dom_node *body)
+
+    Rendering the document's body.
+*/
+void render_body(lxb_dom_node_t *body)
+{
+    SDL_Rect rect = {10, 10, SCREEN_WIDTH - 20, SCREEN_HEIGHT - 20};
+
+    SDL_RenderFillRect(gRenderer, &rect);
+
+    render_node_subnodes(body, rect, 0);
+
+    render_futures();
+}
+
+/*
 void render_document(html_document *document)
 
     Rendering the DOM document item
@@ -447,4 +458,8 @@ void render_document(lxb_html_document_t *document)
     render_body((lxb_dom_node_t *)document->body);
     SDL_RenderPresent(gRenderer);
     SDL_Delay(5000);
+    render_futures();
+    SDL_RenderPresent(gRenderer);
+    SDL_Delay(5000);
+
 }
