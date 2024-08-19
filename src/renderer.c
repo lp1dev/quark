@@ -359,7 +359,7 @@ void render_node_subnodes(lxb_dom_node_t *node, SDL_Rect rect, int depth)
                 if (strcmp(get_tag_name(node), "script") == 0) {
                     i--;
                     elements--;
-                    // TODO Fix this
+                    // TODO Fix this, it just doesn't work right now
                 }
 
                 last_rect = render_single_node(node, rect, i++, elements, depth + 1);
@@ -388,7 +388,7 @@ void render_node_subnodes(lxb_dom_node_t *node, SDL_Rect rect, int depth)
     }
 }
 
-void render_futures() {
+void render_futures(duk_context *ctx) {
     future_render *item;
 
     item = render_queue[0];
@@ -423,7 +423,7 @@ void render_futures() {
         if (item->innerText != NULL)
         {
             if (strcmp(item->tag, "script") == 0) {
-                eval(item->innerText);
+                eval(ctx, item->innerText);
             } else {
                 render_text(item);
             }
@@ -445,7 +445,11 @@ void render_body(lxb_dom_node_t *body)
 
     render_node_subnodes(body, rect, 0);
 
-    render_futures();
+}
+
+/* void init_dom*/
+void init_dom(duk_context *ctx) {
+
 }
 
 /*
@@ -455,11 +459,11 @@ void render_document(html_document *document)
 */
 void render_document(lxb_html_document_t *document)
 {
+    duk_context *ctx = js_init();
+    init_dom(ctx);
     render_body((lxb_dom_node_t *)document->body);
+    render_futures(ctx);
     SDL_RenderPresent(gRenderer);
     SDL_Delay(5000);
-    render_futures();
-    SDL_RenderPresent(gRenderer);
-    SDL_Delay(5000);
-
+    duk_destroy_heap(ctx);
 }
