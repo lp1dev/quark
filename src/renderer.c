@@ -271,7 +271,6 @@ void create_future_render_item(char *tag, SDL_Rect rect, lxb_html_element_t *el,
     item_buffer->style = NULL;
     //TODO replace with better ID generation
     item_buffer->internal_id = rand();
-    printf("SET INTERNAL ID TO %i\n", item_buffer->internal_id);
     render_queue[QUEUE_LENGTH++] = item_buffer;
 }
 
@@ -375,7 +374,7 @@ void render_node_subnodes(lxb_dom_node_t *node, SDL_Rect rect, int depth)
         else if (node->type == LXB_DOM_NODE_TYPE_TEXT)
         {
             text_buffer = get_node_text(node);
-            if (!is_empty(text_buffer))
+            if (text_buffer != NULL && !is_empty(text_buffer))
             {
                 item_buffer->innerText = text_buffer;
             }
@@ -414,11 +413,11 @@ void render_futures(duk_context *ctx) {
         printf("Rendering %s\n", item->tag);
         print_style(item->style);
         print_rect(item->rect);
-        printf("RGBA COLOR IS (%i, %i, %i, %i)\n", \
-        item->render_properties->background_color.r, \
-        item->render_properties->background_color.g,
-        item->render_properties->background_color.b,
-        item->render_properties->background_color.a);
+        // printf("RGBA COLOR IS (%i, %i, %i, %i)\n", \
+        // item->render_properties->background_color.r, \
+        // item->render_properties->background_color.g,
+        // item->render_properties->background_color.b,
+        // item->render_properties->background_color.a);
         SDL_SetRenderDrawColor(gRenderer, \
             item->render_properties->background_color.r, \
             item->render_properties->background_color.g, \
@@ -469,7 +468,6 @@ void serialize_future_render(duk_context *ctx, future_render *item) {
     duk_push_string(ctx, item->innerText);
     duk_put_prop_string(ctx, -2, "innerText");
     duk_push_int(ctx, item->internal_id);
-    printf("INTERNAL ID IN C IS %i\n", item->internal_id);
     duk_put_prop_string(ctx, -2, "internalId");
 }
 
@@ -532,11 +530,9 @@ static duk_ret_t update_element(duk_context *ctx) {
     internalId = duk_get_number(ctx, 0);
     update_type = duk_get_number(ctx, 1);
 
-    printf("IN UPDATE ELEMENT FOR %i!\n", internalId);
     for (int i = 0; render_queue[i] != NULL; i++) {
         if (render_queue[i]->internal_id == internalId) {
             item = render_queue[i];
-            printf("WE HAVE FOUND A CORRESPONDING ITEM %s UPDATE TYPE IS %i\n", item->tag, update_type);
         }
     }
     if (item != NULL) {
@@ -548,7 +544,6 @@ static duk_ret_t update_element(duk_context *ctx) {
             case INNER_TEXT:
                 new_value_str = (char *) duk_get_string(ctx, 2);
                 item->innerText = new_value_str;
-                printf("UPDATED INNER_TEXT %s\n", new_value_str);
                 break;
         }
     }

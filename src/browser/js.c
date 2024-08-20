@@ -11,11 +11,18 @@ static void error_handler(void *udata, const char *msg) {
 }
 
 duk_context *js_init() {
+    duk_int_t res = 0;
+
     duk_context *ctx = duk_create_heap(NULL, NULL, NULL, NULL, error_handler);
     duk_push_global_object(ctx);
     duk_put_global_string(ctx, "window"); // Pushing context to the "window" global
     duk_console_init(ctx, 0 /*flags*/);
-    eval_js_file(ctx, "quark.js");
+
+    if((res = eval_js_file(ctx, "quark.js")) != 0) {
+      printf("ERROR EVALUATING JS FILE\n");
+      exit(0);
+      /* error handler */ 
+    }
     return ctx;
 }
 

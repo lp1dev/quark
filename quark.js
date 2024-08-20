@@ -14,53 +14,65 @@
 //     INNER_TEXT
 // };
 
-// Globals
+// == Globals ==
 document = {}
-//
 window = {}
-//
 
-document.getElementById = function(id) {
-
-  element = quark.c_getElementById(id)
-  output = {}
-  console.log('C element is', element)
-  Object.defineProperty(output, "_id", {
-    enumerable: false,
-    value: element.id,
-    writable: true
-  })
-  Object.defineProperty(output, "_internalId", {
-    enumerable: false,
-    value: element.internalId,
-    writable: false
-  })
-  Object.defineProperty(output, "_innerText", {
-    enumerable: false,
-    value: element.innerText,
-    writable: true
-  })
+// == Types ==
+function Element(element_obj) {
+    Object.defineProperty(this, "_id", {
+        enumerable: false,
+        value: element_obj.id,
+        writable: true,
+        configurable: true
+    })
 
 
-  Object.defineProperty(output, "id", {
-    get: function() {
-      return this._id
-    },
-    set: function(id) {
-      this._id = id;
-      quark.c_updateElement(this._internalId, 8, id)
-    }
-  })
-  Object.defineProperty(output, "innerText", {
-    get: function() {
-      return this._innerText
-    },
-    set: function(innerText) {
-      this._innerText = innerText;
-      quark.c_updateElement(this._internalId, 9, innerText)
-    }
-  })
+    Object.defineProperty(this, "_internalId", {
+        enumerable: false,
+        configurable: true,
+        value: element_obj.internalId,
+        writable: true
+    })
 
-  return output
+    Object.defineProperty(this, "_innerText", {
+        enumerable: false,
+        value: element_obj.innerText,
+        writable: true
+    })
+
+
+
+    Object.defineProperty(this, "id", {
+        get: function() {
+            return this._id;
+        },
+        set: function(id) {
+            this._id = id;
+            quark.c_updateElement(this._internalId, 8, id)
+        },
+        configurable: true
+    })
+
+    Object.defineProperty(this, "innerText", {
+        get: function() {
+            return this._innerText;
+        },
+        set: function(innerText) {
+            this._innerText = innerText;
+            quark.c_updateElement(this._internalId, 9, innerText)
+        },
+        configurable: true
+    })
+    // return this
+
 }
+
+// Functions 
+document.getElementById = function(id) {
+  element = quark.c_getElementById(id)
+  e = new Element(element); // Here, we're not doing return new Element() because it seems to override the same object in duktape
+  return e
+}
+
 // end of custom JS code for internals
