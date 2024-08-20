@@ -108,3 +108,13 @@ css_color apply_style(SDL_Rect *rect, SDL_Rect *root_rect, lxb_html_element_t *e
         }
         return color;
 }
+
+future_render *get_by_internal_id(future_render **queue, int internal_id) {
+        for (int i = 0; queue[i] != NULL; i++) {
+                printf("INTERNAL ID IS %i\n", queue[i]->internal_id);
+                if (queue[i]->internal_id == internal_id) {
+                        return queue[i];
+                }
+        }
+        return NULL;
+}

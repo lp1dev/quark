@@ -50,14 +50,29 @@ struct future_render
     render_properties *render_properties;
     css_property *style;
     lxb_html_element_t *el;
+    int internal_id;
     int style_size;
     char *tag;
     char *id;
     char *innerText;
 };
 
+enum update_types {
+    RECT,
+    SURFACE,
+    RENDER_PROPERTIES,
+    STYLE,
+    EL,
+    INTERNAL_ID,
+    STYLE_SIZE,
+    TAG,
+    ID,
+    INNER_TEXT
+};
+
 css_property *create_css_property(css_property *prev, char *name, char *str_value, int important, int primary);
 css_color apply_style(SDL_Rect *rect, SDL_Rect *root_rect, lxb_html_element_t *el, css_property *style, render_properties *render_properties);
 int unit_to_px(css_property * style);
+future_render *get_by_internal_id(future_render **queue, int internal_id);
 
 #endif

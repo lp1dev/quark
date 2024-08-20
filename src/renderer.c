@@ -269,6 +269,9 @@ void create_future_render_item(char *tag, SDL_Rect rect, lxb_html_element_t *el,
     item_buffer->id = NULL;
     item_buffer->style_size = 0;
     item_buffer->style = NULL;
+    //TODO replace with better ID generation
+    item_buffer->internal_id = rand();
+    printf("SET INTERNAL ID TO %i\n", item_buffer->internal_id);
     render_queue[QUEUE_LENGTH++] = item_buffer;
 }
 
@@ -351,7 +354,7 @@ void render_node_subnodes(lxb_dom_node_t *node, SDL_Rect rect, int depth)
         // DEBUG
         printf("------\nElement qualified name %i\n", (int)html_element->element.qualified_name);
         printf("Node type is %i\n", node->type);
-        printf("Tag name is %s\n", get_tag_name(node));
+        // printf("Tag name is %s\n", get_tag_name(node));
         printf("Number of elements = [%i/%i]\n", i, elements);
 
         // If it's an element, we add it to the render queue
@@ -449,6 +452,34 @@ void render_body(lxb_dom_node_t *body)
 
 }
 
+/* 
+
+void serialize_future_render(duk_context *ctx, future_render *item)
+
+    Serialize a future_render object into a JS object for a duktape context
+
+*/
+void serialize_future_render(duk_context *ctx, future_render *item) {
+    duk_push_object(ctx);
+    // Setting tagName
+    duk_push_string(ctx, item->tag); // I'm conflicted between doing a upper_str here or in JS
+    duk_put_prop_string(ctx, -2, "tagName");
+    duk_push_string(ctx, item->id);
+    duk_put_prop_string(ctx, -2, "id");
+    duk_push_string(ctx, item->innerText);
+    duk_put_prop_string(ctx, -2, "innerText");
+    duk_push_int(ctx, item->internal_id);
+    printf("INTERNAL ID IN C IS %i\n", item->internal_id);
+    duk_put_prop_string(ctx, -2, "internalId");
+}
+
+/*
+
+static duk_ret_t get_element_by_id(duk_context *ctx)
+
+    Returns a JS parsed element
+
+*/
 static duk_ret_t get_element_by_id(duk_context *ctx)
 {
     lxb_dom_attr_t *attr;
@@ -458,6 +489,9 @@ static duk_ret_t get_element_by_id(duk_context *ctx)
 
     id = duk_get_string(ctx, 0);
 
+    /* 
+        I should definitely do attributes parsing *BEFORE* someone does a getElementById, todo fix
+    */
     for (int i = 0; render_queue[i] != NULL; i++)
     {
         attr = lxb_dom_element_first_attribute(&render_queue[i]->el->element);
@@ -467,9 +501,12 @@ static duk_ret_t get_element_by_id(duk_context *ctx)
             tmp = lxb_dom_attr_qualified_name(attr, &tmp_len); // Attribute name
             if (strcmp(tmp, "id") == 0) {
                 tmp = lxb_dom_attr_value(attr, &tmp_len); // Attribute value
+                render_queue[i]->id = (char *) tmp; // Setting up the ID since this is the first time we encounter it
                 if (tmp != NULL && strcmp(tmp, id) == 0)
                 {
-                    duk_push_string(ctx, render_queue[i]->tag);
+                    duk_pop(ctx);
+                    serialize_future_render(ctx, render_queue[i]);
+                    // duk_push_string(ctx, render_queue[i]->tag);
                 }
             }
 
@@ -479,13 +516,57 @@ static duk_ret_t get_element_by_id(duk_context *ctx)
     return (duk_ret_t)1;
 }
 
+/* 
+
+static duk_ret_t update_element(duk_context *ctx)
+
+    Update a JS future_render element according to JS changes
+
+*/
+static duk_ret_t update_element(duk_context *ctx) {
+    future_render *item;
+    static int internalId;
+    int update_type;
+    char *new_value_str;
+
+    internalId = duk_get_number(ctx, 0);
+    update_type = duk_get_number(ctx, 1);
+
+    printf("IN UPDATE ELEMENT FOR %i!\n", internalId);
+    for (int i = 0; render_queue[i] != NULL; i++) {
+        if (render_queue[i]->internal_id == internalId) {
+            item = render_queue[i];
+            printf("WE HAVE FOUND A CORRESPONDING ITEM %s UPDATE TYPE IS %i\n", item->tag, update_type);
+        }
+    }
+    if (item != NULL) {
+        switch (update_type) {
+            case ID:
+                new_value_str = (char *) duk_get_string(ctx, 2);
+                item->id = new_value_str;
+                break;
+            case INNER_TEXT:
+                new_value_str = (char *) duk_get_string(ctx, 2);
+                item->innerText = new_value_str;
+                printf("UPDATED INNER_TEXT %s\n", new_value_str);
+                break;
+        }
+    }
+    return (duk_ret_t) 0;
+}
+
 /* void init_dom
 
     Initializing dom objects in the JS context
 */
 void init_dom(duk_context *ctx) {
+    duk_push_global_object(ctx);
+    duk_put_global_string(ctx, "quark"); // Creating a "document" global
     duk_push_c_function(ctx, get_element_by_id, 1 /*nargs*/);
-    duk_put_global_string(ctx, "get_element_by_id");
+    duk_put_global_string(ctx, "c_getElementById");
+    duk_push_c_function(ctx, update_element, 3 /*nargs*/);
+    duk_put_global_string(ctx, "c_updateElement");
+
 }
 
 /*
@@ -502,7 +583,9 @@ void render_document(lxb_html_document_t *document_param) {
     if (collection == NULL) {
         FAILED("Failed to create Collection object");
     }
-
+    render_futures(ctx);
+    SDL_RenderPresent(gRenderer);
+    SDL_Delay(5000);
     render_futures(ctx);
     SDL_RenderPresent(gRenderer);
     SDL_Delay(5000);

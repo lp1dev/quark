@@ -145,3 +145,18 @@ SDL_Color css_color_to_sdl(css_color *color) {
   new_color.a = color->a;
   return new_color;
 }
+
+char *upper_str(char *str)
+{
+  char *output;
+  if (str != NULL)
+  {
+    output = malloc(sizeof(char) * strlen(str));
+    for (int i = 0; str[i] != '\0'; i++)
+    {
+      output[i] = toupper(str[i]);
+    }
+  }
+  output[strlen(str)] = '\0';
+  return output;
+}

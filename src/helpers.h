@@ -26,5 +26,6 @@ void add_value_str(css_property *property, const unsigned char *value, int len);
 void print_style(css_property *style);
 bool is_empty(char *string);
 SDL_Color css_color_to_sdl(css_color *color);
+char *upper_str(char *str);
 
 #endif
