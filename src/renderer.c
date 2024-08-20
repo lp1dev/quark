@@ -220,9 +220,9 @@ void render_text(future_render *item)
     SDL_Rect text_rect;
     TTF_Font *font;
 
-    printf("Rendering text '%s' with font size %i\n", item->innerText, item->render_properties->font_size);
+    printf("Rendering text '%s' with font size %i\n", item->innerText, item->render_properties.font_size);
 
-    font = TTF_OpenFont("/usr/share/fonts/opentype/Sans.ttf", item->render_properties->font_size);
+    font = TTF_OpenFont("/usr/share/fonts/opentype/Sans.ttf", item->render_properties.font_size);
     if (font == NULL)
     {
         printf("TTF_OpenFont Error: %s\n", TTF_GetError());
@@ -231,10 +231,11 @@ void render_text(future_render *item)
 
     text_rect.x = item->rect.x;
     text_rect.y = item->rect.y;
-    text_rect.w = item->render_properties->font_size * strlen(item->innerText);
-    text_rect.h = item->render_properties->font_size * 3;
+    text_rect.w = item->render_properties.font_size * strlen(item->innerText);
+    text_rect.h = item->render_properties.font_size * 3;
 
-    surfaceMessage = TTF_RenderText_Solid(font, item->innerText, css_color_to_sdl(&item->render_properties->color));
+    printf("-- Rendering font with color %i--\n", item->render_properties.color.b);
+    surfaceMessage = TTF_RenderText_Solid(font, item->innerText, css_color_to_sdl(&item->render_properties.color));
     Message = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage);
 
     SDL_RenderCopy(gRenderer, Message, NULL, &text_rect);
@@ -260,10 +261,9 @@ void create_future_render_item(char *tag, SDL_Rect rect, lxb_html_element_t *el,
     item_buffer = malloc(sizeof(future_render));
     item_buffer->tag = tag;
     item_buffer->rect = rect;
-    item_buffer->render_properties = malloc(sizeof(render_properties));
-    item_buffer->render_properties->font_size = DEFAULT_FONT_SIZE;
-    item_buffer->render_properties->background_color = default_bg_color;
-    item_buffer->render_properties->color = default_color;
+    item_buffer->render_properties.font_size = DEFAULT_FONT_SIZE;
+    item_buffer->render_properties.background_color = default_bg_color;
+    item_buffer->render_properties.color = default_color;
     item_buffer->innerText = NULL;
     item_buffer->el = el;
     item_buffer->id = NULL;
@@ -309,7 +309,9 @@ SDL_Rect render_single_node(lxb_dom_node_t *node, SDL_Rect root_rect, int num_el
     // I have an issue here, which is that style inheritance 
     // Does not really work, I should also check the parents and 
     // add their own style to their children (regarding the color)
-    apply_style(&elem_rect, &root_rect, el, item_buffer->style, item_buffer->render_properties);
+    // if (item_buffer->style == NULL) {
+    apply_style(&elem_rect, &root_rect, el, item_buffer->style, &item_buffer->render_properties);
+    // }
 
     return elem_rect;
 }
@@ -411,19 +413,20 @@ void render_futures(duk_context *ctx) {
         }
 
         printf("Rendering %s\n", item->tag);
-        print_style(item->style);
-        print_rect(item->rect);
+        // print_style(item->style);
+        // print_rect(item->rect);
         // printf("RGBA COLOR IS (%i, %i, %i, %i)\n", \
         // item->render_properties->background_color.r, \
         // item->render_properties->background_color.g,
         // item->render_properties->background_color.b,
         // item->render_properties->background_color.a);
         SDL_SetRenderDrawColor(gRenderer, \
-            item->render_properties->background_color.r, \
-            item->render_properties->background_color.g, \
-            item->render_properties->background_color.b, \
-            item->render_properties->background_color.a);
+            item->render_properties.background_color.r, \
+            item->render_properties.background_color.g, \
+            item->render_properties.background_color.b, \
+            item->render_properties.background_color.a);
         SDL_RenderFillRect(gRenderer, &item->rect);
+        printf("\tItem Color .b = %i\n", item->render_properties.color.b);
         if (item->innerText != NULL && !is_empty(item->innerText))
         {
             if (strcmp(item->tag, "script") == 0) {
@@ -469,6 +472,10 @@ void serialize_future_render(duk_context *ctx, future_render *item) {
     duk_put_prop_string(ctx, -2, "innerText");
     duk_push_int(ctx, item->internal_id);
     duk_put_prop_string(ctx, -2, "internalId");
+    duk_push_string(ctx, color_to_string(item->render_properties.color));
+    duk_put_prop_string(ctx, -2, "color");
+    duk_push_string(ctx, color_to_string(item->render_properties.background_color));
+    duk_put_prop_string(ctx, -2, "backgroundColor");
 }
 
 /*
@@ -524,6 +531,7 @@ static duk_ret_t update_element(duk_context *ctx)
 static duk_ret_t update_element(duk_context *ctx) {
     future_render *item;
     static int internalId;
+    SDL_Color color_buffer;
     int update_type;
     char *new_value_str;
 
@@ -545,6 +553,10 @@ static duk_ret_t update_element(duk_context *ctx) {
                 new_value_str = (char *) duk_get_string(ctx, 2);
                 item->innerText = new_value_str;
                 break;
+            case COLOR:
+                new_value_str = (char *) duk_get_string(ctx, 2);
+                item->render_properties.color = parse_color(new_value_str);
+                printf("COLOR IS NOW r %i g %i b %i\n", item->render_properties.color.r, item->render_properties.color.g, item->render_properties.color.b);
         }
     }
     return (duk_ret_t) 0;
@@ -561,7 +573,6 @@ void init_dom(duk_context *ctx) {
     duk_put_global_string(ctx, "c_getElementById");
     duk_push_c_function(ctx, update_element, 3 /*nargs*/);
     duk_put_global_string(ctx, "c_updateElement");
-
 }
 
 /*
@@ -581,7 +592,8 @@ void render_document(lxb_html_document_t *document_param) {
     render_futures(ctx);
     SDL_RenderPresent(gRenderer);
     SDL_Delay(5000);
-    render_futures(ctx);
+    render_futures(ctx); 
+    // I have 
     SDL_RenderPresent(gRenderer);
     SDL_Delay(5000);
     duk_destroy_heap(ctx);

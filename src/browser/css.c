@@ -73,6 +73,22 @@ css_color parse_color(char *color)
         return output;
 }
 
+char *color_to_string(css_color color) {
+        char *output;
+        char r[3], g[3], b[3], a[3];
+
+        if (color.a != 255) {
+                output = malloc(sizeof(char) * 8);
+                snprintf(output, 8, "#%02x%02x%02x", color.r, color.g, color.b);
+        } else {
+                output = malloc(sizeof(char) * 10);
+                snprintf(output, 10, "#%02x%02x%02x%02x", color.r, color.g, color.b, color.a);
+
+        }
+        return output;
+}
+
+
 css_color apply_style(SDL_Rect *rect, SDL_Rect *root_rect, lxb_html_element_t *el, css_property *style, render_properties *render_properties)
 {
         css_color color = {255, 255, 255, 0};
@@ -107,14 +123,4 @@ css_color apply_style(SDL_Rect *rect, SDL_Rect *root_rect, lxb_html_element_t *e
                 style = style->next;
         }
         return color;
-}
-
-future_render *get_by_internal_id(future_render **queue, int internal_id) {
-        for (int i = 0; queue[i] != NULL; i++) {
-                printf("INTERNAL ID IS %i\n", queue[i]->internal_id);
-                if (queue[i]->internal_id == internal_id) {
-                        return queue[i];
-                }
-        }
-        return NULL;
 }

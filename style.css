@@ -6,11 +6,17 @@ p {
     font-size: 12px;
 }
 
+#heading {
+    background-color: #551111;
+    color: #e2e2e2;
+}
+
 body {
-    background-color: #000000;
-    color: #e2e2e2 !important;
+    background-color: #e2e2e2;
+    color: #006677;
 }
 
 #footer {
     background-color: #006677;
+    color: #e2e2e2;
 }

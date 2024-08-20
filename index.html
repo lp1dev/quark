@@ -6,14 +6,14 @@
     </head>
 <body>
 <div id="test">
-    <h1 id="heading" style="color: #ff0000;">My First Heading</h1>
+    <h1 id="heading">My First Heading</h1>
 </div>
 
-<div style="background-color: #00009955;">
-    <p style="color: #ffffff;">My first paragraph.</p>
+<div>
+    <p>My first paragraph.</p>
 </div>
 
-<div id="footer" style="background-color: #ff0000;color: #0000ff;">
+<div id="footer">
   <div>Test Text</div>
   <div>Test2 Test2</div>
 </div>
@@ -31,8 +31,13 @@
   console.log("I is "+i);
 
   // Test 2
+  heading = document.getElementById('heading')
+  console.log("Color outside of style", heading._color)
+  console.log("Color before set for heading", heading.style.color)
   document.getElementById('heading').innerText = "Test4242"
-  // heading.innerText = "New innerText from JS"
+  heading.style.color = "#000045"
+  console.log("Color after set for heading", heading.style.color)
+  console.log("Style in JS for heading is", document.getElementById('heading').style)
 </script>
 
 </body>
