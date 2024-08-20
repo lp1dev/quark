@@ -6,6 +6,6 @@
 
 
 duk_context *js_init();
-// void serialize_future_render(duk_context *ctx, void *item);
+static duk_int_t eval_js_file(duk_context *ctx, const char *filename);
 
 #endif

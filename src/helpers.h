@@ -27,5 +27,6 @@ void print_style(css_property *style);
 bool is_empty(char *string);
 SDL_Color css_color_to_sdl(css_color *color);
 char *upper_str(char *str);
+char *load_file(char *filename);
 
 #endif
