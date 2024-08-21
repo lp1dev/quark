@@ -5,12 +5,14 @@
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_ttf.h>
 #include <ctype.h>
+#include "browser/classes/element.h"
 #include "helpers.h"
 #include "browser/config.h"
 #include "browser/colors.h"
 #include "rendering/interfaces.h"
 #include "renderer.h"
 #include "browser/js.h"
+#include "adapters/element.h"
 
 static int QUEUE_LENGTH = 0;
 static future_render *item_buffer;
@@ -352,11 +354,7 @@ void render_node_subnodes(lxb_dom_node_t *node, SDL_Rect rect, int depth)
 
         html_element = lxb_html_interface_element(node);
 
-        // DEBUG
-        printf("------\nElement qualified name %i\n", (int)html_element->element.qualified_name);
-        printf("Node type is %i\n", node->type);
-        // printf("Tag name is %s\n", get_tag_name(node));
-        printf("Number of elements = [%i/%i]\n", i, elements);
+
 
         // If it's an element, we add it to the render queue
         if (html_element->element.qualified_name == LXB_DOM_ATTR__UNDEF)
@@ -580,21 +578,24 @@ void render_document(html_document *document)
 
     Rendering the DOM document item
 */
-void render_document(lxb_html_document_t *document_param) {
-    document = document_param;
-    duk_context *ctx = js_init();
-    init_dom(ctx);
-    render_body((lxb_dom_node_t *) document->body);
-    collection = lxb_dom_collection_make(&document->dom_document, LIST_SIZE);
-    if (collection == NULL) {
-        FAILED("Failed to create Collection object");
-    }
-    render_futures(ctx);
-    SDL_RenderPresent(gRenderer);
+void render_document(lxb_html_document_t *document) {
+    //
+    Element *body;
+    body = parse_lxb_body((lxb_dom_node_t *) document->body);
+    //
+    // duk_context *ctx = js_init();
+    // init_dom(ctx);
+    // render_body((lxb_dom_node_t *) document->body);
+    // collection = lxb_dom_collection_make(&document->dom_document, LIST_SIZE);
+    // if (collection == NULL) {
+    //     FAILED("Failed to create Collection object");
+    // }
+    // render_futures(ctx);
+    // SDL_RenderPresent(gRenderer);
+    // SDL_Delay(5000);
+    // render_futures(ctx); 
+    // // I have 
+    // SDL_RenderPresent(gRenderer);
     SDL_Delay(5000);
-    render_futures(ctx); 
-    // I have 
-    SDL_RenderPresent(gRenderer);
-    SDL_Delay(5000);
-    duk_destroy_heap(ctx);
+    // duk_destroy_heap(ctx);
 }
