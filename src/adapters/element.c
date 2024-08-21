@@ -40,6 +40,19 @@ static lxb_status_t style_walk(lxb_html_element_t *html_element, const lxb_css_r
     data = lxb_css_property_by_id(declr->type);
     new_node = Node_create(data->name, ""); // We set the str_value to ""
     data->serialize(declr->u.user, style_callback, (void *) new_node);
+    //TODO also add the important bool
+    //     declr->important
+    // And those :
+    //     printf("    Specificity (priority): %d %d %d %d %d\n",
+    //        lxb_css_selector_sp_i(spec), lxb_css_selector_sp_s(spec),
+    //        lxb_css_selector_sp_a(spec), lxb_css_selector_sp_b(spec),
+    //        lxb_css_selector_sp_c(spec));
+
+    //      printf("        Important: %d\n", lxb_css_selector_sp_i(spec));
+    //      printf("        From Style Attribute: %d\n", lxb_css_selector_sp_s(spec));
+    //      printf("        A: %d\n", lxb_css_selector_sp_a(spec));
+    //      printf("        B: %d\n", lxb_css_selector_sp_b(spec));
+    //      printf("        C: %d\n", lxb_css_selector_sp_c(spec));
     NamedNodeMap_append_node(&element->style, new_node);
     return LXB_STATUS_OK;
 
@@ -63,15 +76,16 @@ void parse_attributes(Element *element, lxb_dom_element_t *lxb_element) {
         {
             tmp_key = (lxb_char_t *) lxb_dom_attr_qualified_name(attr, &tmp_len); // Attribute name
             tmp_val = (lxb_char_t *) lxb_dom_attr_value(attr, &tmp_len); // Attribute value
-            printf("Attribute %s: %s\n", tmp_key, tmp_val);
+            // printf("Attribute %s: %s\n", tmp_key, tmp_val);
             Element_add_attribute(element, tmp_key, tmp_val);
             attr = lxb_dom_element_next_attribute(attr);
         }
 }
 
-void walk_and_create_elements(Element *parent, lxb_dom_node_t *root_node) {
+Element *walk_and_create_elements(Element *parent, lxb_dom_node_t *root_node) {
     lxb_dom_node_t *node;
     lxb_html_element_t *html_element;
+    Element *first_element;
     Element *el_buffer;
     char *str_buffer;
 
@@ -79,22 +93,29 @@ void walk_and_create_elements(Element *parent, lxb_dom_node_t *root_node) {
     el_buffer = NULL;
     str_buffer = NULL;
 
+    // printf("Parent is :\n");
+    // Element_print(parent);
+
     while (node != NULL) {
         // We get the lexbor element from the current node
         html_element = lxb_html_interface_element(node);
-        // DEBUG
-        // printf("Node type is %i\n", node->type);
-
         if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
-            // If the current node is a lexbor Element type
-            el_buffer = Element_create();
+            printf("Element Node is %s\n", get_tag_name(node));
+
+            if (el_buffer != NULL) {
+                el_buffer->next = Element_create();
+                el_buffer = el_buffer->next;
+            } else {
+                el_buffer = Element_create();
+                first_element = el_buffer;
+            }
             el_buffer->tag = get_tag_name(node);
             parse_attributes(el_buffer, (lxb_dom_element_t *) html_element);
             parse_style(el_buffer, html_element);
             Element_append_child(parent, el_buffer);
-            Element_print(el_buffer);
-            Node_print(el_buffer->attributes.first);
-            Node_print(el_buffer->style.first);
+            // Element_print(el_buffer);
+            // Node_print(el_buffer->attributes.first);
+            // Node_print(el_buffer->style.first);
         }
         else if (node->type == LXB_DOM_NODE_TYPE_TEXT) {
             str_buffer = get_node_text(node);
@@ -107,12 +128,12 @@ void walk_and_create_elements(Element *parent, lxb_dom_node_t *root_node) {
         }
         node = node->next;
     }
+    return first_element;
 }
 
 Element *parse_lxb_body(lxb_dom_node_t *body) {
-    Element *body_element = Element_create();
-
-    body_element->tag = "body";
-
-    walk_and_create_elements(body_element, body);
+    Element *document;
+    document = Element_create();
+    document->tag = "document";
+    return walk_and_create_elements(document, body);
 }

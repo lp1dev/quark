@@ -573,6 +573,26 @@ void init_dom(duk_context *ctx) {
     duk_put_global_string(ctx, "c_updateElement");
 }
 
+/* void render (Element *body)
+
+    Rendering the Element body
+*/
+void render(Element *parent, int depth) {
+    Element *tmp;
+
+    tmp = parent;
+    depth = 0;
+
+    while (tmp != NULL) {
+        Element_print(tmp);
+        printf("Depth : %i\n", depth);
+        if (tmp->children != NULL) {
+            return render(tmp->children, depth + 1);
+        }
+        tmp = tmp->next;
+    }
+}
+
 /*
 void render_document(html_document *document)
 
@@ -582,9 +602,10 @@ void render_document(lxb_html_document_t *document) {
     //
     Element *body;
     body = parse_lxb_body((lxb_dom_node_t *) document->body);
+    duk_context *ctx = js_init();
+    init_dom(ctx);
+    render(body, 0);
     //
-    // duk_context *ctx = js_init();
-    // init_dom(ctx);
     // render_body((lxb_dom_node_t *) document->body);
     // collection = lxb_dom_collection_make(&document->dom_document, LIST_SIZE);
     // if (collection == NULL) {

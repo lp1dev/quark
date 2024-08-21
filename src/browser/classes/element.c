@@ -16,6 +16,7 @@ Element *Element_create() {
     new->id = NULL;
     new->children = NULL;
     new->parent = NULL;
+    new->next = NULL;
     new->type = "element";
     new->innerText = NULL;
     return new;
@@ -24,10 +25,14 @@ Element *Element_create() {
 void    Element_append_child(Element *element, Element *child) {
     Element *last_child = element->children;
 
-    while (last_child != NULL) {
+    if (last_child == NULL) {
+        element->children = child;
+        return;
+    }
+    while (last_child->children != NULL) {
         last_child = last_child->children;
     }
-    last_child = child;
+    last_child->children = child;
 }
 
 

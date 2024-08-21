@@ -12,6 +12,7 @@ struct Element {
     char *tag;
     char *id;
     char *type;
+    Element *next;
     Element *children;
     Element *parent;
     char *innerText;
