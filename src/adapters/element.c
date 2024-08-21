@@ -1,6 +1,58 @@
 #include "element.h"
 #include "../helpers.h"
 
+/*
+int style_callback(char *data, void *ctx)
+
+    callback used by data->serialize for each item.
+    I would have prefered an iterative process, but that's what
+    lexbor does internally
+*/
+static lxb_status_t
+style_callback(const lxb_char_t *data, size_t len, void *ctx)
+{
+    Node *node;
+    int value_length;
+    char *data_str;
+    char *tmp;
+
+    node = (Node *) ctx;
+    data_str = (char *) data;
+
+    if (is_empty(data_str)) {
+        return LXB_STATUS_OK;
+    }
+
+    tmp = malloc(sizeof(char) * (len + value_length + 1));
+    snprintf(tmp, len + value_length, "%s%.*s", node->str_value, (int) len, data_str);
+    node->str_value = tmp;
+    return LXB_STATUS_OK;
+
+}
+
+static lxb_status_t style_walk(lxb_html_element_t *html_element, const lxb_css_rule_declaration_t *declr,
+           void *ctx, lxb_css_selector_specificity_t spec, bool is_weak) {
+
+    const lxb_css_entry_data_t *data;
+    Node *new_node;
+    Element *element = (Element *) ctx;
+
+    data = lxb_css_property_by_id(declr->type);
+    new_node = Node_create(data->name, ""); // We set the str_value to ""
+    data->serialize(declr->u.user, style_callback, (void *) new_node);
+    NamedNodeMap_append_node(&element->style, new_node);
+    return LXB_STATUS_OK;
+
+}
+
+void parse_style(Element *element, lxb_html_element_t *html_element) {
+    lxb_status_t status;
+
+    if (html_element->style != NULL) {
+        status = lxb_html_element_style_walk(html_element, style_walk, element, true);
+    }
+}
+
 void parse_attributes(Element *element, lxb_dom_element_t *lxb_element) {
     lxb_dom_attr_t *attr;
     lxb_char_t *tmp_key, *tmp_val;
@@ -31,16 +83,18 @@ void walk_and_create_elements(Element *parent, lxb_dom_node_t *root_node) {
         // We get the lexbor element from the current node
         html_element = lxb_html_interface_element(node);
         // DEBUG
-        printf("Node type is %i\n", node->type);
+        // printf("Node type is %i\n", node->type);
 
         if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
             // If the current node is a lexbor Element type
             el_buffer = Element_create();
             el_buffer->tag = get_tag_name(node);
             parse_attributes(el_buffer, (lxb_dom_element_t *) html_element);
-            Node_print(el_buffer->attributes.first);
+            parse_style(el_buffer, html_element);
             Element_append_child(parent, el_buffer);
             Element_print(el_buffer);
+            Node_print(el_buffer->attributes.first);
+            Node_print(el_buffer->style.first);
         }
         else if (node->type == LXB_DOM_NODE_TYPE_TEXT) {
             str_buffer = get_node_text(node);

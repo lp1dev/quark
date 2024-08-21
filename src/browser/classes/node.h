@@ -19,6 +19,10 @@ struct NamedNodeMap {
 };
 
 Node *Node_create(char *key, char* value);
+Node *Node_create_empty();
 void Node_print(Node *node);
+void NamedNodeMap_append(NamedNodeMap *map, char* key, char *value);
+void NamedNodeMap_append_node(NamedNodeMap *map, Node *new_node);
+Node *NamedNodeMap_get_last(NamedNodeMap *map);
 
 #endif /* NODES_H_ */

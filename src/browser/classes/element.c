@@ -10,7 +10,8 @@ Element *Element_create() {
     new->internal_id = rand();
     new->attributes.length = 0;
     new->attributes.first = NULL;
-    new->style_size = 0;
+    new->style.length = 0;
+    new->style.first = NULL;
     new->tag = NULL;
     new->id = NULL;
     new->children = NULL;
@@ -29,23 +30,18 @@ void    Element_append_child(Element *element, Element *child) {
     last_child = child;
 }
 
-void    Element_add_attribute(Element *element, char *key, char *value) {
-    Node *tmp;
-    Node *last;
 
-    if (element->attributes.length == 0) {
-        element->attributes.first = Node_create(key, value);
-        element->attributes.length = 1;
-    } else {
-        tmp = element->attributes.first;
-        while (tmp->next != NULL) {
-            tmp = tmp->next;
-        }
-        last = tmp;
-        tmp = Node_create(key, value);
-        last->next = tmp;
-        element->attributes.length++;
-    }
+
+void    Element_add_attribute(Element *element, char *key, char *value) {
+    NamedNodeMap_append(&element->attributes, key, value);
+}
+
+void    Element_add_style(Element *element, char *key, char *value) {
+    NamedNodeMap_append(&element->style, key, value);
+}
+
+Node    *Element_get_last_style(Element *element) { // Required for the way lxb parses style w/ callbacks
+    return NamedNodeMap_get_last(&element->style);
 }
 
 void    Element_print(Element *element) {
