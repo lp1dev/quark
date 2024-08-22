@@ -214,30 +214,31 @@ void render_text(char* text, SDL_Rect rect)
 
     Rendering text element
 */
-void render_text(future_render *item)
+void render_text(Element *el, char *text)
 {
     SDL_Surface *surfaceMessage;
     SDL_Texture *Message;
-    SDL_Color text_color;
+    SDL_Color text_color = {0, 0, 0};
     SDL_Rect text_rect;
     TTF_Font *font;
+    int font_size = DEFAULT_FONT_SIZE;
 
-    printf("Rendering text '%s' with font size %i\n", item->innerText, item->render_properties.font_size);
 
-    font = TTF_OpenFont("/usr/share/fonts/opentype/Sans.ttf", item->render_properties.font_size);
+    printf("Rendering text '%s' with font size %i\n", el->innerText, font_size);
+
+    font = TTF_OpenFont("/usr/share/fonts/opentype/Sans.ttf", font_size);
     if (font == NULL)
     {
         printf("TTF_OpenFont Error: %s\n", TTF_GetError());
         exit(-3);
     }
 
-    text_rect.x = item->rect.x;
-    text_rect.y = item->rect.y;
-    text_rect.w = item->render_properties.font_size * strlen(item->innerText);
-    text_rect.h = item->render_properties.font_size * 3;
+    text_rect.x = el->x;
+    text_rect.y = el->y;
+    text_rect.w = font_size * strlen(text);
+    text_rect.h = font_size * 3;
 
-    printf("-- Rendering font with color %i--\n", item->render_properties.color.b);
-    surfaceMessage = TTF_RenderText_Solid(font, item->innerText, css_color_to_sdl(&item->render_properties.color));
+    surfaceMessage = TTF_RenderText_Solid(font, text, text_color);
     Message = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage);
 
     SDL_RenderCopy(gRenderer, Message, NULL, &text_rect);
@@ -430,7 +431,7 @@ void render_futures(duk_context *ctx) {
             if (strcmp(item->tag, "script") == 0) {
                 duk_eval_string_noresult(ctx, item->innerText);
             } else {
-                render_text(item);
+                // render_text(item);
             }
         }
         item = render_queue[i];
@@ -605,18 +606,19 @@ void calculate_element_dimentions(Element *el) {
     // siblings = Element_children_length(parent);
     // Element_draw_graph(el, 0);
     printf("Element has %i siblings and position %i\n", siblings, position);
+    // printf("parent->height, parent->width", )
 
     el->width = parent->width; // We take all of the available width by default;
     el->height = (parent->height / (siblings + 1));
     el->x = 0;
-    el->y = (parent->height / (siblings + 1)) * position;
+    el->y = parent->y + (parent->height / (siblings + 1)) * position;
     // printf("x y w h %i %i %i %i\n", el->width, el->height, el->x, el->y);
     //
 }
 
 void draw_element(Element *el) {
     SDL_Rect rect;
-    css_color background_color = {255, 255, 255, 255};
+    css_color background_color = {255, 255, 255, 0};
     Node *node;
 
     calculate_element_dimentions(el);
@@ -636,6 +638,9 @@ void draw_element(Element *el) {
     rect.h = el->height;
     print_rect(rect);
     SDL_RenderFillRect(gRenderer, &rect);
+    if (el->innerText && strlen(el->innerText) > 0) {
+        render_text(el, el->innerText);
+    }
 }
 
 /* void render (Element *body)
@@ -672,11 +677,12 @@ void render_document(lxb_html_document_t *document) {
     body->height = SCREEN_HEIGHT;
     body->width = SCREEN_WIDTH;
     body->parent = NULL;
-    // duk_context *ctx = js_init();
-    // init_dom(ctx);
+    duk_context *ctx = js_init();
+    init_dom(ctx);
     Element_draw_graph(body, 0);
     render(body, 0);
     SDL_RenderPresent(gRenderer);
-    SDL_Delay(5000);
-    // duk_destroy_heap(ctx);
+    SDL_Delay(10000);
+    // TODO fix JS and re-render after JS changes
+    duk_destroy_heap(ctx);
 }
