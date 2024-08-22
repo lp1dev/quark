@@ -12,19 +12,19 @@ static lxb_status_t
 style_callback(const lxb_char_t *data, size_t len, void *ctx)
 {
     Node *node;
-    int value_length;
     char *data_str;
     char *tmp;
 
     node = (Node *) ctx;
     data_str = (char *) data;
 
-    if (is_empty(data_str)) {
+    if (data_str == NULL || is_empty(data_str)) {
         return LXB_STATUS_OK;
     }
 
-    tmp = malloc(sizeof(char) * (len + value_length + 1));
-    snprintf(tmp, len + value_length, "%s%.*s", node->str_value, (int) len, data_str);
+    tmp = malloc(sizeof(char) * (len + 1));
+    memset(tmp, '\0', sizeof(char)* (len + 1));
+    snprintf(tmp, len, "%s%.*s", node->str_value, (int) len, data_str);
     node->str_value = tmp;
     return LXB_STATUS_OK;
 
@@ -92,15 +92,12 @@ Element *walk_and_create_elements(Element *parent, lxb_dom_node_t *root_node) {
     node = root_node;
     el_buffer = NULL;
     str_buffer = NULL;
-
-    // printf("Parent is :\n");
-    // Element_print(parent);
+    first_element = NULL;
+    str_buffer = NULL;
 
     while (node != NULL) {
-        // We get the lexbor element from the current node
         html_element = lxb_html_interface_element(node);
         if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
-            printf("Element Node is %s\n", get_tag_name(node));
 
             if (el_buffer != NULL) {
                 el_buffer->next = Element_create();
@@ -109,22 +106,22 @@ Element *walk_and_create_elements(Element *parent, lxb_dom_node_t *root_node) {
                 el_buffer = Element_create();
                 first_element = el_buffer;
             }
+
             el_buffer->tag = get_tag_name(node);
+            printf("Element Node is %s\n", el_buffer->tag);
+            el_buffer->parent = parent;
             parse_attributes(el_buffer, (lxb_dom_element_t *) html_element);
             parse_style(el_buffer, html_element);
-            Element_append_child(parent, el_buffer);
-            // Element_print(el_buffer);
-            // Node_print(el_buffer->attributes.first);
-            // Node_print(el_buffer->style.first);
+
+            if (node->first_child != NULL && el_buffer != NULL) {
+                Element_append_child(el_buffer, walk_and_create_elements(el_buffer, node->first_child));
+            }
         }
         else if (node->type == LXB_DOM_NODE_TYPE_TEXT) {
             str_buffer = get_node_text(node);
-            if (el_buffer != NULL && str_buffer != NULL && !is_empty(str_buffer)) {
-                el_buffer->innerText = str_buffer;
+            if (str_buffer != NULL && !is_empty(str_buffer)) {
+                parent->innerText = str_buffer;
             }
-        }
-        if (node->first_child != NULL && el_buffer != NULL) {
-            walk_and_create_elements(el_buffer, node->first_child);
         }
         node = node->next;
     }

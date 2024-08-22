@@ -73,6 +73,16 @@ css_color parse_color(char *color)
         return output;
 }
 
+SDL_Color parse_color_sdl(char *color) {
+        SDL_Color output;
+        css_color parsed = parse_color(color);
+        output.r = parsed.r;
+        output.g = parsed.g;
+        output.b = parsed.b;
+        // output.a = parsed.a;
+        return output;
+}
+
 char *color_to_string(css_color color) {
         char *output;
         char r[3], g[3], b[3], a[3];

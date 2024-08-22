@@ -19,6 +19,8 @@ Element *Element_create() {
     new->next = NULL;
     new->type = "element";
     new->innerText = NULL;
+    new->height = 0;
+    new->width = 0;
     return new;
 }
 
@@ -35,7 +37,18 @@ void    Element_append_child(Element *element, Element *child) {
     last_child->children = child;
 }
 
-
+int     Element_children_length(Element *element) {
+    Element *child;
+    int i;
+    
+    i = 0;
+    child = element->children;
+    while (child != NULL) {
+        child = child->children;
+        i++;
+    }
+    return i;
+}
 
 void    Element_add_attribute(Element *element, char *key, char *value) {
     NamedNodeMap_append(&element->attributes, key, value);
@@ -47,6 +60,41 @@ void    Element_add_style(Element *element, char *key, char *value) {
 
 Node    *Element_get_last_style(Element *element) { // Required for the way lxb parses style w/ callbacks
     return NamedNodeMap_get_last(&element->style);
+}
+
+Node    *Element_get_style(Element *element, char *key) {
+    return NamedNodeMap_get(&element->style, key);
+}
+
+void    Element_draw_graph(Element *element, int depth) {
+    char *tabs;
+    Element *sibling;
+
+    tabs = malloc(sizeof(char) * depth + 1);
+
+    for (int i = 0; i < depth; i++) {
+        tabs[i] = '\t';
+    }
+
+    tabs[depth] = '\0';
+    sibling = element;
+
+    while (sibling != NULL) {
+        if (sibling->tag != NULL) {
+            printf("tag=[%s]\n", sibling->tag);
+            printf("%s----------\n", tabs);
+            printf("%s[   %s   ]\n", tabs, sibling->tag);
+            printf("%s[   %s   ]\n", tabs, sibling->id);
+            printf("%s[   %s   ]\n", tabs, sibling->innerText);
+            printf("%s----------\n", tabs);
+        }
+        if (sibling->children != NULL) {
+            Element_draw_graph(sibling->children, depth + 1);
+        } else {
+            return;
+        }
+        sibling = sibling->next;
+    }
 }
 
 void    Element_print(Element *element) {

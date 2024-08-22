@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "node.h"
 
 Node *Node_create(char *key, char* value) {
@@ -87,4 +88,18 @@ Node *NamedNodeMap_get_last(NamedNodeMap *map) {
         tmp = tmp->next;
     }
     return tmp;
+}
+
+Node *NamedNodeMap_get(NamedNodeMap *map, char *key) {
+    Node *node;
+
+    node = map->first;
+
+    while (node != NULL) {
+        if (strcmp(node->key, key) == 0) {
+            return node;
+        }
+        node = node->next;
+    }
+    return NULL;
 }

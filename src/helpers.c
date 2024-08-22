@@ -129,8 +129,10 @@ void print_style(css_property *style) {
 
 bool is_empty(char *string) {
   for (int i = 0; string[i] != '\0';i++) {
-    if (string[i] != ' ' && string[i] != '\t' \
-       && string[i] != '\n' && string[i] != '\r') {
+    if (string[i] != ' ' && \
+        string[i] != '\t' && \
+        string[i] != '\n' && \
+        string[i] != '\r') {
         return false;
     }
   }

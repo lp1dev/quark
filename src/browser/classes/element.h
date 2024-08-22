@@ -6,16 +6,18 @@
 typedef struct Element Element;
 
 struct Element {
-    int  internal_id;
+    int     internal_id;
+    int     height;
+    int     width;
     NamedNodeMap attributes;
     NamedNodeMap style;
-    char *tag;
-    char *id;
-    char *type;
+    char    *tag;
+    char    *id;
+    char    *type;
     Element *next;
     Element *children;
     Element *parent;
-    char *innerText;
+    char    *innerText;
 };
 
 Element *Element_create(void);
@@ -24,5 +26,8 @@ void    Element_append_child(Element *element, Element *child);
 void    Element_add_attribute(Element *element, char *key, char *value);
 void    Element_add_style(Element *element, char *key, char *value);
 Node    *Element_get_last_style(Element *element);
+Node    *Element_get_style(Element *element, char *key);
+int     Element_children_length(Element *element);
+void    Element_draw_graph(Element *element, int depth);
 
 #endif /* QUARK_ELEMENT_H_ */

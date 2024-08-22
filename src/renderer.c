@@ -573,6 +573,49 @@ void init_dom(duk_context *ctx) {
     duk_put_global_string(ctx, "c_updateElement");
 }
 
+
+void calculate_element_dimentions(Element *el) {
+    Element *parent;
+    Element *tmp;
+    int siblings;
+
+    parent = el->parent;
+
+    if (parent == NULL && parent->height != 0 && parent->width != 0) {
+        printf("This element is a root element and should have its dimensions already set!\n");
+        return;
+    }
+
+    siblings = 0;
+    tmp = parent->children;
+    while (tmp != NULL) {
+        tmp = tmp->next;
+        siblings++;
+    }
+    // siblings = Element_children_length(parent);
+    // Element_draw_graph(el, 0);
+    printf("Element %s\n", el->tag);
+    printf("Element has %i siblings\n", siblings);
+}
+
+void draw_element(Element *el) {
+    SDL_Rect rect;
+    css_color background_color;
+    Node *node;
+
+    calculate_element_dimentions(el);
+    node = Element_get_style(el, "backgroundColor");
+    if (node != NULL) {
+        printf("Background color is %s\n", node->str_value);
+        background_color = parse_color(node->str_value);
+    }
+    SDL_SetRenderDrawColor(gRenderer, \
+    background_color.r, \
+    background_color.g, \
+    background_color.b, \
+    background_color.a);
+}
+
 /* void render (Element *body)
 
     Rendering the Element body
@@ -581,10 +624,10 @@ void render(Element *parent, int depth) {
     Element *tmp;
 
     tmp = parent;
-    depth = 0;
 
     while (tmp != NULL) {
-        Element_print(tmp);
+        // Element_print(tmp);
+        draw_element(tmp);
         printf("Depth : %i\n", depth);
         if (tmp->children != NULL) {
             return render(tmp->children, depth + 1);
@@ -602,9 +645,12 @@ void render_document(lxb_html_document_t *document) {
     //
     Element *body;
     body = parse_lxb_body((lxb_dom_node_t *) document->body);
-    duk_context *ctx = js_init();
-    init_dom(ctx);
-    render(body, 0);
+    body->height = SCREEN_HEIGHT;
+    body->width = SCREEN_WIDTH;
+    // duk_context *ctx = js_init();
+    // init_dom(ctx);
+    Element_draw_graph(body, 0);
+    // render(body, 0);
     //
     // render_body((lxb_dom_node_t *) document->body);
     // collection = lxb_dom_collection_make(&document->dom_document, LIST_SIZE);
