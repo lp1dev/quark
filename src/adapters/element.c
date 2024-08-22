@@ -12,19 +12,26 @@ static lxb_status_t
 style_callback(const lxb_char_t *data, size_t len, void *ctx)
 {
     Node *node;
+    int value_length;
     char *data_str;
     char *tmp;
 
     node = (Node *) ctx;
     data_str = (char *) data;
+    value_length = strlen(node->str_value);
 
-    if (data_str == NULL || is_empty(data_str)) {
+    if (is_empty(data_str)) {
         return LXB_STATUS_OK;
     }
-
-    tmp = malloc(sizeof(char) * (len + 1));
-    memset(tmp, '\0', sizeof(char)* (len + 1));
-    snprintf(tmp, len, "%s%.*s", node->str_value, (int) len, data_str);
+    tmp = malloc(sizeof(char) * (len + value_length + 1));
+    for (int i = 0; i < (len + value_length); i++) {
+        if (i < value_length) {
+            tmp[i] = node->str_value[i];
+        } else {
+            tmp[i] = data_str[i - value_length];
+        }
+    }
+    tmp[len + value_length] = 0;
     node->str_value = tmp;
     return LXB_STATUS_OK;
 
@@ -108,7 +115,6 @@ Element *walk_and_create_elements(Element *parent, lxb_dom_node_t *root_node) {
             }
 
             el_buffer->tag = get_tag_name(node);
-            printf("Element Node is %s\n", el_buffer->tag);
             el_buffer->parent = parent;
             parse_attributes(el_buffer, (lxb_dom_element_t *) html_element);
             parse_style(el_buffer, html_element);

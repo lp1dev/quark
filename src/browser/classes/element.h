@@ -9,6 +9,8 @@ struct Element {
     int     internal_id;
     int     height;
     int     width;
+    int     x;
+    int     y;
     NamedNodeMap attributes;
     NamedNodeMap style;
     char    *tag;

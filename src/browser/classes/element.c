@@ -21,6 +21,8 @@ Element *Element_create() {
     new->innerText = NULL;
     new->height = 0;
     new->width = 0;
+    new->x = 0;
+    new->y = 0;
     return new;
 }
 
@@ -80,14 +82,11 @@ void    Element_draw_graph(Element *element, int depth) {
     sibling = element;
 
     while (sibling != NULL) {
-        if (sibling->tag != NULL) {
-            printf("tag=[%s]\n", sibling->tag);
-            printf("%s----------\n", tabs);
-            printf("%s[   %s   ]\n", tabs, sibling->tag);
-            printf("%s[   %s   ]\n", tabs, sibling->id);
-            printf("%s[   %s   ]\n", tabs, sibling->innerText);
-            printf("%s----------\n", tabs);
-        }
+        printf("%s----------\n", tabs);
+        printf("%s[   %s   ]\n", tabs, sibling->tag);
+        printf("%s[   %s   ]\n", tabs, sibling->id);
+        printf("%s[   %s   ]\n", tabs, sibling->innerText);
+        printf("%s----------\n", tabs);
         if (sibling->children != NULL) {
             Element_draw_graph(sibling->children, depth + 1);
         } else {

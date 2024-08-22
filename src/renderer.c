@@ -82,7 +82,7 @@ style_callback(const lxb_char_t *data, size_t len, void *ctx)
 
 int synchronous_serialize(const lxb_css_rule_declaration_t* declaration)
 
-    Stores the data contained in the document's style in qwark's custom css_property structs.
+    Stores the data contained in the document's style in quark's custom css_property structs.
 
 */
 static lxb_status_t synchronous_serialize(const lxb_css_rule_declaration_t *declaration, bool is_weak)
@@ -180,7 +180,7 @@ int graph_init()
         exit(-2);
     }
 
-    window = SDL_CreateWindow("Qwark",
+    window = SDL_CreateWindow("Quark",
                               SDL_WINDOWPOS_CENTERED,
                               SDL_WINDOWPOS_CENTERED,
                               SCREEN_WIDTH, SCREEN_HEIGHT,
@@ -578,33 +578,49 @@ void calculate_element_dimentions(Element *el) {
     Element *parent;
     Element *tmp;
     int siblings;
+    int position;
 
+    //
     parent = el->parent;
-
-    if (parent == NULL && parent->height != 0 && parent->width != 0) {
-        printf("This element is a root element and should have its dimensions already set!\n");
+    tmp = NULL;
+    siblings = 0;
+    position = 0;
+    //
+    if (parent == NULL) {
         return;
     }
 
-    siblings = 0;
     tmp = parent->children;
+
+    printf("Element %s (%i)\n", el->tag, el->internal_id);
     while (tmp != NULL) {
+        if (tmp->internal_id != el->internal_id) {
+            siblings++;
+        } else {
+            position = siblings;
+        }
+        // printf("\tSibling %s (%i) is %i\n", tmp->tag, tmp->internal_id, siblings);
         tmp = tmp->next;
-        siblings++;
     }
     // siblings = Element_children_length(parent);
     // Element_draw_graph(el, 0);
-    printf("Element %s\n", el->tag);
-    printf("Element has %i siblings\n", siblings);
+    printf("Element has %i siblings and position %i\n", siblings, position);
+
+    el->width = parent->width; // We take all of the available width by default;
+    el->height = (parent->height / (siblings + 1));
+    el->x = 0;
+    el->y = (parent->height / (siblings + 1)) * position;
+    // printf("x y w h %i %i %i %i\n", el->width, el->height, el->x, el->y);
+    //
 }
 
 void draw_element(Element *el) {
     SDL_Rect rect;
-    css_color background_color;
+    css_color background_color = {255, 255, 255, 255};
     Node *node;
 
     calculate_element_dimentions(el);
-    node = Element_get_style(el, "backgroundColor");
+    node = Element_get_style(el, "background-color");
     if (node != NULL) {
         printf("Background color is %s\n", node->str_value);
         background_color = parse_color(node->str_value);
@@ -614,6 +630,12 @@ void draw_element(Element *el) {
     background_color.g, \
     background_color.b, \
     background_color.a);
+    rect.x = el->x;
+    rect.y = el->y;
+    rect.w = el->width;
+    rect.h = el->height;
+    print_rect(rect);
+    SDL_RenderFillRect(gRenderer, &rect);
 }
 
 /* void render (Element *body)
@@ -622,15 +644,17 @@ void draw_element(Element *el) {
 */
 void render(Element *parent, int depth) {
     Element *tmp;
+    int position;
+    int siblings;
 
     tmp = parent;
 
     while (tmp != NULL) {
         // Element_print(tmp);
         draw_element(tmp);
-        printf("Depth : %i\n", depth);
+
         if (tmp->children != NULL) {
-            return render(tmp->children, depth + 1);
+            render(tmp->children, depth + 1);
         }
         tmp = tmp->next;
     }
@@ -647,22 +671,12 @@ void render_document(lxb_html_document_t *document) {
     body = parse_lxb_body((lxb_dom_node_t *) document->body);
     body->height = SCREEN_HEIGHT;
     body->width = SCREEN_WIDTH;
+    body->parent = NULL;
     // duk_context *ctx = js_init();
     // init_dom(ctx);
     Element_draw_graph(body, 0);
-    // render(body, 0);
-    //
-    // render_body((lxb_dom_node_t *) document->body);
-    // collection = lxb_dom_collection_make(&document->dom_document, LIST_SIZE);
-    // if (collection == NULL) {
-    //     FAILED("Failed to create Collection object");
-    // }
-    // render_futures(ctx);
-    // SDL_RenderPresent(gRenderer);
-    // SDL_Delay(5000);
-    // render_futures(ctx); 
-    // // I have 
-    // SDL_RenderPresent(gRenderer);
+    render(body, 0);
+    SDL_RenderPresent(gRenderer);
     SDL_Delay(5000);
     // duk_destroy_heap(ctx);
 }
