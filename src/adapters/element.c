@@ -83,6 +83,9 @@ void parse_attributes(Element *element, lxb_dom_element_t *lxb_element) {
         {
             tmp_key = (lxb_char_t *) lxb_dom_attr_qualified_name(attr, &tmp_len); // Attribute name
             tmp_val = (lxb_char_t *) lxb_dom_attr_value(attr, &tmp_len); // Attribute value
+            if (strncmp(tmp_key, "id", 2) == 0) {
+                element->id = tmp_val;
+            }
             // printf("Attribute %s: %s\n", tmp_key, tmp_val);
             Element_add_attribute(element, tmp_key, tmp_val);
             attr = lxb_dom_element_next_attribute(attr);

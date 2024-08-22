@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "element.h"
 
 
@@ -93,6 +94,28 @@ void    Element_draw_graph(Element *element, int depth) {
             return;
         }
         sibling = sibling->next;
+    }
+}
+
+Element *Element_get_by_id(Element *element, char *id) {
+    Element *tmp;
+    Element *next;
+
+    printf("Getting element of id %s, element is %s\n", id, element->tag);
+    tmp = element;
+    while (tmp != NULL) {
+        if (tmp->id && strcmp(tmp->id, id) == 0) {
+            return tmp;
+        } else {
+            next = tmp->next;
+            while (next != NULL) {
+                if (tmp->id && strcmp(tmp->id, id) == 0) {
+                    return tmp;
+                }
+                next = next->next;
+            }
+        }
+        tmp = tmp->children;
     }
 }
 
