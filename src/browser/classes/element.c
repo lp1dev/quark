@@ -144,6 +144,30 @@ Element *Element_get_by_internal_id(Element *element, int internal_id) {
     return NULL;
 }
 
+void process_style_numeric_value(Node *node) {
+    char *buffer;
+    int set_num_value;
+    int j;
+
+    j = 0;
+    set_num_value = 0;
+    buffer = malloc(sizeof(char) * (strlen(node->str_value) + 1));
+    for (int i = 0; node->str_value[i] != '\0'; i++) {
+        if (node->str_value[i] < '0' || node->str_value[i] > '9') {
+            if (!set_num_value) {
+                buffer[i] = '\0';
+                node->int_value = atoi(buffer);
+                set_num_value = 1;
+            }
+            buffer[j] = node->str_value[i]; 
+            j++;
+        } else {
+            buffer[i] = node->str_value[i];
+        }
+    }
+    buffer[j] = '\0';
+    node->str_value = buffer;
+}
 
 void    Element_print(Element *element) {
     printf("Element {\n");

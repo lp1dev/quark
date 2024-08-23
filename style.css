@@ -14,9 +14,11 @@ p {
 body {
     background-color: #e2e2e2;
     color: #006677;
+    padding: 4px;
 }
 
 #footer {
     background-color: #006677;
     color: #e2e2e2;
+    border: 1px solid #000000;
 }

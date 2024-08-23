@@ -138,10 +138,6 @@ void serialize_element(duk_context *ctx, Element *element) {
     duk_put_prop_string(ctx, -2, "innerText");
     duk_push_int(ctx, element->internal_id);
     duk_put_prop_string(ctx, -2, "internalId");
-    // duk_push_string(ctx, color_to_string(item->render_properties.color));
-    // duk_put_prop_string(ctx, -2, "color");
-    // duk_push_string(ctx, color_to_string(item->render_properties.background_color));
-    // duk_put_prop_string(ctx, -2, "backgroundColor");
 }
 
 /*  */
@@ -218,8 +214,8 @@ static duk_ret_t update_element(duk_context *ctx) {
         return (duk_ret_t) 0;
     }
     update_type = duk_get_number(ctx, 1);
-    update_key = duk_get_string(ctx, 2);
-    update_value = duk_get_string(ctx, 3);
+    update_key = (char *) duk_get_string(ctx, 2);
+    update_value = (char *) duk_get_string(ctx, 3);
     printf("update_element(%i, %i, %s, %s)\n", internal_id, update_type, update_key, update_value);
 
     switch (update_type) {
@@ -282,7 +278,7 @@ void calculate_element_dimentions(Element *el) {
 
     el->width = parent->width; // We take all of the available width by default;
     el->height = (parent->height / (siblings + 1));
-    el->x = 0;
+    el->x = parent->x;
     el->y = parent->y + (parent->height / (siblings + 1)) * position;
 }
 
@@ -297,6 +293,23 @@ void draw_element(Element *el) {
         printf("Background color is %s\n", node->str_value);
         background_color = parse_color(node->str_value);
     }
+    node = Element_get_style(el, "border");
+    Node_print(el->style.first);
+    if (node != NULL) {
+        printf("Border is %s\n", node->str_value);
+    }
+    node = Element_get_style(el, "padding");
+    Node_print(el->style.first);
+    if (node != NULL) {
+        process_style_numeric_value(node);
+        if (strncmp(node->str_value, "px", 2) == 0) {
+            el->x += node->int_value;
+            el->y += node->int_value;
+            el->width -= (node->int_value * 2);
+            el->height -= (node->int_value * 2);
+        }
+    }
+
     SDL_SetRenderDrawColor(gRenderer, \
     background_color.r, \
     background_color.g, \
@@ -307,6 +320,7 @@ void draw_element(Element *el) {
     rect.w = el->width;
     rect.h = el->height;
     print_rect(rect);
+    
     SDL_RenderFillRect(gRenderer, &rect);
     if (el->innerText && strlen(el->innerText) > 0) {
         render_text(el, el->innerText);

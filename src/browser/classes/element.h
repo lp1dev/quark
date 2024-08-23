@@ -47,5 +47,6 @@ int     Element_children_length(Element *element);
 void    Element_draw_graph(Element *element, int depth);
 Element *Element_get_by_id(Element *element, char *id);
 Element *Element_get_by_internal_id(Element *element, int internal_id);
+void    process_style_numeric_value(Node *node);
 
 #endif /* QUARK_ELEMENT_H_ */
