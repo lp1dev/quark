@@ -132,6 +132,28 @@ void serialize_element(duk_context *ctx, Element *element) {
     // duk_put_prop_string(ctx, -2, "backgroundColor");
 }
 
+/*  */
+static duk_ret_t get_element_style(duk_context *ctx) {
+    Element *el;
+    Node *node;
+    int internal_id;
+
+    internal_id = (int) duk_get_int(ctx, 0);
+    el = Element_get_by_internal_id(body, internal_id);
+    if (el == NULL) {
+        printf("Invalid element retrieval by internal id %i\n", internal_id);
+        exit(-1);
+    }
+    duk_push_object(ctx);
+    node = el->style.first;
+    while (node != NULL) {
+        duk_push_string(ctx, node->str_value);
+        duk_put_prop_string(ctx, -2, node->key);
+        node = node->next;
+    }
+    return (duk_ret_t) 1;
+}
+
 /*
 
 static duk_ret_t get_element_by_id(duk_context *ctx)
@@ -156,30 +178,6 @@ static duk_ret_t get_element_by_id(duk_context *ctx)
         printf("#%s not found\n", id);
     }
     serialize_element(ctx, element);
-    /* 
-        I should definitely do attributes parsing *BEFORE* someone does a getElementById, todo fix
-    // */
-    // for (int i = 0; render_queue[i] != NULL; i++)
-    // {
-    //     attr = lxb_dom_element_first_attribute(&render_queue[i]->el->element);
-
-    //     while (attr != NULL)
-    //     {
-    //         tmp = lxb_dom_attr_qualified_name(attr, &tmp_len); // Attribute name
-    //         if (strcmp(tmp, "id") == 0) {
-    //             tmp = lxb_dom_attr_value(attr, &tmp_len); // Attribute value
-    //             render_queue[i]->id = (char *) tmp; // Setting up the ID since this is the first time we encounter it
-    //             if (tmp != NULL && strcmp(tmp, id) == 0)
-    //             {
-    //                 duk_pop(ctx);
-    //                 serialize_future_render(ctx, render_queue[i]);
-    //                 // duk_push_string(ctx, render_queue[i]->tag);
-    //             }
-    //         }
-
-    //         attr = lxb_dom_element_next_attribute(attr);
-    //     }
-    // }
     return (duk_ret_t)1;
 }
 
@@ -200,11 +198,6 @@ static duk_ret_t update_element(duk_context *ctx) {
     internalId = duk_get_number(ctx, 0);
     update_type = duk_get_number(ctx, 1);
 
-    // for (int i = 0; render_queue[i] != NULL; i++) {
-    //     if (render_queue[i]->internal_id == internalId) {
-    //         item = render_queue[i];
-    //     }
-    // }
     // if (item != NULL) {
     //     switch (update_type) {
     //         case ID:
@@ -233,8 +226,10 @@ void init_dom(duk_context *ctx) {
     duk_put_global_string(ctx, "quark"); // Creating a "document" global
     duk_push_c_function(ctx, get_element_by_id, 1 /*nargs*/);
     duk_put_global_string(ctx, "c_getElementById");
-    duk_push_c_function(ctx, update_element, 3 /*nargs*/);
+    duk_push_c_function(ctx, update_element, 2 /*nargs*/);
     duk_put_global_string(ctx, "c_updateElement");
+    duk_push_c_function(ctx, get_element_style, 1);
+    duk_put_global_string(ctx, "c_getElementStyle");
 }
 
 

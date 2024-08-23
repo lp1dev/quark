@@ -32,6 +32,7 @@
 
   // Test 2
   heading = document.getElementById('heading')
+  console.log("Style of element is ", c_getElementStyle(heading._internalId))
   console.log("Color outside of style", heading._color)
   console.log("Color before set for heading", heading.style.color)
   document.getElementById('heading').innerText = "Test4242"

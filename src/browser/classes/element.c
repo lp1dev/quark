@@ -101,7 +101,6 @@ Element *Element_get_by_id(Element *element, char *id) {
     Element *tmp;
     Element *next;
 
-    printf("Getting element of id %s, element is %s\n", id, element->tag);
     tmp = element;
     while (tmp != NULL) {
         if (tmp->id && strcmp(tmp->id, id) == 0) {
@@ -118,6 +117,29 @@ Element *Element_get_by_id(Element *element, char *id) {
         tmp = tmp->children;
     }
 }
+
+Element *Element_get_by_internal_id(Element *element, int internal_id) {
+    Element *tmp;
+    Element *next;
+
+    tmp = element;
+    while (tmp != NULL) {
+        if (tmp->internal_id == internal_id) {
+            return tmp;
+        } else {
+            next = tmp->next;
+            while (next != NULL) {
+                if (tmp->internal_id == internal_id) {
+                    return tmp;
+                }
+                next = next->next;
+            }
+        }
+        tmp = tmp->children;
+    }
+    return NULL;
+}
+
 
 void    Element_print(Element *element) {
     printf("Element {\n");

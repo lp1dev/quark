@@ -74,7 +74,7 @@ function Element(element_obj) {
         enumerable: false,
         configurable: true,
         value: element_obj.internalId,
-        writable: true
+        writable: false
     })
 
     Object.defineProperty(this, "_innerText", {
