@@ -51,25 +51,9 @@ struct future_render
     css_property *style;
     lxb_html_element_t *el;
     int internal_id;
-    int style_size;
     char *tag;
     char *id;
     char *innerText;
-};
-
-enum update_types {
-    RECT,
-    SURFACE,
-    RENDER_PROPERTIES,
-    STYLE,
-    EL,
-    INTERNAL_ID,
-    STYLE_SIZE,
-    TAG,
-    ID,
-    INNER_TEXT,
-    COLOR,
-    BACKGROUND_COLOR
 };
 
 css_property *create_css_property(css_property *prev, char *name, char *str_value, int important, int primary);

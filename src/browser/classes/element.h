@@ -3,6 +3,19 @@
 #include "node.h"
 #include "css_properties.h"
 
+enum update_types {
+    RECT,
+    SURFACE,
+    RENDER_PROPERTIES,
+    ATTRIBUTES,
+    STYLE,
+    EL,
+    INTERNAL_ID,
+    TAG,
+    ID,
+    INNER_TEXT
+};
+
 typedef struct Element Element;
 
 struct Element {
@@ -29,6 +42,7 @@ void    Element_add_attribute(Element *element, char *key, char *value);
 void    Element_add_style(Element *element, char *key, char *value);
 Node    *Element_get_last_style(Element *element);
 Node    *Element_get_style(Element *element, char *key);
+void    Element_set_style(Element *element, char *key, char *value);
 int     Element_children_length(Element *element);
 void    Element_draw_graph(Element *element, int depth);
 Element *Element_get_by_id(Element *element, char *id);

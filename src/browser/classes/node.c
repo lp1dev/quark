@@ -103,3 +103,20 @@ Node *NamedNodeMap_get(NamedNodeMap *map, char *key) {
     }
     return NULL;
 }
+
+void NamedNodeMap_set(NamedNodeMap *map, char *key, char *value) {
+    Node *node;
+
+    node = map->first;
+
+    while (node != NULL) {
+        printf("\tNode %s=%s\n", node->key, node->str_value);
+        printf("\tSearched key %s\n", key);
+        if (strcmp(node->key, key) == 0) {
+            node->str_value = value;
+            return;
+        }
+        node = node->next;
+    }
+    NamedNodeMap_append(map, key, value);
+}

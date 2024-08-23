@@ -80,7 +80,9 @@ void render_text(Element *el, char *text)
 {
     SDL_Surface *surfaceMessage;
     SDL_Texture *Message;
-    SDL_Color text_color = {0, 0, 0};
+    SDL_Color sdl_color;
+    Node *element_color;
+    css_color text_color = {0, 0, 0, 255};
     SDL_Rect text_rect;
     TTF_Font *font;
     int font_size = DEFAULT_FONT_SIZE;
@@ -100,7 +102,17 @@ void render_text(Element *el, char *text)
     text_rect.w = font_size * strlen(text);
     text_rect.h = font_size * 3;
 
-    surfaceMessage = TTF_RenderText_Solid(font, text, text_color);
+    //
+    element_color = Element_get_style(el, "color");
+    if (element_color != NULL) {
+        text_color = parse_color(element_color->str_value);
+    }
+    sdl_color.r = text_color.r;
+    sdl_color.b = text_color.b;
+    sdl_color.g = text_color.g;
+    sdl_color.a = text_color.a;
+    //
+    surfaceMessage = TTF_RenderText_Solid(font, text, sdl_color);
     Message = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage);
 
     SDL_RenderCopy(gRenderer, Message, NULL, &text_rect);
@@ -146,6 +158,8 @@ static duk_ret_t get_element_style(duk_context *ctx) {
     }
     duk_push_object(ctx);
     node = el->style.first;
+    duk_push_number(ctx, el->internal_id);
+    duk_put_prop_string(ctx, -2, "internalId");
     while (node != NULL) {
         duk_push_string(ctx, node->str_value);
         duk_put_prop_string(ctx, -2, node->key);
@@ -176,6 +190,7 @@ static duk_ret_t get_element_by_id(duk_context *ctx)
         printf("Found element %s with id %s\n", element->tag, id);
     } else {
         printf("#%s not found\n", id);
+        return (duk_ret_t)0;
     }
     serialize_element(ctx, element);
     return (duk_ret_t)1;
@@ -189,31 +204,36 @@ static duk_ret_t update_element(duk_context *ctx)
 
 */
 static duk_ret_t update_element(duk_context *ctx) {
-    future_render *item;
-    static int internalId;
+    Element *element;
+    static int internal_id;
     SDL_Color color_buffer;
     int update_type;
-    char *new_value_str;
+    char *update_key;
+    char *update_value;
 
-    internalId = duk_get_number(ctx, 0);
+    internal_id = duk_get_number(ctx, 0);
+    element = Element_get_by_internal_id(body, internal_id);
+    if (element == NULL) {
+        printf("Error, element is NULL! %i\n", internal_id);
+        return (duk_ret_t) 0;
+    }
     update_type = duk_get_number(ctx, 1);
+    update_key = duk_get_string(ctx, 2);
+    update_value = duk_get_string(ctx, 3);
+    printf("update_element(%i, %i, %s, %s)\n", internal_id, update_type, update_key, update_value);
 
-    // if (item != NULL) {
-    //     switch (update_type) {
-    //         case ID:
-    //             new_value_str = (char *) duk_get_string(ctx, 2);
-    //             item->id = new_value_str;
-    //             break;
-    //         case INNER_TEXT:
-    //             new_value_str = (char *) duk_get_string(ctx, 2);
-    //             item->innerText = new_value_str;
-    //             break;
-    //         case COLOR:
-    //             new_value_str = (char *) duk_get_string(ctx, 2);
-    //             item->render_properties.color = parse_color(new_value_str);
-    //             printf("COLOR IS NOW r %i g %i b %i\n", item->render_properties.color.r, item->render_properties.color.g, item->render_properties.color.b);
-    //     }
-    // }
+    switch (update_type) {
+        case ID:
+            element->id = update_value;
+            break;
+        case STYLE:
+            Element_set_style(element, update_key, update_value);
+            break;
+        case INNER_TEXT:
+            element->innerText = update_value;
+            break;
+    }
+
     return (duk_ret_t) 0;
 }
 
@@ -226,7 +246,7 @@ void init_dom(duk_context *ctx) {
     duk_put_global_string(ctx, "quark"); // Creating a "document" global
     duk_push_c_function(ctx, get_element_by_id, 1 /*nargs*/);
     duk_put_global_string(ctx, "c_getElementById");
-    duk_push_c_function(ctx, update_element, 2 /*nargs*/);
+    duk_push_c_function(ctx, update_element, 4 /*nargs*/);
     duk_put_global_string(ctx, "c_updateElement");
     duk_push_c_function(ctx, get_element_style, 1);
     duk_put_global_string(ctx, "c_getElementStyle");
@@ -324,15 +344,26 @@ void render_document(html_document *document)
 void render_document(lxb_html_document_t *document) {
     //
     body = parse_lxb_body((lxb_dom_node_t *) document->body);
+
     body->height = SCREEN_HEIGHT;
     body->width = SCREEN_WIDTH;
     body->parent = NULL;
+
     duk_context *ctx = js_init();
+
     init_dom(ctx);
+
     Element_draw_graph(body, 0);
+
     render(body, 0, ctx);
     SDL_RenderPresent(gRenderer);
-    SDL_Delay(10000);
+    SDL_Delay(5000);
+
+    Element_draw_graph(body, 0);
+
+    render(body, 0, ctx);
+    SDL_RenderPresent(gRenderer);
+    SDL_Delay(5000);
     // TODO fix JS and re-render after JS changes
     duk_destroy_heap(ctx);
 }

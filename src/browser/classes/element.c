@@ -69,6 +69,10 @@ Node    *Element_get_style(Element *element, char *key) {
     return NamedNodeMap_get(&element->style, key);
 }
 
+void    Element_set_style(Element *element, char *key, char *value) {
+    return NamedNodeMap_set(&element->style, key, value);
+}
+
 void    Element_draw_graph(Element *element, int depth) {
     char *tabs;
     Element *sibling;

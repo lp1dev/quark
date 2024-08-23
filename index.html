@@ -26,18 +26,19 @@
   i += 1
   // Test 1
   var el = document.getElementById('test');
-  el.id = "newID"
-  console.log("element ID is", el.id);
+  // if (el) {
+  //   el.id = "newID"
+  // }
   console.log("I is "+i);
 
   // Test 2
   heading = document.getElementById('heading')
   console.log("Style of element is ", c_getElementStyle(heading._internalId))
-  console.log("Color outside of style", heading._color)
-  console.log("Color before set for heading", heading.style.color)
+  console.log("Style of element is ", heading.style.backgroundColor)
+  
   document.getElementById('heading').innerText = "Test4242"
-  heading.style.color = "#000045"
-  console.log("Color after set for heading", heading.style.color)
+  heading.style.backgroundColor = "#000045"
+  heading.style.color = "#990022"
   console.log("Style in JS for heading is", document.getElementById('heading').style)
 </script>
 

@@ -1,19 +1,18 @@
 // Quark Internals
 //
 // In the C code, we have
+
 // enum update_types {
-//     RECT, 0
-//     SURFACE, 1
-//     RENDER_PROPERTIES, 2
-//     STYLE, 3
-//     EL, 4
-//     INTERNAL_ID, 5
-//     STYLE_SIZE, 6
-//     TAG, 7
-//     ID, 8
-//     INNER_TEXT, 9
-//     COLOR, 10
-//     BACKGROUND_COLOR 11
+//     RECT,
+//     SURFACE,
+//     RENDER_PROPERTIES,
+//     ATTRIBUTES,
+//     STYLE,
+//     EL,
+//     INTERNAL_ID,
+//     TAG,
+//     ID,
+//     INNER_TEXT
 // };
 
 // == Globals ==
@@ -32,7 +31,7 @@ function Style(style_obj) {
 
     Object.defineProperty(this, "_backgroundColor", {
 	enumerable: false,
-	value: style_obj.backgroundColor,
+	value: style_obj['background-color'],
 	writable: true,
 	configurable: true
     })
@@ -43,7 +42,7 @@ function Style(style_obj) {
         },
         set: function(color) {
             this._color = color;
-            quark.c_updateElement(this._internalId, 10, color)
+            quark.c_updateElement(style_obj['internalId'], 4, "color", color)
         },
         configurable: true
     })
@@ -52,9 +51,9 @@ function Style(style_obj) {
         get: function() {
             return this._backgroundColor;
         },
-        set: function(color) {
+        set: function(backgroundColor) {
             this._backgroundColor = backgroundColor;
-            quark.c_updateElement(this._internalId, 11, backgroundColor)
+            quark.c_updateElement(style_obj['internalId'], 4, "background-color", backgroundColor)
         },
         configurable: true
     })
@@ -89,7 +88,7 @@ function Element(element_obj) {
         },
         set: function(id) {
             this._id = id;
-            quark.c_updateElement(this._internalId, 8, id)
+            quark.c_updateElement(this._internalId, 8, "id", id);
         },
         configurable: true
     })
@@ -100,16 +99,13 @@ function Element(element_obj) {
         },
         set: function(innerText) {
             this._innerText = innerText;
-            quark.c_updateElement(this._internalId, 9, innerText)
+            quark.c_updateElement(this._internalId, 9, "innerText", innerText);
         },
         configurable: true
     })
 
     Object.defineProperty(this, "style", {
-	value: new Style({
-	    color: element_obj.color,
-	    backgroundColor: element_obj.backgroundColor
-	}),
+	value: new Style(c_getElementStyle(this._internalId)),
 	configurable: true,
 	writable: true
     })

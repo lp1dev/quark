@@ -25,5 +25,6 @@ void NamedNodeMap_append(NamedNodeMap *map, char* key, char *value);
 void NamedNodeMap_append_node(NamedNodeMap *map, Node *new_node);
 Node *NamedNodeMap_get_last(NamedNodeMap *map);
 Node *NamedNodeMap_get(NamedNodeMap *map, char *key);
+void NamedNodeMap_set(NamedNodeMap *map, char *key, char *value);
 
 #endif /* NODES_H_ */
