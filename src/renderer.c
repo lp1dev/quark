@@ -290,13 +290,12 @@ void draw_element(Element *el) {
     calculate_element_dimentions(el);
     node = Element_get_style(el, "background-color");
     if (node != NULL) {
-        printf("Background color is %s\n", node->str_value);
         background_color = parse_color(node->str_value);
     }
     node = Element_get_style(el, "border");
     Node_print(el->style.first);
     if (node != NULL) {
-        printf("Border is %s\n", node->str_value);
+        // TODO handle borders
     }
     node = Element_get_style(el, "padding");
     Node_print(el->style.first);
@@ -350,12 +349,33 @@ void render(Element *parent, int depth, duk_context *ctx) {
     }
 }
 
+void render_loop(duk_context *ctx) {
+    SDL_Event event;
+    int go_on;
+
+    go_on = 1;
+    while (go_on) {
+        Element_draw_graph(body, 0);
+        render(body, 0, ctx);
+        SDL_RenderPresent(gRenderer);
+        if (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                break;
+            }
+        }
+        SDL_Delay(5);
+    }
+ 
+    return;
+}
+
 /*
 void render_document(html_document *document)
 
     Rendering the DOM document item
 */
 void render_document(lxb_html_document_t *document) {
+    duk_context *ctx;
     //
     body = parse_lxb_body((lxb_dom_node_t *) document->body);
 
@@ -363,21 +383,10 @@ void render_document(lxb_html_document_t *document) {
     body->width = SCREEN_WIDTH;
     body->parent = NULL;
 
-    duk_context *ctx = js_init();
-
+    ctx = js_init();
     init_dom(ctx);
-
-    Element_draw_graph(body, 0);
-
-    render(body, 0, ctx);
-    SDL_RenderPresent(gRenderer);
-    SDL_Delay(5000);
-
-    Element_draw_graph(body, 0);
-
-    render(body, 0, ctx);
-    SDL_RenderPresent(gRenderer);
-    SDL_Delay(5000);
+    //
+    render_loop(ctx);
     // TODO fix JS and re-render after JS changes
     duk_destroy_heap(ctx);
 }
