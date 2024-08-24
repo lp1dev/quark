@@ -34,8 +34,12 @@
   // Test 2
   heading = document.getElementById('heading')
   console.log("Style of element is ", c_getElementStyle(heading._internalId))
+  function callback() {
+    console.log("Hello from the JS callback!")
+  }
   console.log("Style of element is ", heading.style.backgroundColor)
-  
+  intervalID = setTimeout(callback, 3000)
+  console.log("IntervalId is ", intervalID)
   document.getElementById('heading').innerText = "Test4242"
   heading.style.backgroundColor = "#000045"
   heading.style.color = "#990022"

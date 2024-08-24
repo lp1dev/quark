@@ -6,6 +6,7 @@
 #include <SDL2/SDL_ttf.h>
 #include <ctype.h>
 #include "browser/classes/element.h"
+#include "browser/classes/interval.h"
 #include "helpers.h"
 #include "browser/config.h"
 #include "browser/colors.h"
@@ -17,6 +18,7 @@
 SDL_Renderer *gRenderer = NULL;
 Element *body;
 TTF_Font *font;
+Interval *intervals[LIST_SIZE];
 
 /*
 
@@ -250,6 +252,55 @@ static duk_ret_t update_element(duk_context *ctx) {
     return (duk_ret_t) 0;
 }
 
+void init_intervals() {
+    memset(intervals, 0, LIST_SIZE);
+    return;
+}
+
+void check_intervals(duk_context *ctx) {
+    Interval *interval;
+    int current_time;
+    int i;
+
+    current_time = SDL_GetTicks();
+    i = 0;
+    while (intervals[i] != NULL) {
+        if (intervals[i]->timeout != -123456789) {
+            if (current_time > (intervals[i]->start_time + intervals[i]->timeout)) {
+                printf("INTERVAL IS TRIGGERED %i\n", intervals[i]->id);
+                duk_get_global_string(ctx, "quark_executeInterval");
+                duk_push_number(ctx, intervals[i]->id);
+                duk_call(ctx, 1);
+                intervals[i]->timeout = -123456789; // Temporary replacement for an actual delete of the interval
+            }
+        }
+        i++;
+    }
+}
+
+static duk_ret_t set_interval(duk_context *ctx) {
+    Interval *interval_obj;
+    int i;
+    int id;
+    int interval;
+    int timeout;
+
+    i  = 0;
+    id = duk_get_number(ctx, 0);
+    interval = duk_get_number(ctx, 1);
+    timeout = duk_get_number(ctx, 2);
+    interval_obj = Interval_create(id, interval, timeout, SDL_GetTicks());
+    while (intervals[i] != NULL) {
+        i++;
+    }
+    if (i >= LIST_SIZE) {
+        printf("Too many intervals created, exiting\n");
+        exit(-1);
+    }
+    intervals[i] = interval_obj;
+    return (duk_ret_t) 0;
+}
+
 /* void init_dom
 
     Initializing dom objects in the JS context
@@ -263,6 +314,8 @@ void init_dom(duk_context *ctx) {
     duk_put_global_string(ctx, "c_updateElement");
     duk_push_c_function(ctx, get_element_style, 1);
     duk_put_global_string(ctx, "c_getElementStyle");
+    duk_push_c_function(ctx, set_interval, 3);
+    duk_put_global_string(ctx, "c_setInterval");
 }
 
 
@@ -323,8 +376,8 @@ void draw_element(Element *el) {
         if (strncmp(node->str_value, "px", 2) == 0) {
             el->x += node->int_value;
             el->y += node->int_value;
-            // el->width -= (node->int_value * 2);
-            // el->height -= (node->int_value * 2);
+            el->width -= (node->int_value * 2);
+            el->height -= (node->int_value * 2);
         }
     }
 
@@ -385,7 +438,7 @@ void render_loop(duk_context *ctx) {
     timer = 0;
 
     while (go_on) {
-        Element_draw_graph(body, 0);
+        // Element_draw_graph(body, 0);
         render(body, 0, ctx);
         SDL_RenderPresent(gRenderer);
         if (SDL_PollEvent(&event)) {
@@ -393,8 +446,9 @@ void render_loop(duk_context *ctx) {
                 go_on = 0;
             }
         }
+        check_intervals(ctx);
         i++;
-        printf("TIMER %i\n", timer);
+        // printf("TIMER %i\n", timer);
         timer += SDL_GetTicks();
     }
     return;
@@ -413,6 +467,7 @@ void render_document(lxb_html_document_t *document) {
     body->width = SCREEN_WIDTH;
     body->parent = NULL;
 
+    init_intervals();
     ctx = js_init();
     init_dom(ctx);
     render_loop(ctx);
