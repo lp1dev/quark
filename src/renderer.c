@@ -96,8 +96,10 @@ void render_text(Element *el, char *text)
     int font_size = DEFAULT_FONT_SIZE;
 
     element_font_size = Element_get_style(el, "font-size");
-    if (element_font_size != NULL && element_font_size->int_value == -123456789) {
-        process_style_numeric_value(element_font_size);
+    if (element_font_size != NULL) {
+        if (element_font_size->int_value == -123456789) {
+            process_style_numeric_value(element_font_size);
+        }
         font_size = element_font_size->int_value;
     }
     printf("Rendering text '%s' with font size %i\n", el->innerText, font_size);
@@ -298,7 +300,6 @@ void compute_element_dimentions(Element *el) {
 
     el->width = parent->width; // We take all of the available width by default;
     el->height = (parent->height / (siblings + 1));
-    parent->x, parent->y, parent->height, parent->width);
     el->x = parent->x;
     el->y = parent->y + (parent->height / (siblings + 1)) * position;
 }
