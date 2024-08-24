@@ -113,8 +113,6 @@ void    Element_draw_graph(Element *element, int depth) {
         printf("%s----------\n", tabs);
         if (sibling->children != NULL) {
             Element_draw_graph(sibling->children, depth + 1);
-        } else {
-            return;
         }
         sibling = sibling->next;
     }
