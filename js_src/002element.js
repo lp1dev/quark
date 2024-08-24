@@ -46,9 +46,15 @@ function Element(element_obj) {
     })
 
     Object.defineProperty(this, "style", {
-	value: new Style(c_getElementStyle(this._internalId)),
-	configurable: true,
-	writable: true
+	    value: new Style(c_getElementStyle(this._internalId)),
+	    configurable: true,
+	    writable: true
+    })
+
+    Object.defineProperty(this, "attributes", {
+        value: new Attributes(c_getElementAttributes(this._internalId)),
+        configurable: true,
+        writable: true
     })
 }
 

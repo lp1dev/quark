@@ -9,8 +9,8 @@
     <h1 id="heading">My First Heading</h1>
 </div>
 
-<div>
-    <p>My first paragraph.</p>
+<div onclick="console.log('JS: Hello from onclick!!!')">
+    <p>Click me!.</p>
 </div>
 
 <div id="footer">
@@ -26,6 +26,7 @@
   i += 1
   // Test 1
   var el = document.getElementById('test');
+
   // if (el) {
   //   el.id = "newID"
   // }
@@ -57,8 +58,14 @@
     }
     console.log('heading style.color after is', heading.style.color)
   }
+  function heading_onclick() {
+    console.log("HEADING HAS BEEN CLICKED");
+    heading.style.backgroundColor = '#0000ff'
+  }
+  heading.attributes.onclick = "heading_onclick"
   setInterval(switchColor, 2000);
   console.log("Style in JS for heading is", document.getElementById('heading').style)
+  console.log("ATTRIBUTES", c_getElementAttributes(heading._internalId))
 </script>
 
 </body>

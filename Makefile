@@ -7,10 +7,10 @@ SOURCES=src/*.c \
    duktape/src/duktape.c \
    duktape/extras/console/duk_console.c
 
-default: build-js all
+default: js all
 
-build-js:
+js:
 	cat js_src/*.js > quark.js
 
-all: build-js
+all: js
 	gcc ${SOURCES} ${CFLAGS} ./liblexbor.so -o quark

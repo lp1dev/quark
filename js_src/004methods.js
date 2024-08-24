@@ -33,6 +33,13 @@ quark_executeInterval = function(intervalID) {
   }
 }
 
+quark_onClick = function(element) {
+  el = new Element(element)
+  if (el.attributes.onclick) {
+    el.attributes.onclick()
+  }
+}
+
 setTimeout = window.setTimeout
 setInterval = window.setInterval
 getElementById = document.getElementById

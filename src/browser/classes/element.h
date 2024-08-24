@@ -44,10 +44,12 @@ void    Element_add_style(Element *element, char *key, char *value);
 Node    *Element_get_last_style(Element *element);
 Node    *Element_get_style(Element *element, char *key);
 void    Element_set_style(Element *element, char *key, char *value);
+void    Element_set_attribute(Element *element, char *key, char *value);
 int     Element_children_length(Element *element);
 void    Element_draw_graph(Element *element, int depth);
 Element *Element_get_by_id(Element *element, char *id);
 Element *Element_get_by_internal_id(Element *element, int internal_id);
+Element *Element_get_by_pos(Element *element, int x, int y);
 void    Element_delete(Element *element, int internal_id);
 void    process_style_numeric_value(Node *node);
 

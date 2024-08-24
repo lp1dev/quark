@@ -74,6 +74,11 @@ void    Element_set_style(Element *element, char *key, char *value) {
     return NamedNodeMap_set(&element->style, key, value);
 }
 
+void    Element_set_attribute(Element *element, char *key, char *value) {
+    return NamedNodeMap_set(&element->attributes, key, value);
+}
+
+
 void    Element_draw_graph(Element *element, int depth) {
     char *tabs;
     Element *sibling;
@@ -123,6 +128,33 @@ Element *Element_get_by_id(Element *element, char *id) {
     }
 }
 
+Element *Element_get_by_pos(Element *element, int x, int y) {
+    Element *tmp;
+    Element *next;
+    Element *last_match;
+
+    tmp = element;
+    last_match = NULL;
+    while (tmp != NULL) {
+        if ((tmp->x + tmp->width) >= x && x > tmp->x) {
+            if ((tmp->y + tmp->height) >= y && y > tmp->y) {
+                last_match = tmp;
+            }
+        }
+        next = tmp->next;
+        while (next != NULL) {
+            if ((next->x + next->width) >= x && x > next->x) {
+                if ((next->y + next->height) >= y && y > next->y) {
+                    last_match = next;
+                }
+            }
+            next = next->next;
+        }
+        tmp = tmp->children;
+    }
+    return last_match;
+}
+
 void Element_delete(Element *element, int internal_id) {
     Element *tmp;
     Element *next;
@@ -158,8 +190,8 @@ Element *Element_get_by_internal_id(Element *element, int internal_id) {
         } else {
             next = tmp->next;
             while (next != NULL) {
-                if (tmp->internal_id == internal_id) {
-                    return tmp;
+                if (next->internal_id == internal_id) {
+                    return next;
                 }
                 next = next->next;
             }

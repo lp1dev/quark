@@ -153,6 +153,30 @@ void serialize_element(duk_context *ctx, Element *element) {
     duk_put_prop_string(ctx, -2, "internalId");
 }
 
+
+static duk_ret_t get_element_attributes(duk_context *ctx) {
+    Element *el;
+    Node    *node;
+    int     internal_id;
+
+    internal_id = (int) duk_get_int(ctx, 0);
+    el = Element_get_by_internal_id(body, internal_id);
+    if (el == NULL) {
+        printf("Invalid element retrieval by internal id %i\n", internal_id);
+        exit(-1);
+    }
+    duk_push_object(ctx);
+    node = el->attributes.first;
+    duk_push_number(ctx, el->internal_id);
+    duk_put_prop_string(ctx, -2, "internalId");
+    while (node != NULL) {
+        duk_push_string(ctx, node->str_value);
+        duk_put_prop_string(ctx, -2, node->key);
+        node = node->next;
+    }
+    return (duk_ret_t) 1;
+}
+
 /*  */
 static duk_ret_t get_element_style(duk_context *ctx) {
     Element *el;
@@ -247,6 +271,9 @@ static duk_ret_t update_element(duk_context *ctx) {
         case INNER_TEXT:
             element->innerText = update_value;
             break;
+        case ATTRIBUTES:
+            Element_set_attribute(element, update_key, update_value);
+            break;
     }
 
     return (duk_ret_t) 0;
@@ -322,6 +349,9 @@ void init_dom(duk_context *ctx) {
     duk_put_global_string(ctx, "c_getElementStyle");
     duk_push_c_function(ctx, set_interval, 3);
     duk_put_global_string(ctx, "c_setInterval");
+    duk_push_c_function(ctx, get_element_attributes, 1);
+    duk_put_global_string(ctx, "c_getElementAttributes");
+
 }
 
 
@@ -427,6 +457,19 @@ void render(Element *parent, int depth, duk_context *ctx) {
     }
 }
 
+void handle_click(duk_context *ctx, int x, int y) {
+    Element *el;
+
+    printf("User click on %i, %i\n", x, y);
+    el = Element_get_by_pos(body, x, y);
+    printf("User has clicked on %s\n", el->tag);
+    duk_get_global_string(ctx, "quark_onClick");
+    // duk_push_int(ctx, el->internal_id);
+    serialize_element(ctx, el);
+    duk_call(ctx, 1);
+    return;
+}
+
 
 /* 
 void render_loop(dux_context *ctx)
@@ -450,6 +493,10 @@ void render_loop(duk_context *ctx) {
         if (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 go_on = 0;
+            } else if (event.type == SDL_MOUSEBUTTONDOWN) {
+                handle_click(ctx, event.button.x, event.button.y);
+                // event.button.x;
+                // event.button.y;
             }
         }
         check_intervals(ctx);
