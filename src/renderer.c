@@ -358,7 +358,9 @@ void init_dom(duk_context *ctx) {
 void compute_element_dimentions(Element *el) {
     Element *parent;
     Element *tmp;
+    Node *height_node;
     int siblings;
+    int vertical_space_left;
     int position;
 
     //
@@ -368,8 +370,6 @@ void compute_element_dimentions(Element *el) {
     position = 0;
     //
     if (parent == NULL) {
-        el->x = 0;
-        el->y = 0;
         el->width = SCREEN_WIDTH;
         el->height = SCREEN_HEIGHT;
         return;
@@ -384,10 +384,36 @@ void compute_element_dimentions(Element *el) {
         }
         tmp = tmp->next;
     }
-    el->width = parent->width; // We take all of the available width by default;
-    el->height = (parent->height / (siblings + 1));
-    el->x = parent->x;
-    el->y = parent->y + (parent->height / (siblings + 1)) * position;
+
+    printf("Rendering %s\n", el->tag);
+    printf("    Parent is %s\n", parent->tag);
+    if (el->prev == NULL) {
+        printf("This one has no previous sibling\n");
+        el->width = parent->width;
+        el->height = (parent->height / (siblings + 1));
+        el->y = (parent->height / (siblings + 1)) * position;
+        el->x = parent->x;
+    } else {
+        vertical_space_left = SCREEN_HEIGHT - (el->prev->y + el->prev->height);
+        el->width = parent->width; // We take all of the available width by default;
+        el->height = vertical_space_left / (siblings + 1);
+        el->x = parent->x;
+        el->y = el->prev->y + el->prev->height;
+    }
+
+    height_node = Element_get_style(el, "height");
+    if (height_node != NULL) {
+        printf("We've got a height\n");
+        if (height_node->int_value == -123456789) {
+            printf("And a numeric value\n");
+            process_style_numeric_value(height_node);
+        }
+        if (strncmp(height_node->str_value, "px", 2) == 0) {
+            printf("Setting the value with %i\n", height_node->int_value);
+            el->height = height_node->int_value;
+        }
+    }
+    printf("%s{%i,%i,%i,%i}\n", el->tag, el->x, el->y, el->width, el->height);
 }
 
 void draw_element(Element *el) {
@@ -404,18 +430,19 @@ void draw_element(Element *el) {
     if (node != NULL) {
         // TODO handle borders
     }
-    node = Element_get_style(el, "padding");
-    if (node != NULL) {
-        if (node->int_value == -123456789) {
-            process_style_numeric_value(node);
-        }
-        if (strncmp(node->str_value, "px", 2) == 0) {
-            el->x += node->int_value;
-            el->y += node->int_value;
-            el->width -= (node->int_value * 2);
-            el->height -= (node->int_value * 2);
-        }
-    }
+    // node = Element_get_style(el, "padding");
+    // if (node != NULL) {
+    //     if (node->int_value == -123456789) {
+    //         process_style_numeric_value(node);
+    //     }
+    //     if (strncmp(node->str_value, "px", 2) == 0) {
+    //         // Temporarily removed
+    //         // el->x += node->int_value;
+    //         // el->y += node->int_value;
+    //         // el->width -= (node->int_value * 2);
+    //         // el->height -= (node->int_value * 2);
+    //     }
+    // }
 
     SDL_SetRenderDrawColor(gRenderer, \
     background_color.r, \
@@ -503,6 +530,7 @@ void render_loop(duk_context *ctx) {
         i++;
         // printf("TIMER %i\n", timer);
         timer += SDL_GetTicks();
+        SDL_Delay(1000);
     }
     return;
 }
