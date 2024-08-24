@@ -156,6 +156,7 @@ void process_style_numeric_value(Node *node) {
         if (node->str_value[i] < '0' || node->str_value[i] > '9') {
             if (!set_num_value) {
                 buffer[i] = '\0';
+                printf("BUFFER IS %s\n", buffer);
                 node->int_value = atoi(buffer);
                 set_num_value = 1;
             }

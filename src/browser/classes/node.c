@@ -9,7 +9,7 @@ Node *Node_create(char *key, char* value) {
     node = malloc(sizeof(Node));
     node->key = key;
     node->str_value = value;
-    node->int_value = -1;
+    node->int_value = -123456789;
     node->next = NULL;
     return node;
 }
@@ -20,7 +20,7 @@ Node *Node_create_empty() {
     node = malloc(sizeof(Node));
     node->key = NULL;
     node->str_value = NULL;
-    node->int_value = -1;
+    node->int_value = -123456789;
     node->next = NULL;
     return node;
 }

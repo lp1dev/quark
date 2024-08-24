@@ -90,11 +90,16 @@ void render_text(Element *el, char *text)
     SDL_Texture *Message;
     SDL_Color sdl_color;
     Node *element_color;
+    Node *element_font_size;
     css_color text_color = {0, 0, 0, 255};
     SDL_Rect text_rect;
     int font_size = DEFAULT_FONT_SIZE;
 
-
+    element_font_size = Element_get_style(el, "font-size");
+    if (element_font_size != NULL && element_font_size->int_value == -123456789) {
+        process_style_numeric_value(element_font_size);
+        font_size = element_font_size->int_value;
+    }
     printf("Rendering text '%s' with font size %i\n", el->innerText, font_size);
 
     if (TTF_SetFontSize(font, font_size) == -1) {
@@ -148,8 +153,10 @@ void serialize_element(duk_context *ctx, Element *element) {
 /*  */
 static duk_ret_t get_element_style(duk_context *ctx) {
     Element *el;
-    Node *node;
-    int internal_id;
+    Node    *node;
+    char    *tmp;
+    int     internal_id;
+    int     size;
 
     internal_id = (int) duk_get_int(ctx, 0);
     el = Element_get_by_internal_id(body, internal_id);
@@ -162,7 +169,14 @@ static duk_ret_t get_element_style(duk_context *ctx) {
     duk_push_number(ctx, el->internal_id);
     duk_put_prop_string(ctx, -2, "internalId");
     while (node != NULL) {
-        duk_push_string(ctx, node->str_value);
+        if (node->int_value != -123456789) { // This is the uninitialized value
+            size = snprintf(NULL, 0 ,"%i%s\n", node->int_value, node->str_value);
+            tmp = malloc((size + 1) * sizeof(char));
+            snprintf(tmp, size + 1 ,"%i %s\n", node->int_value, node->str_value);
+            duk_push_string(ctx, tmp);
+        } else {
+            duk_push_string(ctx, node->str_value);
+        }
         duk_put_prop_string(ctx, -2, node->key);
         node = node->next;
     }
@@ -187,9 +201,7 @@ static duk_ret_t get_element_by_id(duk_context *ctx)
     printf("In getElementById\n");
     id = (char *) duk_get_string(ctx, 0);
     element = Element_get_by_id(body, id);
-    if (element != NULL) {
-        printf("Found element %s with id %s\n", element->tag, id);
-    } else {
+    if (element == NULL) {
         printf("#%s not found\n", id);
         return (duk_ret_t)0;
     }
@@ -221,7 +233,6 @@ static duk_ret_t update_element(duk_context *ctx) {
     update_type = duk_get_number(ctx, 1);
     update_key = (char *) duk_get_string(ctx, 2);
     update_value = (char *) duk_get_string(ctx, 3);
-    printf("update_element(%i, %i, %s, %s)\n", internal_id, update_type, update_key, update_value);
 
     switch (update_type) {
         case ID:
@@ -254,7 +265,7 @@ void init_dom(duk_context *ctx) {
 }
 
 
-void calculate_element_dimentions(Element *el) {
+void compute_element_dimentions(Element *el) {
     Element *parent;
     Element *tmp;
     int siblings;
@@ -267,6 +278,10 @@ void calculate_element_dimentions(Element *el) {
     position = 0;
     //
     if (parent == NULL) {
+        el->x = 0;
+        el->y = 0;
+        el->width = SCREEN_WIDTH;
+        el->height = SCREEN_HEIGHT;
         return;
     }
 
@@ -279,10 +294,11 @@ void calculate_element_dimentions(Element *el) {
         }
         tmp = tmp->next;
     }
-    printf("Element has %i siblings and position %i\n", siblings, position);
+    // printf("Element has %i siblings and position %i\n", siblings, position);
 
     el->width = parent->width; // We take all of the available width by default;
     el->height = (parent->height / (siblings + 1));
+    parent->x, parent->y, parent->height, parent->width);
     el->x = parent->x;
     el->y = parent->y + (parent->height / (siblings + 1)) * position;
 }
@@ -292,7 +308,7 @@ void draw_element(Element *el) {
     css_color background_color = {255, 255, 255, 0};
     Node *node;
 
-    calculate_element_dimentions(el);
+    compute_element_dimentions(el);
     node = Element_get_style(el, "background-color");
     if (node != NULL) {
         background_color = parse_color(node->str_value);
@@ -305,12 +321,14 @@ void draw_element(Element *el) {
     node = Element_get_style(el, "padding");
     Node_print(el->style.first);
     if (node != NULL) {
-        process_style_numeric_value(node);
+        if (node->int_value == -123456789) {
+            process_style_numeric_value(node);
+        }
         if (strncmp(node->str_value, "px", 2) == 0) {
             el->x += node->int_value;
             el->y += node->int_value;
-            el->width -= (node->int_value * 2);
-            el->height -= (node->int_value * 2);
+            // el->width -= (node->int_value * 2);
+            // el->height -= (node->int_value * 2);
         }
     }
 
@@ -365,6 +383,7 @@ void render_loop(duk_context *ctx) {
     SDL_Event event;
     int go_on;
     int timer;
+    int i = 0;
 
     go_on = 1;
     timer = 0;
@@ -378,9 +397,10 @@ void render_loop(duk_context *ctx) {
                 go_on = 0;
             }
         }
+        i++;
         printf("TIMER %i\n", timer);
         timer += SDL_GetTicks();
-    } 
+    }
     return;
 }
 
