@@ -16,6 +16,7 @@
 
 SDL_Renderer *gRenderer = NULL;
 Element *body;
+TTF_Font *font;
 
 /*
 
@@ -67,6 +68,13 @@ int graph_init()
         exit(-6);
     }
 
+    font = TTF_OpenFont("/usr/share/fonts/opentype/Sans.ttf", DEFAULT_FONT_SIZE);
+    if (font == NULL) {
+        printf("Failed to load font\n");
+        exit(-7);
+    }
+
+
     SDL_SetRenderDrawBlendMode(gRenderer, SDL_BLENDMODE_BLEND);
     SDL_UpdateWindowSurface(window);
 }
@@ -84,17 +92,14 @@ void render_text(Element *el, char *text)
     Node *element_color;
     css_color text_color = {0, 0, 0, 255};
     SDL_Rect text_rect;
-    TTF_Font *font;
     int font_size = DEFAULT_FONT_SIZE;
 
 
     printf("Rendering text '%s' with font size %i\n", el->innerText, font_size);
 
-    font = TTF_OpenFont("/usr/share/fonts/opentype/Sans.ttf", font_size);
-    if (font == NULL)
-    {
-        printf("TTF_OpenFont Error: %s\n", TTF_GetError());
-        exit(-3);
+    if (TTF_SetFontSize(font, font_size) == -1) {
+        printf("Error when setting font size: %s\n", TTF_GetError());
+        exit(-7);
     }
 
     text_rect.x = el->x;
@@ -349,23 +354,33 @@ void render(Element *parent, int depth, duk_context *ctx) {
     }
 }
 
+
+/* 
+void render_loop(dux_context *ctx)
+
+    The main rendering loop
+
+*/
 void render_loop(duk_context *ctx) {
     SDL_Event event;
     int go_on;
+    int timer;
 
     go_on = 1;
+    timer = 0;
+
     while (go_on) {
         Element_draw_graph(body, 0);
         render(body, 0, ctx);
         SDL_RenderPresent(gRenderer);
         if (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
-                break;
+                go_on = 0;
             }
         }
-        SDL_Delay(5);
-    }
- 
+        printf("TIMER %i\n", timer);
+        timer += SDL_GetTicks();
+    } 
     return;
 }
 
@@ -378,15 +393,14 @@ void render_document(lxb_html_document_t *document) {
     duk_context *ctx;
     //
     body = parse_lxb_body((lxb_dom_node_t *) document->body);
-
     body->height = SCREEN_HEIGHT;
     body->width = SCREEN_WIDTH;
     body->parent = NULL;
 
     ctx = js_init();
     init_dom(ctx);
-    //
     render_loop(ctx);
-    // TODO fix JS and re-render after JS changes
     duk_destroy_heap(ctx);
+    SDL_DestroyRenderer(gRenderer);
+    SDL_Quit();
 }
