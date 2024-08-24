@@ -102,7 +102,6 @@ void render_text(Element *el, char *text)
         }
         font_size = element_font_size->int_value;
     }
-    printf("Rendering text '%s' with font size %i\n", el->innerText, font_size);
 
     if (TTF_SetFontSize(font, font_size) == -1) {
         printf("Error when setting font size: %s\n", TTF_GetError());
@@ -296,8 +295,6 @@ void compute_element_dimentions(Element *el) {
         }
         tmp = tmp->next;
     }
-    // printf("Element has %i siblings and position %i\n", siblings, position);
-
     el->width = parent->width; // We take all of the available width by default;
     el->height = (parent->height / (siblings + 1));
     el->x = parent->x;
@@ -315,12 +312,10 @@ void draw_element(Element *el) {
         background_color = parse_color(node->str_value);
     }
     node = Element_get_style(el, "border");
-    Node_print(el->style.first);
     if (node != NULL) {
         // TODO handle borders
     }
     node = Element_get_style(el, "padding");
-    Node_print(el->style.first);
     if (node != NULL) {
         if (node->int_value == -123456789) {
             process_style_numeric_value(node);
@@ -342,7 +337,6 @@ void draw_element(Element *el) {
     rect.y = el->y;
     rect.w = el->width;
     rect.h = el->height;
-    print_rect(rect);
     
     SDL_RenderFillRect(gRenderer, &rect);
     if (el->innerText && strlen(el->innerText) > 0) {
@@ -365,6 +359,7 @@ void render(Element *parent, int depth, duk_context *ctx) {
         draw_element(tmp);
         if (strncmp(tmp->tag, "script", 6) == 0) {
             duk_eval_string(ctx, tmp->innerText);
+            Element_delete(parent, tmp->internal_id);
         }
         if (tmp->children != NULL) {
             render(tmp->children, depth + 1, ctx);

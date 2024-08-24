@@ -58,6 +58,25 @@ void NamedNodeMap_append(NamedNodeMap *map, char* key, char *value) {
     }
 }
 
+void NamedNodeMap_delete(NamedNodeMap *map, char *key) {
+    Node *tmp;
+
+    tmp = map->first;
+    if (strcmp(tmp->key, key) == 0) {
+        free(map->first);
+        map->first = NULL;
+        map->length = 0;
+    }
+    while (tmp->next != NULL) {
+        if (strcmp(tmp->next->key, key) == 0) {
+            free(tmp->next);
+            tmp->next = tmp->next->next;
+            return;
+        }
+        tmp = tmp->next;
+    }
+}
+
 void NamedNodeMap_append_node(NamedNodeMap *map, Node *new_node) {
     Node *tmp;
     Node *last;

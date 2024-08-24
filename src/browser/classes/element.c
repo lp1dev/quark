@@ -17,6 +17,7 @@ Element *Element_create() {
     new->id = NULL;
     new->children = NULL;
     new->parent = NULL;
+    new->prev = NULL;
     new->next = NULL;
     new->type = "element";
     new->innerText = NULL;
@@ -112,11 +113,35 @@ Element *Element_get_by_id(Element *element, char *id) {
         } else {
             next = tmp->next;
             while (next != NULL) {
-                if (tmp->id && strcmp(tmp->id, id) == 0) {
-                    return tmp;
+                if (tmp->id && strcmp(tmp->id, id) == 0) { // Might be a bug, should maybe remplace tmp by next here!!
+                    return tmp;// Or next ?
                 }
                 next = next->next;
             }
+        }
+        tmp = tmp->children;
+    }
+}
+
+void Element_delete(Element *element, int internal_id) {
+    Element *tmp;
+    Element *next;
+
+    tmp = element;
+    while (tmp != NULL) {
+        if (tmp->internal_id == internal_id) {
+            tmp->prev->next = tmp->next;
+            free(tmp);
+            return;
+        }
+        next = tmp->next;
+        while (next != NULL) {
+            if (next->internal_id == internal_id) {
+                next->prev->next = next->next;
+                free(next);
+                return;
+            }
+            next = next->next;
         }
         tmp = tmp->children;
     }

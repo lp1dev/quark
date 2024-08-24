@@ -110,6 +110,7 @@ Element *walk_and_create_elements(Element *parent, lxb_dom_node_t *root_node) {
 
             if (el_buffer != NULL) {
                 el_buffer->next = Element_create();
+                el_buffer->next->prev = el_buffer;
                 el_buffer = el_buffer->next;
             } else {
                 el_buffer = Element_create();
