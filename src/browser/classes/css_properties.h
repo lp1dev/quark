@@ -8,4 +8,11 @@ struct CSS_Properties {
     char *color;
 };
 
+
+// typedef struct Margin Margin;
+
+// struct Margin {
+
+// }
+
 #endif

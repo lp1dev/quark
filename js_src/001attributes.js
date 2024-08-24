@@ -55,7 +55,6 @@ function Attributes(attributes) {
             if (typeof(onclick) !== 'string') {
                 throw new Error("OnClick attributes must be strings, not functions with quark!");
             }
-            console.log('Setting onclick to', onclick)
             quark.c_updateElement(attributes['internalId'], 3, "onclick", onclick)
         },
         configurable: true

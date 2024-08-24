@@ -86,7 +86,7 @@ void render_text(char* text, SDL_Rect rect)
 
     Rendering text element
 */
-void render_text(Element *el, char *text)
+SDL_Rect render_text(Element *el, char *text)
 {
     SDL_Surface *surfaceMessage;
     SDL_Texture *Message;
@@ -124,13 +124,16 @@ void render_text(Element *el, char *text)
     sdl_color.b = text_color.b;
     sdl_color.g = text_color.g;
     sdl_color.a = text_color.a;
-    //
-    surfaceMessage = TTF_RenderText_Solid(font, text, sdl_color);
+    // TTF_RenderText_Blended_Wrapped might not be supported on all devices
+    surfaceMessage = TTF_RenderText_Blended_Wrapped(font, text, sdl_color, el->width);
+    text_rect.w = surfaceMessage->w;
+    text_rect.h = surfaceMessage->h;
     Message = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage);
 
     SDL_RenderCopy(gRenderer, Message, NULL, &text_rect);
     SDL_FreeSurface(surfaceMessage);
     SDL_DestroyTexture(Message);
+    return text_rect;
 }
 
 /* 
@@ -358,9 +361,10 @@ void init_dom(duk_context *ctx) {
 void compute_element_dimentions(Element *el) {
     Element *parent;
     Element *tmp;
-    Node *height_node;
+    Node *node;
     int siblings;
     int vertical_space_left;
+    int horizontal_space_left;
     int position;
 
     //
@@ -389,28 +393,41 @@ void compute_element_dimentions(Element *el) {
     printf("    Parent is %s\n", parent->tag);
     if (el->prev == NULL) {
         printf("This one has no previous sibling\n");
-        el->width = parent->width;
+        el->width = parent->width; // By default an element will take all of the available width
         el->height = (parent->height / (siblings + 1));
         el->y = (parent->height / (siblings + 1)) * position;
         el->x = parent->x;
     } else {
+        horizontal_space_left = SCREEN_WIDTH - (el->prev->x + el->prev->width);
         vertical_space_left = SCREEN_HEIGHT - (el->prev->y + el->prev->height);
         el->width = parent->width; // We take all of the available width by default;
-        el->height = vertical_space_left / (siblings + 1);
+        el->height = vertical_space_left / (siblings);
         el->x = parent->x;
         el->y = el->prev->y + el->prev->height;
     }
 
-    height_node = Element_get_style(el, "height");
-    if (height_node != NULL) {
+    node = Element_get_style(el, "height");
+    if (node != NULL) {
         printf("We've got a height\n");
-        if (height_node->int_value == -123456789) {
+        if (node->int_value == -123456789) {
             printf("And a numeric value\n");
-            process_style_numeric_value(height_node);
+            process_style_numeric_value(node);
         }
-        if (strncmp(height_node->str_value, "px", 2) == 0) {
-            printf("Setting the value with %i\n", height_node->int_value);
-            el->height = height_node->int_value;
+        if (strncmp(node->str_value, "px", 2) == 0) {
+            printf("Setting the value with %i\n", node->int_value);
+            el->height = node->int_value;
+        }
+    }
+    node = Element_get_style(el, "width");
+    if (node != NULL) {
+        printf("We've got a width\n");
+        if (node->int_value == -123456789) {
+            printf("And a numeric value\n");
+            process_style_numeric_value(node);
+        }
+        if (strncmp(node->str_value, "px", 2) == 0) {
+            printf("Setting the value with %i\n", node->int_value);
+            el->width = node->int_value;
         }
     }
     printf("%s{%i,%i,%i,%i}\n", el->tag, el->x, el->y, el->width, el->height);
@@ -530,7 +547,6 @@ void render_loop(duk_context *ctx) {
         i++;
         // printf("TIMER %i\n", timer);
         timer += SDL_GetTicks();
-        SDL_Delay(1000);
     }
     return;
 }
