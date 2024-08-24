@@ -78,6 +78,19 @@ void    Element_set_attribute(Element *element, char *key, char *value) {
     return NamedNodeMap_set(&element->attributes, key, value);
 }
 
+Node     *Element_get_style_int(Element *element, char *name) {
+    Node *node;
+    node = Element_get_style(element, name);
+    if (node != NULL) {
+        if (node->int_value == -123456789) {
+            process_style_numeric_value(node);
+        }
+        if (strncmp(node->str_value, "px", 2) == 0) {
+            return node;
+        }
+    }
+    return NULL;
+}
 
 void    Element_draw_graph(Element *element, int depth) {
     char *tabs;

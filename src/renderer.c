@@ -395,7 +395,7 @@ void compute_element_dimentions(Element *el) {
         printf("This one has no previous sibling\n");
         el->width = parent->width; // By default an element will take all of the available width
         el->height = (parent->height / (siblings + 1));
-        el->y = (parent->height / (siblings + 1)) * position;
+        el->y = ((parent->height / (siblings + 1)) * position) + parent->y;
         el->x = parent->x;
     } else {
         horizontal_space_left = SCREEN_WIDTH - (el->prev->x + el->prev->width);
@@ -447,33 +447,39 @@ void draw_element(Element *el) {
     if (node != NULL) {
         // TODO handle borders
     }
-    // node = Element_get_style(el, "padding");
-    // if (node != NULL) {
-    //     if (node->int_value == -123456789) {
-    //         process_style_numeric_value(node);
-    //     }
-    //     if (strncmp(node->str_value, "px", 2) == 0) {
-    //         // Temporarily removed
-    //         // el->x += node->int_value;
-    //         // el->y += node->int_value;
-    //         // el->width -= (node->int_value * 2);
-    //         // el->height -= (node->int_value * 2);
-    //     }
-    // }
+    if (el->parent != NULL) {
+        node = Element_get_style_int(el->parent, "padding");
+        if (node != NULL) {
+            printf("\tApplying parent padding %i to %s\n", node->int_value, el->tag);
+            el->x += node->int_value;
+            el->y += node->int_value;
+            el->width -= (node->int_value * 2);
+            el->height -= (node->int_value * 2);
+            printf("{%i, %i, %i, %i}\n", el->x, el->y, el->width, el->height);
+        }
+    }
 
     SDL_SetRenderDrawColor(gRenderer, \
     background_color.r, \
     background_color.g, \
     background_color.b, \
     background_color.a);
+
     rect.x = el->x;
     rect.y = el->y;
     rect.w = el->width;
     rect.h = el->height;
-    
+    print_rect(rect);
     SDL_RenderFillRect(gRenderer, &rect);
     if (el->innerText && strlen(el->innerText) > 0) {
         render_text(el, el->innerText);
+    }
+    node = Element_get_style_int(el, "margin");
+    if (node != NULL) {
+        el->x -= node->int_value;
+        el->y -= node->int_value;
+        el->width += node->int_value * 2;
+        el->height += node->int_value * 2;
     }
 }
 

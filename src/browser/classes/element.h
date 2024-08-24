@@ -50,6 +50,7 @@ void    Element_draw_graph(Element *element, int depth);
 Element *Element_get_by_id(Element *element, char *id);
 Element *Element_get_by_internal_id(Element *element, int internal_id);
 Element *Element_get_by_pos(Element *element, int x, int y);
+Node    *Element_get_style_int(Element *element, char *name);
 void    Element_delete(Element *element, int internal_id);
 void    process_style_numeric_value(Node *node);
 
