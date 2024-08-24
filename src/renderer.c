@@ -267,11 +267,17 @@ void check_intervals(duk_context *ctx) {
     while (intervals[i] != NULL) {
         if (intervals[i]->timeout != -123456789) {
             if (current_time > (intervals[i]->start_time + intervals[i]->timeout)) {
-                printf("INTERVAL IS TRIGGERED %i\n", intervals[i]->id);
                 duk_get_global_string(ctx, "quark_executeInterval");
                 duk_push_number(ctx, intervals[i]->id);
                 duk_call(ctx, 1);
                 intervals[i]->timeout = -123456789; // Temporary replacement for an actual delete of the interval
+            }
+        } else if (intervals[i]->interval != -123456789) {
+            if (current_time > (intervals[i]->start_time + intervals[i]->interval)) {
+                duk_get_global_string(ctx, "quark_executeInterval");
+                duk_push_number(ctx, intervals[i]->id);
+                duk_call(ctx, 1);
+                intervals[i]->start_time = current_time;
             }
         }
         i++;

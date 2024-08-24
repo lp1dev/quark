@@ -36,6 +36,8 @@
   console.log("Style of element is ", c_getElementStyle(heading._internalId))
   function callback() {
     console.log("Hello from the JS callback!")
+    heading.style.color = "#009900"
+    heading.style.backgroundColor = "#990066cc"
   }
   console.log("Style of element is ", heading.style.backgroundColor)
   intervalID = setTimeout(callback, 3000)
@@ -43,6 +45,19 @@
   document.getElementById('heading').innerText = "Test4242"
   heading.style.backgroundColor = "#000045"
   heading.style.color = "#990022"
+
+  function switchColor() {
+    heading = document.getElementById('heading')
+    console.log('heading style is', heading.style)
+    console.log('heading style.color is', heading.style.color)
+    if (heading.style.color == "#990000") {
+      heading.style.color = "#009900"
+    } else {
+      heading.style.color = "#990000"
+    }
+    console.log('heading style.color after is', heading.style.color)
+  }
+  setInterval(switchColor, 2000);
   console.log("Style in JS for heading is", document.getElementById('heading').style)
 </script>
 

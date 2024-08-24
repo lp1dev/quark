@@ -10,8 +10,15 @@ document.getElementById = function(id) {
 
 window.setTimeout = function(callback, timeout_duration) {
   intervalID = parseInt(Math.random() * 1000000);
-  window.intervals.push({id: intervalID, callback, timeout_duration});
+  window.intervals.push({id: intervalID, callback, timeout_duration})
   c_setInterval(intervalID, -123456789, timeout_duration);
+  return intervalID
+}
+
+window.setInterval = function(callback, interval_duration) {
+  intervalID = parseInt(Math.random() * 1000000);
+  window.intervals.push({id: intervalID, callback, interval_duration})
+  c_setInterval(intervalID, interval_duration, -123456789)
   return intervalID
 }
 
@@ -27,6 +34,7 @@ quark_executeInterval = function(intervalID) {
 }
 
 setTimeout = window.setTimeout
+setInterval = window.setInterval
 getElementById = document.getElementById
 
 //
