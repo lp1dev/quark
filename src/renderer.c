@@ -357,8 +357,67 @@ void init_dom(duk_context *ctx) {
 
 }
 
+void compute_element_dimensions_inline(Element *el) {
+    Element *parent;
+    Element *tmp;
+    Node *node;
+    int siblings;
+    int vertical_space_left;
+    int horizontal_space_left;
+    int position;
 
-void compute_element_dimentions(Element *el) {
+    printf("Handling inline item %s\n", el->tag);
+
+    //
+    parent = el->parent;
+    tmp = NULL;
+    siblings = 0;
+    position = 0;
+    //
+    if (parent == NULL) {
+        el->width = SCREEN_WIDTH;
+        el->height = SCREEN_HEIGHT;
+        return;
+    }
+
+    tmp = parent->children;
+    while (tmp != NULL) {
+        if (tmp->internal_id == el->internal_id) {
+            position = siblings;
+        }
+        siblings++;
+        tmp = tmp->next;
+    }
+
+    if (el->prev == NULL) {
+        el->width = (parent->width / (siblings));
+        el->height = parent->height;
+        el->x = ((parent->width / (siblings)) * position) + parent->x;
+        el->y = parent->y;
+    } else {
+        horizontal_space_left = SCREEN_WIDTH - (el->prev->x + el->prev->width);
+        vertical_space_left = SCREEN_HEIGHT - (el->prev->y + el->prev->height);
+        el->width = horizontal_space_left / (siblings) * position;
+        el->height = parent->height;
+        el->x = el->prev->x + el->prev->width;
+        el->y = parent->y;
+        if ((parent->x + el->x + el->width) > parent->width) {
+            parent->width = parent->x + el->x + el->width;
+        }
+        printf("%s{%i, %i, %i, %i}\n", el->tag, el->x, el->y, el->width, el->height);
+    }
+
+    node = Element_get_style_int(el, "height");
+    if (node != NULL) {
+        el->height = node->int_value;
+    }
+    node = Element_get_style_int(el, "width");
+    if (node != NULL) {
+        el->width = node->int_value;
+    }
+}
+
+void compute_element_dimensions(Element *el) {
     Element *parent;
     Element *tmp;
     Node *node;
@@ -381,56 +440,39 @@ void compute_element_dimentions(Element *el) {
 
     tmp = parent->children;
     while (tmp != NULL) {
-        if (tmp->internal_id != el->internal_id) {
-            siblings++;
-        } else {
+        if (tmp->internal_id == el->internal_id) {
             position = siblings;
         }
+        siblings++;
         tmp = tmp->next;
     }
 
-    printf("Rendering %s\n", el->tag);
-    printf("    Parent is %s\n", parent->tag);
     if (el->prev == NULL) {
-        printf("This one has no previous sibling\n");
         el->width = parent->width; // By default an element will take all of the available width
-        el->height = (parent->height / (siblings + 1));
-        el->y = ((parent->height / (siblings + 1)) * position) + parent->y;
+        el->height = (parent->height / siblings);
+        el->y = ((parent->height / siblings) * position) + parent->y;
         el->x = parent->x;
     } else {
         horizontal_space_left = SCREEN_WIDTH - (el->prev->x + el->prev->width);
         vertical_space_left = SCREEN_HEIGHT - (el->prev->y + el->prev->height);
         el->width = parent->width; // We take all of the available width by default;
-        el->height = vertical_space_left / (siblings);
+        el->height = vertical_space_left / siblings * position;
         el->x = parent->x;
         el->y = el->prev->y + el->prev->height;
+        if ((parent->y + el->y + el->height) > parent->height) {
+            parent->height = parent->y + el->y + el->height;
+        }
+        printf("%s{%i, %i, %i, %i}\n", el->tag, el->x, el->y, el->width, el->height);
     }
 
-    node = Element_get_style(el, "height");
+    node = Element_get_style_int(el, "height");
     if (node != NULL) {
-        printf("We've got a height\n");
-        if (node->int_value == -123456789) {
-            printf("And a numeric value\n");
-            process_style_numeric_value(node);
-        }
-        if (strncmp(node->str_value, "px", 2) == 0) {
-            printf("Setting the value with %i\n", node->int_value);
-            el->height = node->int_value;
-        }
+        el->height = node->int_value;
     }
-    node = Element_get_style(el, "width");
+    node = Element_get_style_int(el, "width");
     if (node != NULL) {
-        printf("We've got a width\n");
-        if (node->int_value == -123456789) {
-            printf("And a numeric value\n");
-            process_style_numeric_value(node);
-        }
-        if (strncmp(node->str_value, "px", 2) == 0) {
-            printf("Setting the value with %i\n", node->int_value);
-            el->width = node->int_value;
-        }
+        el->width = node->int_value;
     }
-    printf("%s{%i,%i,%i,%i}\n", el->tag, el->x, el->y, el->width, el->height);
 }
 
 void draw_element(Element *el) {
@@ -438,7 +480,16 @@ void draw_element(Element *el) {
     css_color background_color = {255, 255, 255, 0};
     Node *node;
 
-    compute_element_dimentions(el);
+    node = NULL;
+    if (el->parent != NULL) {
+        node = Element_get_style(el->parent, "display");
+    }
+    if (node != NULL && \
+        strncmp(node->str_value, "inline-block", 12) == 0) {
+        compute_element_dimensions_inline(el);
+    } else {
+        compute_element_dimensions(el);
+    }
     node = Element_get_style(el, "background-color");
     if (node != NULL) {
         background_color = parse_color(node->str_value);
@@ -537,7 +588,7 @@ void render_loop(duk_context *ctx) {
     timer = 0;
 
     while (go_on) {
-        // Element_draw_graph(body, 0);
+        Element_draw_graph(body, 0);
         render(body, 0, ctx);
         SDL_RenderPresent(gRenderer);
         if (SDL_PollEvent(&event)) {
@@ -545,8 +596,6 @@ void render_loop(duk_context *ctx) {
                 go_on = 0;
             } else if (event.type == SDL_MOUSEBUTTONDOWN) {
                 handle_click(ctx, event.button.x, event.button.y);
-                // event.button.x;
-                // event.button.y;
             }
         }
         check_intervals(ctx);
