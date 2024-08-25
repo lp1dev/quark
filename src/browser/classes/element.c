@@ -144,24 +144,19 @@ Element *Element_get_by_pos(Element *element, int x, int y) {
     Element *next;
     Element *last_match;
 
-    tmp = element;
+    next = element;
     last_match = NULL;
-    while (tmp != NULL) {
-        if ((tmp->x + tmp->width) >= x && x > tmp->x) {
-            if ((tmp->y + tmp->height) >= y && y > tmp->y) {
-                last_match = tmp;
+    while (next != NULL) {
+        printf("\tnext->tag %s\n", next->tag);
+        if ((next->x + next->width) >= x && x > next->x) {
+            if ((next->y + next->height) >= y && y > next->y) {
+                last_match = next;
             }
         }
-        next = tmp->next;
-        while (next != NULL) {
-            if ((next->x + next->width) >= x && x > next->x) {
-                if ((next->y + next->height) >= y && y > next->y) {
-                    last_match = next;
-                }
-            }
-            next = next->next;
+        if (next->children != NULL) {
+            return Element_get_by_pos(next->children, x, y);
         }
-        tmp = tmp->children;
+        next = next->next;
     }
     return last_match;
 }
