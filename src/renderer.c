@@ -397,7 +397,7 @@ void compute_element_dimensions_inline(Element *el) {
     } else {
         horizontal_space_left = SCREEN_WIDTH - (el->prev->x + el->prev->width);
         vertical_space_left = SCREEN_HEIGHT - (el->prev->y + el->prev->height);
-        el->width = horizontal_space_left / (siblings) * position;
+        el->width = horizontal_space_left / (siblings - 1) * position;
         el->height = parent->height;
         el->x = el->prev->x + el->prev->width;
         el->y = parent->y;
@@ -447,6 +447,7 @@ void compute_element_dimensions(Element *el) {
         tmp = tmp->next;
     }
 
+    printf("%s: Siblings is %i\n", el->tag, siblings);
     if (el->prev == NULL) {
         el->width = parent->width; // By default an element will take all of the available width
         el->height = (parent->height / siblings);
@@ -456,7 +457,7 @@ void compute_element_dimensions(Element *el) {
         horizontal_space_left = SCREEN_WIDTH - (el->prev->x + el->prev->width);
         vertical_space_left = SCREEN_HEIGHT - (el->prev->y + el->prev->height);
         el->width = parent->width; // We take all of the available width by default;
-        el->height = vertical_space_left / siblings * position;
+        el->height = vertical_space_left / (siblings - 1) * position;
         el->x = parent->x;
         el->y = el->prev->y + el->prev->height;
         if ((parent->y + el->y + el->height) > parent->height) {

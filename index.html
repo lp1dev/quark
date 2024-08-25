@@ -5,68 +5,18 @@
       <link rel="stylesheet" href="style.css"/>
     </head>
 <body>
-<div id="test">
-    <h1 id="heading">My First Heading</h1>
+  <div id="container">
+    <h1 style="height: 120px; width: 200px; background-color: #229900; color: #000000" id="heading">My First Heading</h1>
+
+    <h2 style="background-color: #990000; color: #0044ee;">Test2 Test2</h2>
+
+    <h3 style="background-color: #2821ab; color: #ffffff;">Test3</h3>
+  </div>
+
+  <div style="background-color: #6b3665;" id="footer">
+    <h2>I am the footer</h2>
+  </div>
 </div>
-
-<div onclick="console.log('JS: Hello from onclick!!!')">
-    <p>Click me!.</p>
-</div>
-
-<div id="footer">
-  <div style="background-color: #991199">Test Text</div>
-  <div>Test2 Test2</div>
-</div>
-
-<script>
-
-  console.log("Hello from html!", 123);
-  var i = 0;
-  i += 1
-  i += 1
-  // Test 1
-  var el = document.getElementById('test');
-
-  // if (el) {
-  //   el.id = "newID"
-  // }
-  console.log("I is "+i);
-
-  // Test 2
-  heading = document.getElementById('heading')
-  console.log("Style of element is ", c_getElementStyle(heading._internalId))
-  function callback() {
-    console.log("Hello from the JS callback!")
-    heading.style.color = "#009900"
-    heading.style.backgroundColor = "#990066cc"
-  }
-  console.log("Style of element is ", heading.style.backgroundColor)
-  intervalID = setTimeout(callback, 3000)
-  console.log("IntervalId is ", intervalID)
-  document.getElementById('heading').innerText = "Test4242"
-  heading.style.backgroundColor = "#000045"
-  heading.style.color = "#990022"
-
-  function switchColor() {
-    heading = document.getElementById('heading')
-    console.log('heading style is', heading.style)
-    console.log('heading style.color is', heading.style.color)
-    if (heading.style.color == "#990000") {
-      heading.style.color = "#009900"
-    } else {
-      heading.style.color = "#990000"
-    }
-    console.log('heading style.color after is', heading.style.color)
-  }
-  function heading_onclick() {
-    console.log("HEADING HAS BEEN CLICKED");
-    heading.style.backgroundColor = '#0000ff'
-  }
-  heading.attributes.onclick = "heading_onclick"
-  setInterval(switchColor, 2000);
-  console.log("Style in JS for heading is", document.getElementById('heading').style)
-  console.log("ATTRIBUTES", c_getElementAttributes(heading._internalId))
-</script>
 
 </body>
 </html>

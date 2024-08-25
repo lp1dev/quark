@@ -1,10 +1,11 @@
 h1 {
     font-size: 2rem;
+    margin: 3px;
 }
 
 p {
     font-size: 12px;
-    margin: 6px;
+    /* margin: 6px; */
 }
 
 #heading {
@@ -16,16 +17,20 @@ p {
 body {
     background-color: #e2e2e2;
     color: #006677;
-    padding: 10px;
+    /* padding: 10px; */
 }
 
 #footer {
     background-color: #006677;
     color: #e2e2e2;
     border: 1px solid #000000;
-    padding: 6px;
+    /* padding: 6px; */
 }
 
 #test {
     height: 15px;
+}
+
+#container {
+    display: inline-block;
 }
