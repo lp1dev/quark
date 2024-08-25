@@ -189,20 +189,17 @@ Element *Element_get_by_internal_id(Element *element, int internal_id) {
     Element *tmp;
     Element *next;
 
-    tmp = element;
-    while (tmp != NULL) {
-        if (tmp->internal_id == internal_id) {
-            return tmp;
-        } else {
-            next = tmp->next;
-            while (next != NULL) {
-                if (next->internal_id == internal_id) {
-                    return next;
-                }
-                next = next->next;
+    next = element;
+    while (next != NULL) {
+        if (next->internal_id == internal_id) {
+            return next;
+        } else if (next->children != NULL) {
+            tmp = Element_get_by_internal_id(next->children, internal_id);
+            if (tmp != NULL) {
+                return tmp;
             }
         }
-        tmp = tmp->children;
+        next = next->next;
     }
     return NULL;
 }
