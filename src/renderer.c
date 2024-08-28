@@ -418,8 +418,8 @@ void compute_element_dimensions_inline(Element *el) {
     if (node != NULL) {
         el->x += node->int_value;
         el->y += node->int_value;
-        // el->width -= (node->int_value);
-        // el->height -= (node->int_value);
+        el->width -= (node->int_value * 2);
+        el->height -= (node->int_value * 2);
     }
 
 }
@@ -554,8 +554,8 @@ void compute_element_dimensions(Element *el) {
     if (node != NULL) {
         el->x += node->int_value;
         el->y += node->int_value;
-        // el->width -= (node->int_value);
-        // el->height -= (node->int_value);
+        el->width -= (node->int_value * 2);
+        el->height -= (node->int_value * 2);
     }
 }
 
