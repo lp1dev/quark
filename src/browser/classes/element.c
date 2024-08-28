@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "element.h"
+#include "../config.h"
 
 
 Element *Element_create() {
@@ -79,15 +80,48 @@ void    Element_set_attribute(Element *element, char *key, char *value) {
 }
 
 Node     *Element_get_style_int(Element *element, char *name) {
+    Node *new_node;
     Node *node;
+
     node = Element_get_style(element, name);
+    new_node = malloc(sizeof(Node));
+
     if (node != NULL) {
-        if (node->int_value == -123456789) {
-            process_style_numeric_value(node);
-        }
+        process_style_numeric_value(node);
+
         if (strncmp(node->str_value, "px", 2) == 0) {
             return node;
         }
+        else if (strncmp(node->str_value, "%", 1) == 0) {
+            // Parsing of the number is wrong here, I need to check process_style_numeric_value
+            printf("[1/2] Percentage value is %i %s %s\n", node->int_value, node->str_value, name);
+
+            printf("Element parent width is %i\n", element->parent->width);
+            if (strncmp(name, "width", 5) == 0) {
+                if (element->parent != NULL) {
+                    new_node->int_value = ((element->parent->width / 100) * node->int_value);
+                } else {
+                    new_node->int_value = ((SCREEN_WIDTH / 100) * node->int_value);
+                }
+            } else if (strncmp(name, "height", 6) == 0) {
+                if (element->parent != NULL) {
+                    new_node->int_value = ((element->parent->height / 100) * node->int_value);
+                } else {
+                    new_node->int_value = ((SCREEN_HEIGHT / 100) * node->int_value);
+                }
+            }
+            printf("[2/2] Percentage value is %i\n", node->int_value);
+            new_node->key = name;
+            new_node->str_value = node->str_value;
+            return new_node;
+        }
+        else if (strncmp(node->str_value, "vh", 2) == 0) {
+            node->int_value = (SCREEN_HEIGHT / 100) * node->int_value;
+        }
+        else if (strncmp(node->str_value, "vw", 2) == 0) {
+            node->int_value = (SCREEN_WIDTH / 100) * node->int_value;
+        }
+
     }
     return NULL;
 }
@@ -209,6 +243,9 @@ void process_style_numeric_value(Node *node) {
     int set_num_value;
     int j;
 
+    if (node->int_value != -123456789) {
+        return;
+    }
     j = 0;
     set_num_value = 0;
     buffer = malloc(sizeof(char) * (strlen(node->str_value) + 1));
@@ -216,7 +253,6 @@ void process_style_numeric_value(Node *node) {
         if (node->str_value[i] < '0' || node->str_value[i] > '9') {
             if (!set_num_value) {
                 buffer[i] = '\0';
-                printf("BUFFER IS %s\n", buffer);
                 node->int_value = atoi(buffer);
                 set_num_value = 1;
             }

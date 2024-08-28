@@ -415,13 +415,61 @@ void compute_element_dimensions_inline(Element *el) {
     }
 }
 
+SDL_Rect compute_smallest_element_size(Element *el) {
+    Element *child;
+    Node *font_size;
+    Node *padding;
+    int font_size_value;
+    SDL_Rect smallest = {0, 0, 0, 0};
+    SDL_Rect text_size = {0, 0, 0, 0};
+    SDL_Rect children_size = {0, 0, 0, 0};
+    
+    //
+    smallest.w = el->width;
+    smallest.h = el->height;
+
+    child = el->children;
+    while (child != NULL) {
+        children_size = compute_smallest_element_size(child);
+        smallest.w = children_size.w;
+        smallest.h = children_size.h;
+
+        child = child->children;
+    }
+
+    font_size = Element_get_style_int(el, "font-size");
+    if (font_size != NULL) {
+        font_size_value = font_size->int_value;
+    } else {
+        font_size_value = DEFAULT_FONT_SIZE;
+    }
+    if (el->innerText != NULL) {
+        text_size.w = (strlen(el->innerText) * font_size_value);
+        text_size.w = font_size_value;
+    }
+
+    if (smallest.h > text_size.h && text_size.h > 0) {
+        smallest.h = text_size.h;
+    }
+    if (smallest.w > text_size.w && text_size.w > 0) {
+        smallest.w = text_size.w;
+    }
+    padding = Element_get_style_int(el, "padding");
+    if (padding != NULL) {
+        // There seems to be a bug in applying padding
+        smallest.w += padding->int_value;
+        smallest.h += padding->int_value;
+    }
+    return smallest;
+}
+
 void compute_element_dimensions(Element *el) {
     Element *parent;
     Element *tmp;
     Node *node;
+    SDL_Rect smallest_size;
     int siblings;
     int vertical_space_left;
-    int horizontal_space_left;
     int position;
 
     //
@@ -445,22 +493,43 @@ void compute_element_dimensions(Element *el) {
         tmp = tmp->next;
     }
 
+    smallest_size = compute_smallest_element_size(el);
+    // print_rect(smallest_size);
+
     if (el->prev == NULL) {
+    
         el->width = parent->width; // By default an element will take all of the available width
         el->height = (parent->height / siblings);
+
+        if (smallest_size.w != 0) {
+            el->width = smallest_size.w;
+            // I should add padding here
+        }
+        if (smallest_size.h != 0) {
+            el->height = smallest_size.h;
+            // Here too
+        }
         el->y = ((parent->height / siblings) * position) + parent->y;
         el->x = parent->x;
     } else {
-        horizontal_space_left = SCREEN_WIDTH - (el->prev->x + el->prev->width);
         vertical_space_left = SCREEN_HEIGHT - (el->prev->y + el->prev->height);
         el->width = parent->width; // We take all of the available width by default;
         el->height = vertical_space_left / (siblings - 1) * position;
+        if (smallest_size.w != 0) {
+            el->width = smallest_size.w;
+            // I should add padding here
+        }
+        if (smallest_size.h != 0) {
+            // Here too
+            el->height = smallest_size.h;
+        }
+
         el->x = parent->x;
         el->y = el->prev->y + el->prev->height;
         if ((parent->y + el->y + el->height) > parent->height) {
             parent->height = parent->y + el->y + el->height;
         }
-        // printf("%s{%i, %i, %i, %i}\n", el->tag, el->x, el->y, el->width, el->height);
+        // printf("%s(%s){%i, %i, %i, %i}\n", el->tag, el->id, el->x, el->y, el->width, el->height);
     }
 
     node = Element_get_style_int(el, "height");
@@ -471,6 +540,14 @@ void compute_element_dimensions(Element *el) {
     if (node != NULL) {
         el->width = node->int_value;
     }
+    //
+    node = Element_get_style_int(el->parent, "padding");
+    // if (node != NULL) {
+    //     el->x += node->int_value;
+    //     el->y += node->int_value;
+    //     el->width -= (node->int_value * 2);
+    //     el->height -= (node->int_value * 2);
+    // }
 }
 
 void draw_element(Element *el) {
@@ -496,16 +573,16 @@ void draw_element(Element *el) {
     if (node != NULL) {
         // TODO handle borders
     }
-    if (el->parent != NULL) {
-        node = Element_get_style_int(el->parent, "padding");
-        if (node != NULL) {
-            el->x += node->int_value;
-            el->y += node->int_value;
-            el->width -= (node->int_value * 2);
-            el->height -= (node->int_value * 2);
-            // printf("{%i, %i, %i, %i}\n", el->x, el->y, el->width, el->height);
-        }
-    }
+    // if (el->parent != NULL) {
+    //     node = Element_get_style_int(el->parent, "padding");
+    //     if (node != NULL) {
+    //         el->x += node->int_value;
+    //         el->y += node->int_value;
+    //         el->width -= (node->int_value * 2);
+    //         el->height -= (node->int_value * 2);
+    //         // printf("{%i, %i, %i, %i}\n", el->x, el->y, el->width, el->height);
+    //     }
+    // }
 
     SDL_SetRenderDrawColor(gRenderer, \
     background_color.r, \
@@ -518,24 +595,24 @@ void draw_element(Element *el) {
     rect.w = el->width;
     rect.h = el->height;
     SDL_RenderFillRect(gRenderer, &rect);
-    node = Element_get_style_int(el, "padding");
-    if (node != NULL) {
-        el->x += node->int_value;
-        el->y += node->int_value;
-        el->width -= node->int_value * 2;
-        el->height -= node->int_value * 2;
-    }
+    // node = Element_get_style_int(el, "padding");
+    // if (node != NULL) {
+    //     el->x += node->int_value;
+    //     el->y += node->int_value;
+    //     el->width -= node->int_value * 2;
+    //     el->height -= node->int_value * 2;
+    // }
 
     if (el->innerText && strlen(el->innerText) > 0) {
         render_text(el, el->innerText);
     }
-    node = Element_get_style_int(el, "margin");
-    if (node != NULL) {
-        el->x -= node->int_value;
-        el->y -= node->int_value;
-        el->width += node->int_value * 2;
-        el->height += node->int_value * 2;
-    }
+    // node = Element_get_style_int(el, "margin");
+    // if (node != NULL) {
+    //     el->x -= node->int_value;
+    //     el->y -= node->int_value;
+    //     el->width += node->int_value * 2;
+    //     el->height += node->int_value * 2;
+    // }
 
 }
 
@@ -568,11 +645,15 @@ void handle_click(duk_context *ctx, int x, int y) {
 
     printf("User click on %i, %i\n", x, y);
     el = Element_get_by_pos(body, x, y);
-    printf("User has clicked on %s %s\n", el->tag, el->innerText);
-    duk_get_global_string(ctx, "quark_onClick");
-    // duk_push_int(ctx, el->internal_id);
-    serialize_element(ctx, el);
-    duk_call(ctx, 1);
+    if (el != NULL) {
+        duk_get_global_string(ctx, "quark_onClick");
+        // duk_push_int(ctx, el->internal_id);
+        serialize_element(ctx, el);
+        duk_call(ctx, 1);
+    } else {
+        // TODO fix this bug
+        printf("Warning : Invalid element clicked? x=%i y=%i\n", x, y);
+    }
     return;
 }
 
@@ -607,6 +688,7 @@ void render_loop(duk_context *ctx) {
         i++;
         // printf("TIMER %i\n", timer);
         timer += SDL_GetTicks();
+        // SDL_Delay(1000);
     }
     return;
 }
