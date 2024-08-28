@@ -413,6 +413,15 @@ void compute_element_dimensions_inline(Element *el) {
     if (node != NULL) {
         el->width = node->int_value;
     }
+
+    node = Element_get_style_int(el->parent, "padding");
+    if (node != NULL) {
+        el->x += node->int_value;
+        el->y += node->int_value;
+        // el->width -= (node->int_value);
+        // el->height -= (node->int_value);
+    }
+
 }
 
 SDL_Rect compute_smallest_element_size(Element *el) {
@@ -477,6 +486,8 @@ void compute_element_dimensions(Element *el) {
     tmp = NULL;
     siblings = 0;
     position = 0;
+    smallest_size = compute_smallest_element_size(el);
+
     //
     if (parent == NULL) {
         el->width = SCREEN_WIDTH;
@@ -493,11 +504,9 @@ void compute_element_dimensions(Element *el) {
         tmp = tmp->next;
     }
 
-    smallest_size = compute_smallest_element_size(el);
     // print_rect(smallest_size);
 
-    if (el->prev == NULL) {
-    
+    if (el->prev == NULL) {    
         el->width = parent->width; // By default an element will take all of the available width
         el->height = (parent->height / siblings);
 
@@ -542,12 +551,12 @@ void compute_element_dimensions(Element *el) {
     }
     //
     node = Element_get_style_int(el->parent, "padding");
-    // if (node != NULL) {
-    //     el->x += node->int_value;
-    //     el->y += node->int_value;
-    //     el->width -= (node->int_value * 2);
-    //     el->height -= (node->int_value * 2);
-    // }
+    if (node != NULL) {
+        el->x += node->int_value;
+        el->y += node->int_value;
+        // el->width -= (node->int_value);
+        // el->height -= (node->int_value);
+    }
 }
 
 void draw_element(Element *el) {

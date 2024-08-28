@@ -82,6 +82,7 @@ void    Element_set_attribute(Element *element, char *key, char *value) {
 Node     *Element_get_style_int(Element *element, char *name) {
     Node *new_node;
     Node *node;
+    float value;
 
     node = Element_get_style(element, name);
     new_node = malloc(sizeof(Node));
@@ -93,24 +94,21 @@ Node     *Element_get_style_int(Element *element, char *name) {
             return node;
         }
         else if (strncmp(node->str_value, "%", 1) == 0) {
-            // Parsing of the number is wrong here, I need to check process_style_numeric_value
-            printf("[1/2] Percentage value is %i %s %s\n", node->int_value, node->str_value, name);
-
-            printf("Element parent width is %i\n", element->parent->width);
             if (strncmp(name, "width", 5) == 0) {
                 if (element->parent != NULL) {
-                    new_node->int_value = ((element->parent->width / 100) * node->int_value);
+                    value = (float) element->parent->width;
                 } else {
-                    new_node->int_value = ((SCREEN_WIDTH / 100) * node->int_value);
+                    value = (float) SCREEN_WIDTH;
                 }
+                new_node->int_value = (value / 100.0) * node->int_value;
             } else if (strncmp(name, "height", 6) == 0) {
                 if (element->parent != NULL) {
-                    new_node->int_value = ((element->parent->height / 100) * node->int_value);
+                    value = (float) element->parent->height;
                 } else {
-                    new_node->int_value = ((SCREEN_HEIGHT / 100) * node->int_value);
+                    value = (float) SCREEN_HEIGHT;
                 }
+                new_node->int_value = ((value / 100.0) * node->int_value);
             }
-            printf("[2/2] Percentage value is %i\n", node->int_value);
             new_node->key = name;
             new_node->str_value = node->str_value;
             return new_node;
@@ -132,7 +130,7 @@ void    Element_draw_graph(Element *element, int depth) {
 
     tabs = malloc(sizeof(char) * depth + 1);
 
-    for (int i = 0; i < depth; i++) {
+   for (int i = 0; i < depth; i++) {
         tabs[i] = '\t';
     }
 
@@ -144,6 +142,9 @@ void    Element_draw_graph(Element *element, int depth) {
         printf("%s[   %s   ]\n", tabs, sibling->tag);
         printf("%s[   %s   ]\n", tabs, sibling->id);
         printf("%s[   %s   ]\n", tabs, sibling->innerText);
+        if (sibling->parent != NULL) {
+            printf("%s[   %s   ]\n", tabs, sibling->parent->tag);
+        }
         printf("%s----------\n", tabs);
         if (sibling->children != NULL) {
             Element_draw_graph(sibling->children, depth + 1);
