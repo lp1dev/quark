@@ -154,6 +154,14 @@ void serialize_element(duk_context *ctx, Element *element) {
     duk_put_prop_string(ctx, -2, "innerText");
     duk_push_int(ctx, element->internal_id);
     duk_put_prop_string(ctx, -2, "internalId");
+    duk_push_int(ctx, element->x);
+    duk_put_prop_string(ctx, -2, "x");
+    duk_push_int(ctx, element->y);
+    duk_put_prop_string(ctx, -2, "y");
+    duk_push_int(ctx, element->width);
+    duk_put_prop_string(ctx, -2, "width");
+    duk_push_int(ctx, element->height);
+    duk_put_prop_string(ctx, -2, "height");
 }
 
 
@@ -465,7 +473,7 @@ SDL_Rect compute_smallest_element_size(Element *el) {
     }
     padding = Element_get_style_int(el, "padding");
     if (padding != NULL) {
-        // There seems to be a bug in applying padding
+        // There seems to be a bug in applying padding.
         smallest.w += padding->int_value;
         smallest.h += padding->int_value;
     }
@@ -504,8 +512,6 @@ void compute_element_dimensions(Element *el) {
         tmp = tmp->next;
     }
 
-    // print_rect(smallest_size);
-
     if (el->prev == NULL) {    
         el->width = parent->width; // By default an element will take all of the available width
         el->height = (parent->height / siblings);
@@ -538,7 +544,6 @@ void compute_element_dimensions(Element *el) {
         if ((parent->y + el->y + el->height) > parent->height) {
             parent->height = parent->y + el->y + el->height;
         }
-        // printf("%s(%s){%i, %i, %i, %i}\n", el->tag, el->id, el->x, el->y, el->width, el->height);
     }
 
     node = Element_get_style_int(el, "height");
@@ -604,17 +609,11 @@ void draw_element(Element *el) {
     rect.w = el->width;
     rect.h = el->height;
     SDL_RenderFillRect(gRenderer, &rect);
-    // node = Element_get_style_int(el, "padding");
-    // if (node != NULL) {
-    //     el->x += node->int_value;
-    //     el->y += node->int_value;
-    //     el->width -= node->int_value * 2;
-    //     el->height -= node->int_value * 2;
-    // }
 
     if (el->innerText && strlen(el->innerText) > 0) {
         render_text(el, el->innerText);
     }
+
     // node = Element_get_style_int(el, "margin");
     // if (node != NULL) {
     //     el->x -= node->int_value;

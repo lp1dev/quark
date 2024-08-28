@@ -178,18 +178,22 @@ Element *Element_get_by_pos(Element *element, int x, int y) {
     Element *tmp;
     Element *next;
     Element *last_match;
+    Element *children_match;
 
     next = element;
     last_match = NULL;
     while (next != NULL) {
-        printf("\tnext->tag %s\n", next->tag);
+        // printf("\tnext->tag %s\n", next->tag);
         if ((next->x + next->width) >= x && x > next->x) {
             if ((next->y + next->height) >= y && y > next->y) {
                 last_match = next;
             }
         }
         if (next->children != NULL) {
-            return Element_get_by_pos(next->children, x, y);
+            children_match = Element_get_by_pos(next->children, x, y);
+            if (children_match != NULL) {
+                return children_match;
+            }
         }
         next = next->next;
     }
