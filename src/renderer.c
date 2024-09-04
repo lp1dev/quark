@@ -93,6 +93,7 @@ SDL_Rect render_text(Element *el, char *text)
     SDL_Color sdl_color;
     Node *element_color;
     Node *element_font_size;
+    Node *padding;
     css_color text_color = {0, 0, 0, 255};
     SDL_Rect text_rect;
     int font_size = DEFAULT_FONT_SIZE;
@@ -115,6 +116,13 @@ SDL_Rect render_text(Element *el, char *text)
     text_rect.w = font_size * strlen(text);
     text_rect.h = font_size * 3;
 
+    padding = Element_get_style_int(el, "padding");
+    if (padding != NULL) {
+        text_rect.x += padding->int_value;
+        text_rect.y += padding->int_value;
+        text_rect.w -= padding->int_value;
+        text_rect.h -= padding->int_value;
+    }
     //
     element_color = Element_get_style(el, "color");
     if (element_color != NULL) {
@@ -429,13 +437,21 @@ void compute_element_dimensions_inline(Element *el) {
         el->width -= (node->int_value * 2);
         el->height -= (node->int_value * 2);
     }
+    if (el->prev != NULL) {
+        node = Element_get_style_int(el->prev, "margin");
+        if (node != NULL) {
+            el->x += node->int_value;
+        }
+    }
+
 
 }
 
 SDL_Rect compute_smallest_element_size(Element *el) {
     Element *child;
+    Element *prev;
     Node *font_size;
-    Node *padding;
+    Node *node;
     int font_size_value;
     SDL_Rect smallest = {0, 0, 0, 0};
     SDL_Rect text_size = {0, 0, 0, 0};
@@ -471,11 +487,11 @@ SDL_Rect compute_smallest_element_size(Element *el) {
     if (smallest.w > text_size.w && text_size.w > 0) {
         smallest.w = text_size.w;
     }
-    padding = Element_get_style_int(el, "padding");
-    if (padding != NULL) {
+    node = Element_get_style_int(el, "padding");
+    if (node != NULL) {
         // There seems to be a bug in applying padding.
-        smallest.w += padding->int_value;
-        smallest.h += padding->int_value;
+        smallest.w += node->int_value;
+        smallest.h += node->int_value;
     }
     return smallest;
 }
@@ -562,6 +578,13 @@ void compute_element_dimensions(Element *el) {
         el->width -= (node->int_value * 2);
         el->height -= (node->int_value * 2);
     }
+    if (el->prev != NULL) {
+        node = Element_get_style_int(el->prev, "margin");
+        if (node != NULL) {
+            el->y += node->int_value;
+        }
+    }
+
 }
 
 void draw_element(Element *el) {
