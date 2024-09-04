@@ -93,17 +93,15 @@ SDL_Rect render_text(Element *el, char *text)
     SDL_Color sdl_color;
     Node *element_color;
     Node *element_font_size;
-    Node *padding;
+    Node *node;
+    char *text_align;
     css_color text_color = {0, 0, 0, 255};
     SDL_Rect text_rect;
     int font_size = DEFAULT_FONT_SIZE;
 
-    element_font_size = Element_get_style(el, "font-size");
-    if (element_font_size != NULL) {
-        if (element_font_size->int_value == -123456789) {
-            process_style_numeric_value(element_font_size);
-        }
-        font_size = element_font_size->int_value;
+    node = Element_get_style_int(el, "font-size");
+    if (node != NULL) {
+        font_size = node->int_value;
     }
 
     if (TTF_SetFontSize(font, font_size) == -1) {
@@ -116,13 +114,6 @@ SDL_Rect render_text(Element *el, char *text)
     text_rect.w = font_size * strlen(text);
     text_rect.h = font_size * 3;
 
-    padding = Element_get_style_int(el, "padding");
-    if (padding != NULL) {
-        text_rect.x += padding->int_value;
-        text_rect.y += padding->int_value;
-        text_rect.w -= padding->int_value;
-        text_rect.h -= padding->int_value;
-    }
     //
     element_color = Element_get_style(el, "color");
     if (element_color != NULL) {
@@ -136,6 +127,45 @@ SDL_Rect render_text(Element *el, char *text)
     surfaceMessage = TTF_RenderText_Blended_Wrapped(font, text, sdl_color, el->width);
     text_rect.w = surfaceMessage->w;
     text_rect.h = surfaceMessage->h;
+    //
+    node = Element_get_style(el, "text-align");
+    if (node != NULL) {
+        if (strncmp(node->str_value, "center", 6) == 0) {
+            text_rect.x = el->x + (el->width / 2) - (text_rect.w / 2);
+        } else if (strncmp(node->str_value, "right", 5) == 0) {
+            text_rect.x = el->width - text_rect.w;
+        } else if (strncmp(node->str_value, "left", 4) == 0) {
+            text_rect.x = el->x;
+        }
+        text_align = node->str_value;
+    }
+    //
+    node = Element_get_style(el, "vertical-align");
+    if (node != NULL) {
+        if (strncmp(node->str_value, "middle", 6) == 0) {
+            text_rect.y = el->y + (el->height / 2) - (text_rect.h / 2);
+        } else if (strncmp(node->str_value, "top", 5) == 0) {
+            // This is the default behaviour
+        } else if (strncmp(node->str_value, "bottom", 4) == 0) {
+            text_rect.y = el->y + el->height - text_rect.h;
+        }
+    }
+    //
+    node = Element_get_style_int(el, "padding");
+    if (node != NULL) {
+        if (strncmp(node->str_value, "center", 6) == 0) {
+            text_rect.y += node->int_value;
+        } else if (strncmp(node->str_value, "right", 5) == 0) {
+            text_rect.x -= node->int_value;
+        } else if (strncmp(node->str_value, "left", 4) == 0) {
+            text_rect.x += node->int_value;
+        }
+    }
+    //
+    node = Element_get_style_int(el, "line-height");
+    if (node != NULL) {
+        text_rect.h = node->int_value;
+    }
     Message = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage);
 
     SDL_RenderCopy(gRenderer, Message, NULL, &text_rect);
@@ -493,6 +523,11 @@ SDL_Rect compute_smallest_element_size(Element *el) {
         smallest.w += node->int_value;
         smallest.h += node->int_value;
     }
+    // node = Element_get_style_int(el, "margin");
+    // if (node != NULL) {
+    //     smallest.w += node->int_value;
+    //     smallest.h += node->int_value;        
+    // }
     return smallest;
 }
 
@@ -578,10 +613,11 @@ void compute_element_dimensions(Element *el) {
         el->width -= (node->int_value * 2);
         el->height -= (node->int_value * 2);
     }
-    if (el->prev != NULL) {
-        node = Element_get_style_int(el->prev, "margin");
+    if (el->parent != NULL) {
+        node = Element_get_style_int(el->parent, "margin");
         if (node != NULL) {
             el->y += node->int_value;
+            // el->height -= (node->int_value * 2);
         }
     }
 
@@ -610,16 +646,6 @@ void draw_element(Element *el) {
     if (node != NULL) {
         // TODO handle borders
     }
-    // if (el->parent != NULL) {
-    //     node = Element_get_style_int(el->parent, "padding");
-    //     if (node != NULL) {
-    //         el->x += node->int_value;
-    //         el->y += node->int_value;
-    //         el->width -= (node->int_value * 2);
-    //         el->height -= (node->int_value * 2);
-    //         // printf("{%i, %i, %i, %i}\n", el->x, el->y, el->width, el->height);
-    //     }
-    // }
 
     SDL_SetRenderDrawColor(gRenderer, \
     background_color.r, \
@@ -636,14 +662,6 @@ void draw_element(Element *el) {
     if (el->innerText && strlen(el->innerText) > 0) {
         render_text(el, el->innerText);
     }
-
-    // node = Element_get_style_int(el, "margin");
-    // if (node != NULL) {
-    //     el->x -= node->int_value;
-    //     el->y -= node->int_value;
-    //     el->width += node->int_value * 2;
-    //     el->height += node->int_value * 2;
-    // }
 
 }
 
