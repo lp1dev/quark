@@ -124,7 +124,9 @@ SDL_Rect render_text(Element *el, char *text)
     sdl_color.g = text_color.g;
     sdl_color.a = text_color.a;
     // TTF_RenderText_Blended_Wrapped might not be supported on all devices
-    surfaceMessage = TTF_RenderText_Blended_Wrapped(font, text, sdl_color, el->width);
+    surfaceMessage = TTF_RenderUTF8_Blended_Wrapped(font, text, sdl_color, el->width);
+
+    // surfaceMessage = TTF_RenderText_Blended_Wrapped(font, text, sdl_color, el->width);
     text_rect.w = surfaceMessage->w;
     text_rect.h = surfaceMessage->h;
     //
