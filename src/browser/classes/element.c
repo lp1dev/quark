@@ -26,6 +26,10 @@ Element *Element_create() {
     new->width = 0;
     new->x = 0;
     new->y = 0;
+    new->computed_height = 0;
+    new->computed_width = 0;
+    new->computed_x = 0;
+    new->computed_y = 0;
     return new;
 }
 
@@ -184,8 +188,8 @@ Element *Element_get_by_pos(Element *element, int x, int y) {
     last_match = NULL;
     while (next != NULL) {
         // printf("\tnext->tag %s\n", next->tag);
-        if ((next->x + next->width) >= x && x > next->x) {
-            if ((next->y + next->height) >= y && y > next->y) {
+        if ((next->computed_x + next->computed_width) >= x && x > next->computed_x) {
+            if ((next->computed_y + next->computed_height) >= y && y > next->computed_y) {
                 last_match = next;
             }
         }

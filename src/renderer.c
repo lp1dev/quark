@@ -109,8 +109,8 @@ SDL_Rect render_text(Element *el, char *text)
         exit(-7);
     }
 
-    text_rect.x = el->x;
-    text_rect.y = el->y;
+    text_rect.x = el->computed_x;
+    text_rect.y = el->computed_y;
     text_rect.w = font_size * strlen(text);
     text_rect.h = font_size * 3;
 
@@ -131,11 +131,11 @@ SDL_Rect render_text(Element *el, char *text)
     node = Element_get_style(el, "text-align");
     if (node != NULL) {
         if (strncmp(node->str_value, "center", 6) == 0) {
-            text_rect.x = el->x + (el->width / 2) - (text_rect.w / 2);
+            text_rect.x = el->computed_x + (el->computed_width / 2) - (text_rect.w / 2);
         } else if (strncmp(node->str_value, "right", 5) == 0) {
-            text_rect.x = el->width - text_rect.w;
+            text_rect.x = el->computed_width - text_rect.w;
         } else if (strncmp(node->str_value, "left", 4) == 0) {
-            text_rect.x = el->x;
+            text_rect.x = el->computed_x;
         }
         text_align = node->str_value;
     }
@@ -143,22 +143,27 @@ SDL_Rect render_text(Element *el, char *text)
     node = Element_get_style(el, "vertical-align");
     if (node != NULL) {
         if (strncmp(node->str_value, "middle", 6) == 0) {
-            text_rect.y = el->y + (el->height / 2) - (text_rect.h / 2);
+            text_rect.y = el->computed_y + (el->height / 2) - (text_rect.h / 2);
         } else if (strncmp(node->str_value, "top", 5) == 0) {
             // This is the default behaviour
         } else if (strncmp(node->str_value, "bottom", 4) == 0) {
-            text_rect.y = el->y + el->height - text_rect.h;
+            text_rect.y = el->computed_y + el->computed_height - text_rect.h;
         }
     }
     //
     node = Element_get_style_int(el, "padding");
     if (node != NULL) {
-        if (strncmp(node->str_value, "center", 6) == 0) {
-            text_rect.y += node->int_value;
-        } else if (strncmp(node->str_value, "right", 5) == 0) {
-            text_rect.x -= node->int_value;
-        } else if (strncmp(node->str_value, "left", 4) == 0) {
+        if (text_align != NULL) {
+            if (strncmp(text_align, "center", 6) == 0) {
+                text_rect.y += node->int_value;
+            } else if (strncmp(text_align, "right", 5) == 0) {
+                text_rect.x -= node->int_value;
+            } else if (strncmp(text_align, "left", 4) == 0) {
+                text_rect.x += node->int_value;
+            }
+        } else {
             text_rect.x += node->int_value;
+            text_rect.y += node->int_value;
         }
     }
     //
@@ -274,7 +279,7 @@ static duk_ret_t get_element_by_id(duk_context *ctx)
     size_t value_len, tmp_len;
     char *id;
 
-    printf("In getElementById\n");
+    // printf("In getElementById\n");
     id = (char *) duk_get_string(ctx, 0);
     element = Element_get_by_id(body, id);
     if (element == NULL) {
@@ -403,6 +408,24 @@ void init_dom(duk_context *ctx) {
 
 }
 
+void compute_margin_padding(Element *el) {
+    Node *node;
+
+    node = Element_get_style_int(el, "margin");
+    if (node != NULL) {
+        el->computed_x += node->int_value;
+        el->computed_y += node->int_value;
+    }
+
+    node = Element_get_style_int(el->parent, "padding");
+    if (node != NULL) {
+        el->computed_x += node->int_value;
+        el->computed_y += node->int_value;
+        el->computed_height -= (node->int_value * 2);
+        el->computed_width -= (node->int_value * 2);
+    }
+}
+
 void compute_element_dimensions_inline(Element *el) {
     Element *parent;
     Element *tmp;
@@ -434,19 +457,19 @@ void compute_element_dimensions_inline(Element *el) {
     }
 
     if (el->prev == NULL) {
-        el->width = (parent->width / (siblings));
-        el->height = parent->height;
-        el->x = ((parent->width / (siblings)) * position) + parent->x;
-        el->y = parent->y;
+        el->width = (parent->computed_width / (siblings));
+        el->height = parent->computed_height;
+        el->x = ((parent->computed_width / (siblings)) * position) + parent->computed_x;
+        el->y = parent->computed_y;
     } else {
-        horizontal_space_left = SCREEN_WIDTH - (el->prev->x + el->prev->width);
-        vertical_space_left = SCREEN_HEIGHT - (el->prev->y + el->prev->height);
+        horizontal_space_left = SCREEN_WIDTH - (el->prev->computed_x + el->prev->computed_width);
+        vertical_space_left = SCREEN_HEIGHT - (el->prev->computed_y + el->prev->computed_height);
         el->width = horizontal_space_left / (siblings - 1) * position;
-        el->height = parent->height;
-        el->x = el->prev->x + el->prev->width;
-        el->y = parent->y;
-        if ((parent->x + el->x + el->width) > parent->width) {
-            parent->width = parent->x + el->x + el->width;
+        el->height = parent->computed_height;
+        el->x = el->prev->computed_x + el->prev->computed_width;
+        el->y = parent->computed_y;
+        if ((parent->computed_x + el->x + el->width) > parent->computed_width) {
+            parent->computed_width = parent->computed_x + el->x + el->width;
         }
         // printf("%s{%i, %i, %i, %i}\n", el->tag, el->x, el->y, el->width, el->height);
     }
@@ -460,20 +483,14 @@ void compute_element_dimensions_inline(Element *el) {
         el->width = node->int_value;
     }
 
-    node = Element_get_style_int(el->parent, "padding");
-    if (node != NULL) {
-        el->x += node->int_value;
-        el->y += node->int_value;
-        el->width -= (node->int_value * 2);
-        el->height -= (node->int_value * 2);
-    }
-    if (el->prev != NULL) {
-        node = Element_get_style_int(el->prev, "margin");
-        if (node != NULL) {
-            el->x += node->int_value;
-        }
-    }
-
+    // Applying computed properties
+    el->computed_x = el->x;
+    el->computed_y = el->y;
+    el->computed_height = el->height;
+    el->computed_width = el->width;
+    //
+    
+    compute_margin_padding(el);
 
 }
 
@@ -517,16 +534,11 @@ SDL_Rect compute_smallest_element_size(Element *el) {
     if (smallest.w > text_size.w && text_size.w > 0) {
         smallest.w = text_size.w;
     }
-    node = Element_get_style_int(el, "padding");
-    if (node != NULL) {
-        // There seems to be a bug in applying padding.
-        smallest.w += node->int_value;
-        smallest.h += node->int_value;
-    }
-    // node = Element_get_style_int(el, "margin");
+    // node = Element_get_style_int(el, "padding");
     // if (node != NULL) {
+    //     // There seems to be a bug in applying padding.
     //     smallest.w += node->int_value;
-    //     smallest.h += node->int_value;        
+    //     smallest.h += node->int_value;
     // }
     return smallest;
 }
@@ -564,8 +576,8 @@ void compute_element_dimensions(Element *el) {
     }
 
     if (el->prev == NULL) {    
-        el->width = parent->width; // By default an element will take all of the available width
-        el->height = (parent->height / siblings);
+        el->width = parent->computed_width; // By default an element will take all of the available width
+        el->height = (parent->computed_height / siblings);
 
         if (smallest_size.w != 0) {
             el->width = smallest_size.w;
@@ -575,25 +587,24 @@ void compute_element_dimensions(Element *el) {
             el->height = smallest_size.h;
             // Here too
         }
-        el->y = ((parent->height / siblings) * position) + parent->y;
-        el->x = parent->x;
+        el->y = ((parent->computed_height / siblings) * position) + parent->computed_y;
+        el->x = parent->computed_x;
     } else {
-        vertical_space_left = SCREEN_HEIGHT - (el->prev->y + el->prev->height);
-        el->width = parent->width; // We take all of the available width by default;
+        vertical_space_left = SCREEN_HEIGHT - (el->prev->computed_y + el->prev->computed_height);
+        el->width = parent->computed_width; // We take all of the available width by default;
         el->height = vertical_space_left / (siblings - 1) * position;
         if (smallest_size.w != 0) {
             el->width = smallest_size.w;
-            // I should add padding here
         }
         if (smallest_size.h != 0) {
             // Here too
             el->height = smallest_size.h;
         }
 
-        el->x = parent->x;
-        el->y = el->prev->y + el->prev->height;
-        if ((parent->y + el->y + el->height) > parent->height) {
-            parent->height = parent->y + el->y + el->height;
+        el->x = parent->computed_x;
+        el->y = el->prev->computed_y + el->prev->computed_height;
+        if ((parent->computed_y + el->y + el->height) > parent->computed_height) {
+            parent->computed_height = parent->computed_y + el->y + el->height;
         }
     }
 
@@ -605,21 +616,14 @@ void compute_element_dimensions(Element *el) {
     if (node != NULL) {
         el->width = node->int_value;
     }
+
+    // Applying computed properties
+    el->computed_x = el->x;
+    el->computed_y = el->y;
+    el->computed_height = el->height;
+    el->computed_width = el->width;
     //
-    node = Element_get_style_int(el->parent, "padding");
-    if (node != NULL) {
-        el->x += node->int_value;
-        el->y += node->int_value;
-        el->width -= (node->int_value * 2);
-        el->height -= (node->int_value * 2);
-    }
-    if (el->parent != NULL) {
-        node = Element_get_style_int(el->parent, "margin");
-        if (node != NULL) {
-            el->y += node->int_value;
-            // el->height -= (node->int_value * 2);
-        }
-    }
+    compute_margin_padding(el);
 
 }
 
@@ -627,8 +631,10 @@ void draw_element(Element *el) {
     SDL_Rect rect;
     css_color background_color = {255, 255, 255, 0};
     Node *node;
+    int is_inline;
 
     node = NULL;
+    is_inline = 0;
     if (el->parent != NULL) {
         node = Element_get_style(el->parent, "display");
     }
@@ -653,10 +659,10 @@ void draw_element(Element *el) {
     background_color.b, \
     background_color.a);
 
-    rect.x = el->x;
-    rect.y = el->y;
-    rect.w = el->width;
-    rect.h = el->height;
+    rect.x = el->computed_x;
+    rect.y = el->computed_y;
+    rect.w = el->computed_width;
+    rect.h = el->computed_height;
     SDL_RenderFillRect(gRenderer, &rect);
 
     if (el->innerText && strlen(el->innerText) > 0) {
@@ -692,7 +698,7 @@ void render(Element *parent, int depth, duk_context *ctx) {
 void handle_click(duk_context *ctx, int x, int y) {
     Element *el;
 
-    printf("User click on %i, %i\n", x, y);
+    // printf("User click on %i, %i\n", x, y);
     el = Element_get_by_pos(body, x, y);
     if (el != NULL) {
         duk_get_global_string(ctx, "quark_onClick");
@@ -753,6 +759,8 @@ void render_document(lxb_html_document_t *document) {
     body = parse_lxb_body((lxb_dom_node_t *) document->body);
     body->height = SCREEN_HEIGHT;
     body->width = SCREEN_WIDTH;
+    body->computed_height = SCREEN_HEIGHT;
+    body->computed_width = SCREEN_WIDTH;
     body->parent = NULL;
 
     init_intervals();

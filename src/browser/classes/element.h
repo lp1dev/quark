@@ -21,9 +21,13 @@ typedef struct Element Element;
 struct Element {
     int     internal_id;
     int     height;
+    int     computed_height;
     int     width;
+    int     computed_width;
     int     x;
+    int     computed_x;
     int     y;
+    int     computed_y;
     NamedNodeMap attributes;
     NamedNodeMap style;
     char    *tag;
