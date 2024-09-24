@@ -355,6 +355,7 @@ void check_intervals(duk_context *ctx) {
                 duk_push_number(ctx, intervals[i]->id);
                 duk_call(ctx, 1);
                 intervals[i]->timeout = -123456789; // Temporary replacement for an actual delete of the interval
+                free(intervals[i]);
             }
         } else if (intervals[i]->interval != -123456789) {
             if (current_time > (intervals[i]->start_time + intervals[i]->interval)) {
@@ -494,7 +495,7 @@ void compute_element_dimensions_inline(Element *el) {
     //
     
     compute_margin_padding(el);
-
+    free(tmp);
 }
 
 SDL_Rect compute_smallest_element_size(Element *el) {
@@ -627,7 +628,7 @@ void compute_element_dimensions(Element *el) {
     el->computed_width = el->width;
     //
     compute_margin_padding(el);
-
+    free(tmp);
 }
 
 void draw_element(Element *el) {
@@ -671,7 +672,7 @@ void draw_element(Element *el) {
     if (el->innerText && strlen(el->innerText) > 0) {
         render_text(el, el->innerText);
     }
-
+    free(node);
 }
 
 /* void render (Element *body)
@@ -710,7 +711,6 @@ void handle_click(duk_context *ctx, int x, int y) {
         serialize_element(ctx, el);
         duk_call(ctx, 1);
     } else {
-        // TODO fix this bug
         printf("Warning : Invalid element clicked? x=%i y=%i\n", x, y);
     }
     return;
