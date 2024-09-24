@@ -43,5 +43,6 @@ static duk_int_t eval_js_file(duk_context *ctx, const char *filename) {
   duk_int_t retval = duk_peval(ctx);
   /* cleanup */
   duk_pop(ctx);
+  free(buf);
   return retval;
 }

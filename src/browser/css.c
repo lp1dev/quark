@@ -70,6 +70,7 @@ css_color parse_color(char *color)
                         output.a = strtol(buffer, NULL, 16);
                 }
         }
+        free(buffer);
         return output;
 }
 

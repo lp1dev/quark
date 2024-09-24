@@ -257,6 +257,7 @@ static duk_ret_t get_element_style(duk_context *ctx) {
             tmp = malloc((size + 1) * sizeof(char));
             snprintf(tmp, size + 1 ,"%i %s\n", node->int_value, node->str_value);
             duk_push_string(ctx, tmp);
+            free(tmp);
         } else {
             duk_push_string(ctx, node->str_value);
         }
@@ -695,6 +696,7 @@ void render(Element *parent, int depth, duk_context *ctx) {
         }
         tmp = tmp->next;
     }
+    free(tmp);
 }
 
 void handle_click(duk_context *ctx, int x, int y) {

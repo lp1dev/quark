@@ -108,6 +108,7 @@ void add_value_str(css_property *property, const unsigned char * value, int len)
     new_str[i] = '\0';
     property->str_value = new_str;
     property->value_length += len;
+    free(new_str);
   }
 }
 

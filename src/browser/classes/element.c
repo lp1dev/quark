@@ -37,13 +37,18 @@ void    Element_append_child(Element *element, Element *child) {
     Element *last_child = element->children;
 
     if (last_child == NULL) {
-        element->children = child;
+        if (child != NULL) {
+            element->children = child;
+        }
         return;
     }
     while (last_child->children != NULL) {
         last_child = last_child->children;
     }
-    last_child->children = child;
+    if (child != NULL) {
+        last_child->children = child;
+    }
+    free(last_child);
 }
 
 int     Element_children_length(Element *element) {
@@ -56,6 +61,8 @@ int     Element_children_length(Element *element) {
         child = child->children;
         i++;
     }
+    //
+    free(child);
     return i;
 }
 
@@ -125,6 +132,9 @@ Node     *Element_get_style_int(Element *element, char *name) {
         }
 
     }
+    //
+    free(node);
+    free(new_node);
     return NULL;
 }
 
@@ -155,6 +165,9 @@ void    Element_draw_graph(Element *element, int depth) {
         }
         sibling = sibling->next;
     }
+    //
+    free(sibling);
+    free(tabs);
 }
 
 Element *Element_get_by_id(Element *element, char *id) {
