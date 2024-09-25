@@ -23,6 +23,31 @@ function Element(element_obj) {
         writable: true
     })
 
+    Object.defineProperty(this, "_x", {
+        enumerable: false,
+        value: element_obj.x,
+        writable: false
+    })
+
+    Object.defineProperty(this, "_y", {
+        enumerable: false,
+        value: element_obj.y,
+        writable: false
+    })
+
+    Object.defineProperty(this, "_width", {
+        enumerable: false,
+        value: element_obj.width,
+        writable: false
+    })
+
+    Object.defineProperty(this, "_height", {
+        enumerable: false,
+        value: element_obj.height,
+        writable: false
+    })
+
+
     Object.defineProperty(this, "id", {
         get: function() {
             return this._id;

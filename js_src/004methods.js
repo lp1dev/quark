@@ -34,6 +34,9 @@ quark_executeInterval = function(intervalID) {
 }
 
 quark_onClick = function(element) {
+  console.log("\tJS: Onclick()", element)
+  console.log("\tJS: el.internal_id", element.internalId)
+
   el = new Element(element)
   if (el.attributes.onclick) {
     el.attributes.onclick()

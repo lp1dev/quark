@@ -1,21 +1,146 @@
 <!DOCTYPE html>
 <html>
     <head>
-      <title>Test Index.html file</title>
+      <title>Quarkulator | Quark-based calculator</title>
       <link rel="stylesheet" href="style.css"/>
     </head>
 <body>
+
+
+
   <div id="container">
-    <h1 style="height: 120px; width: 200px; background-color: #229900; color: #000000" id="heading">My First Heading</h1>
+    <div id="screen">0</div>
+    <div id="buttons-container">
 
-    <h2 style="background-color: #990000; color: #0044ee;">Test2 Test2</h2>
-
-    <h3 style="background-color: #2821ab; color: #ffffff;">Test3</h3>
+    <div id="buttons" class="buttons">
+      <button onclick="press('sqrt')">&Sqrt;</button>
+      <button onclick="press('ABS')">ABS</button>
+      <button onclick="press('tan')">TAN</button>
+      <button onclick="press('7')">7</button>
+      <button onclick="press('8')">8</button>
+      <button onclick="press('9')">9</button>
+      <button class="alt-1" onclick="press('/')">/</button>
+      <button class="alt-2" onclick="press('AC')">AC</button>
+    </div>
+    <div class="buttons">
+      <button onclick="press(Math.PI)">&pi;</button>
+      <button onclick="press('sin')">SIN</button>
+      <button onclick="press('e')">e</button>
+      <button onclick="press('4')">4</button>
+      <button onclick="press('5')">5</button>
+      <button onclick="press('6')">6</button>
+      <button class="alt-1" onclick="press('x')">&times;</button>
+      <button class="alt-1" onclick="press('+')">+</button>
+    </div>
+    <div class="buttons">
+      <button onclick="press('^')">^</button>
+      <button onclick="press('cos')">COS</button>
+      <button onclick="press('log')">LOG</button>
+      <button onclick="press('1')">1</button>
+      <button onclick="press('2')">2</button>
+      <button onclick="press('3')">3</button>
+      <button class="alt-1" onclick="press('-')">-</button>
+      <button class="alt-1" onclick="press('%')">&percnt;</button>
+    </div>
+    <div class="buttons">
+      <button class="hidden"></button>
+      <button class="hidden"></button>
+      <button class="hidden"></button>
+      <button onclick="press('0')">0</button>
+      <button onclick="press('.')">.</button>
+      <button onclick="press('larr')">DEL</button>
+      <button class="alt-3" onclick="press('=')">=</button>
+    </div>
   </div>
+</div>
+  
 
-  <div style="background-color: #6b3665;" id="footer">
-    <h2>I am the footer</h2>
-  </div>
+  <script>
+    var buffer = "";
+    var stack = [];
+
+    function press(button) {
+      console.log("JS : In press function")
+      screen = document.getElementById('screen')
+
+      if (!isNaN(button)) {
+        buffer += button;
+      } else if (button === '.') {
+        if (!Number.isInteger(Number(buffer))) {
+          return
+        }
+        buffer += button
+      } else if (button === 'sqrt') {
+        var sqrt = Math.sqrt(Number(buffer))
+        buffer = sqrt.toString()
+      } else if (button === 'ABS') {
+        buffer = Math.abs(Number(buffer)).toString()
+      } else if (button === '-') {
+        if (buffer.length === 0) {
+          buffer += button
+        }
+      } else if (button === 'sin') {
+        buffer = Math.sin(Number(buffer)).toString()
+      } else if (button === 'cos') {
+        buffer = Math.cos(Number(buffer)).toString()
+      } else if (button === 'tan') {
+        buffer = Math.tan(Number(buffer)).toString()
+      } else if (button === 'log') {
+        buffer = Math.log(Number(buffer)).toString()
+      } else if (button === 'e') {
+        buffer = Math.exp(Number(buffer)).toString()
+      } else if (button !== 'larr') {
+        if (buffer.length > 0) {
+          stack.push(Number(buffer))
+          buffer = ""
+        }
+        stack.push(button)
+      }
+      console.log("Buffer is", buffer)
+
+      if (button === '=') {
+        var total = 0.0;
+        var operator = null
+        var lastItem = null
+        console.log("Stack: ", stack)
+
+        stack.forEach(function (item) {
+          if (typeof(item) === 'number') {
+            if (operator === null) {
+              total = item
+            } else if (operator === '+') {
+              total = total + item
+            } else if (operator === '-') {
+              total = total - item
+            } else if (operator === 'x') {
+              total = total * item
+            } else if (operator === '/') {
+              total = total / item
+            } else if (operator === '%') {
+              total = total % item
+            } else if (operator === '^') {
+              total = Math.pow(total, item)
+            }
+          } else {
+            operator = item
+          }
+        })
+        if (isNaN(total)) {
+          buffer = "0"
+        } else {
+          buffer = String(total)
+        }
+        stack = []
+      } else if (button == 'AC') {
+        stack = []
+        buffer = ""
+      } else if (button == 'larr') {
+        buffer = buffer.substring(0, buffer.length - 1)
+      }
+      screen.innerText = buffer.length ? buffer : "0"
+    }
+  </script>
+
 </div>
 
 </body>

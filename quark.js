@@ -63,7 +63,6 @@ function Attributes(attributes) {
             if (typeof(onclick) !== 'string') {
                 throw new Error("OnClick attributes must be strings, not functions with quark!");
             }
-            console.log('Setting onclick to', onclick)
             quark.c_updateElement(attributes['internalId'], 3, "onclick", onclick)
         },
         configurable: true
@@ -152,6 +151,31 @@ function Element(element_obj) {
         writable: true
     })
 
+    Object.defineProperty(this, "_x", {
+        enumerable: false,
+        value: element_obj.x,
+        writable: false
+    })
+
+    Object.defineProperty(this, "_y", {
+        enumerable: false,
+        value: element_obj.y,
+        writable: false
+    })
+
+    Object.defineProperty(this, "_width", {
+        enumerable: false,
+        value: element_obj.width,
+        writable: false
+    })
+
+    Object.defineProperty(this, "_height", {
+        enumerable: false,
+        value: element_obj.height,
+        writable: false
+    })
+
+
     Object.defineProperty(this, "id", {
         get: function() {
             return this._id;
@@ -223,6 +247,9 @@ quark_executeInterval = function(intervalID) {
 }
 
 quark_onClick = function(element) {
+  console.log("\tJS: Onclick()", element)
+  console.log("\tJS: el.internal_id", element.internalId)
+
   el = new Element(element)
   if (el.attributes.onclick) {
     el.attributes.onclick()
