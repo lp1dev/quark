@@ -45,12 +45,8 @@ int graph_init()
         exit(-2);
     }
 
-    window = SDL_CreateWindow("Quark",
-                              SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED,
-                              SCREEN_WIDTH, SCREEN_HEIGHT,
-                              0);
-
+    window = SDL_CreateWindow("Quark", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    
     if (window == NULL)
     {
         printf("Failed to create window\n");
@@ -62,20 +58,32 @@ int graph_init()
         exit(-5);
     }
 
-    window_surface = SDL_GetWindowSurface(window);
+    /*    window_surface = SDL_GetWindowSurface(window);
 
     if (window_surface == NULL)
     {
         printf("Failed to get the surface from the window\n");
         exit(-6);
-    }
+	}*/ //Removed for debugging on the vita
 
-    font = TTF_OpenFont("/usr/share/fonts/opentype/Sans.ttf", DEFAULT_FONT_SIZE);
+    font = TTF_OpenFont("Sans.ttf", DEFAULT_FONT_SIZE);
     if (font == NULL) {
         printf("Failed to load font\n");
         exit(-7);
     }
 
+    // TEST
+    /*    SDL_Rect fillRect = { SCREEN_WIDTH  / 4,
+		      SCREEN_HEIGHT / 4,
+		      SCREEN_WIDTH  / 2,
+		      SCREEN_HEIGHT / 2
+};
+  SDL_SetRenderDrawColor( gRenderer, 255,0,0,255);
+  SDL_RenderFillRect( gRenderer, &fillRect );
+  SDL_RenderPresent( gRenderer );
+  SDL_Delay(4000);
+    
+  SDL_Quit(); // TEST FOR DEBUGGING */
 
     SDL_SetRenderDrawBlendMode(gRenderer, SDL_BLENDMODE_BLEND);
     SDL_UpdateWindowSurface(window);
@@ -104,10 +112,11 @@ SDL_Rect render_text(Element *el, char *text)
         font_size = node->int_value;
     }
 
-    if (TTF_SetFontSize(font, font_size) == -1) {
-        printf("Error when setting font size: %s\n", TTF_GetError());
-        exit(-7);
-    }
+    //if (FT_Set_Char_Size(font, font_size) == -1) {
+      //    if (TTF_SetFontSize(font, font_size) == -1) {
+    //printf("Error when setting font size: %s\n", TTF_GetError());
+    //exit(-7);
+    //}
 
     text_rect.x = el->computed_x;
     text_rect.y = el->computed_y;

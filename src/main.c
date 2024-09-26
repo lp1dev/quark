@@ -8,6 +8,7 @@
 #include "renderer.h"
 #include "browser/js.h"
 
+
 lxb_html_document_t *parse_html(char *filename) {
     lxb_status_t status;
     const lxb_char_t *tag_name;
@@ -74,20 +75,19 @@ lxb_css_stylesheet_t *parse_css(char *filename) {
 
 
 int main(int argc, const char *argv[])
-{   
+{
+    //
     lexbor_status_t status;
     lxb_dom_collection_t *collection;
 
     lxb_html_document_t *document = parse_html("index.html");
     lxb_html_element_t *element = lxb_html_element_interface_create(document);
-
     lxb_css_stylesheet_t *css = parse_css("style.css");
 
     status = lxb_html_document_stylesheet_apply(document, css);
     if (status != LXB_STATUS_OK) {
         return EXIT_FAILURE;
     }
-
     collection = lxb_dom_collection_make(lxb_dom_interface_document(document), 16);
     if (collection == NULL) {
         return EXIT_FAILURE;
@@ -99,5 +99,6 @@ int main(int argc, const char *argv[])
     render_document(document);
     (void) lxb_html_document_destroy(document);
     (void) lxb_css_stylesheet_destroy(css, true);
+    parse_css("beforeexit2");
     return EXIT_SUCCESS;
 }
