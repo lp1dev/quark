@@ -105,12 +105,6 @@ SDL_Rect render_text(Element *el, char *text)
         font_size = node->int_value;
     }
 
-    //if (FT_Set_Char_Size(font, font_size) == -1) {
-      //    if (TTF_SetFontSize(font, font_size) == -1) {
-    //printf("Error when setting font size: %s\n", TTF_GetError());
-    //exit(-7);
-    //}
-
     text_rect.x = el->computed_x;
     text_rect.y = el->computed_y;
     text_rect.w = font_size * strlen(text);
@@ -126,26 +120,7 @@ SDL_Rect render_text(Element *el, char *text)
     sdl_color.g = text_color.g;
     sdl_color.a = text_color.a;
 
-    //
-    // while (text_textures[i] != NULL) {
-    //     if (Text_Texture_Compare(text_textures[i], font, text, sdl_color, font_size, el->x, el->y)) {
-    //         printf("DEBUG:::Text Already exists, recycling");
-    //         text_texture = text_textures[i];
-    //         SDL_RenderCopy(gRenderer, text_texture->texture, NULL, text_texture->rect);
-    //         return *text_texture->rect;
-    //     }
-    //     i++;
-    // }
-    //
-
-    if (text_texture == NULL) {
-        surfaceMessage = TTF_RenderUTF8_Blended_Wrapped(font, text, sdl_color, el->width);
-    }
-    // This call also seems quite resource-hungry (maybe 30 fps?)
-    // I should store already rendered text textures
-    // In memory and ONLY rerender the surfaces and textures if necessary
-    // UPDATE : I think what I did here worked!! But I still need to fix 
-    // my font size and some positioning that seems broken
+    surfaceMessage = TTF_RenderUTF8_Blended_Wrapped(font, text, sdl_color, el->width);
 
     text_rect.w = surfaceMessage->w;
     text_rect.h = surfaceMessage->h;
@@ -197,15 +172,6 @@ SDL_Rect render_text(Element *el, char *text)
     text_texture = Text_Texture_Create(font, text, surfaceMessage, &text_rect, sdl_color, font_size, el->x, el->y, gRenderer);
     SDL_RenderCopy(gRenderer, text_texture->texture, NULL, &text_rect);
     SDL_FreeSurface(surfaceMessage);
-    // if (i + 1 >= LIST_SIZE) {
-    //     while (i < LIST_SIZE) {
-    //         free(text_textures[i]);
-    //         text_textures[i] = NULL;
-    //     }
-    //     i = 0;
-    // }
-    // text_textures[i] = text_texture;
-    // text_textures[i + 1] = NULL;
     return text_rect;
 }
 
