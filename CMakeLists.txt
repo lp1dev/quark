@@ -84,6 +84,7 @@ add_executable(${PROJECT_NAME}
   ./src/browser/classes/element.c
   ./src/browser/classes/interval.c
   ./src/browser/classes/node.c
+  ./src/rendering/interfaces.c
   ./common/debugScreen.c
   ${lexbor_SRC}
 )

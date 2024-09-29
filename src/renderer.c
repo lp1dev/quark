@@ -19,6 +19,7 @@ SDL_Renderer *gRenderer = NULL;
 Element *body;
 TTF_Font *font;
 Interval *intervals[LIST_SIZE];
+Text_Texture *text_textures[LIST_SIZE];
 
 /*
 
@@ -47,24 +48,22 @@ int graph_init()
 
     window = SDL_CreateWindow("Quark", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     
+
     if (window == NULL)
     {
         printf("Failed to create window\n");
         exit(-4);
     }
 
-    if ((gRenderer = SDL_CreateRenderer(window, -1, 0)) == NULL)
+    // Vita specific
+	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
+	gRenderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    //
+
+    if (gRenderer == NULL)
     {
         exit(-5);
     }
-
-    /*    window_surface = SDL_GetWindowSurface(window);
-
-    if (window_surface == NULL)
-    {
-        printf("Failed to get the surface from the window\n");
-        exit(-6);
-	}*/ //Removed for debugging on the vita
 
     font = TTF_OpenFont("Sans.ttf", DEFAULT_FONT_SIZE);
     if (font == NULL) {
@@ -72,21 +71,9 @@ int graph_init()
         exit(-7);
     }
 
-    // TEST
-    /*    SDL_Rect fillRect = { SCREEN_WIDTH  / 4,
-		      SCREEN_HEIGHT / 4,
-		      SCREEN_WIDTH  / 2,
-		      SCREEN_HEIGHT / 2
-};
-  SDL_SetRenderDrawColor( gRenderer, 255,0,0,255);
-  SDL_RenderFillRect( gRenderer, &fillRect );
-  SDL_RenderPresent( gRenderer );
-  SDL_Delay(4000);
-    
-  SDL_Quit(); // TEST FOR DEBUGGING */
-
     SDL_SetRenderDrawBlendMode(gRenderer, SDL_BLENDMODE_BLEND);
-    SDL_UpdateWindowSurface(window);
+    // SDL_UpdateWindowSurface(window);
+    text_textures[0] = NULL;
 }
 
 /*
@@ -102,10 +89,16 @@ SDL_Rect render_text(Element *el, char *text)
     Node *element_color;
     Node *element_font_size;
     Node *node;
+    Text_Texture *text_texture;
     char *text_align;
     css_color text_color = {0, 0, 0, 255};
     SDL_Rect text_rect;
     int font_size = DEFAULT_FONT_SIZE;
+    int i;
+
+
+    text_texture = NULL;
+    i = 0;
 
     node = Element_get_style_int(el, "font-size");
     if (node != NULL) {
@@ -132,13 +125,31 @@ SDL_Rect render_text(Element *el, char *text)
     sdl_color.b = text_color.b;
     sdl_color.g = text_color.g;
     sdl_color.a = text_color.a;
-    // TTF_RenderText_Blended_Wrapped might not be supported on all devices
-    surfaceMessage = TTF_RenderUTF8_Blended_Wrapped(font, text, sdl_color, el->width);
 
-    // surfaceMessage = TTF_RenderText_Blended_Wrapped(font, text, sdl_color, el->width);
+    //
+    // while (text_textures[i] != NULL) {
+    //     if (Text_Texture_Compare(text_textures[i], font, text, sdl_color, font_size, el->x, el->y)) {
+    //         printf("DEBUG:::Text Already exists, recycling");
+    //         text_texture = text_textures[i];
+    //         SDL_RenderCopy(gRenderer, text_texture->texture, NULL, text_texture->rect);
+    //         return *text_texture->rect;
+    //     }
+    //     i++;
+    // }
+    //
+
+    if (text_texture == NULL) {
+        surfaceMessage = TTF_RenderUTF8_Blended_Wrapped(font, text, sdl_color, el->width);
+    }
+    // This call also seems quite resource-hungry (maybe 30 fps?)
+    // I should store already rendered text textures
+    // In memory and ONLY rerender the surfaces and textures if necessary
+    // UPDATE : I think what I did here worked!! But I still need to fix 
+    // my font size and some positioning that seems broken
+
     text_rect.w = surfaceMessage->w;
     text_rect.h = surfaceMessage->h;
-    //
+
     node = Element_get_style(el, "text-align");
     if (node != NULL) {
         if (strncmp(node->str_value, "center", 6) == 0) {
@@ -182,11 +193,19 @@ SDL_Rect render_text(Element *el, char *text)
     if (node != NULL) {
         text_rect.h = node->int_value;
     }
-    Message = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage);
 
-    SDL_RenderCopy(gRenderer, Message, NULL, &text_rect);
+    text_texture = Text_Texture_Create(font, text, surfaceMessage, &text_rect, sdl_color, font_size, el->x, el->y, gRenderer);
+    SDL_RenderCopy(gRenderer, text_texture->texture, NULL, &text_rect);
     SDL_FreeSurface(surfaceMessage);
-    SDL_DestroyTexture(Message);
+    // if (i + 1 >= LIST_SIZE) {
+    //     while (i < LIST_SIZE) {
+    //         free(text_textures[i]);
+    //         text_textures[i] = NULL;
+    //     }
+    //     i = 0;
+    // }
+    // text_textures[i] = text_texture;
+    // text_textures[i + 1] = NULL;
     return text_rect;
 }
 

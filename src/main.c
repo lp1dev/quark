@@ -99,6 +99,5 @@ int main(int argc, const char *argv[])
     render_document(document);
     (void) lxb_html_document_destroy(document);
     (void) lxb_css_stylesheet_destroy(css, true);
-    parse_css("beforeexit2");
     return EXIT_SUCCESS;
 }
