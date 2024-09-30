@@ -181,8 +181,8 @@ Element *Element_get_by_id(Element *element, char *id) {
         } else {
             next = tmp->next;
             while (next != NULL) {
-                if (tmp->id && strcmp(tmp->id, id) == 0) { // Might be a bug, should maybe remplace tmp by next here!!
-                    return tmp;// Or next ?
+                if (next->id && strcmp(next->id, id) == 0) {
+                    return next;
                 }
                 next = next->next;
             }

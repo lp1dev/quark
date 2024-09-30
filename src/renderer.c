@@ -14,10 +14,12 @@
 #include "renderer.h"
 #include "browser/js.h"
 #include "adapters/element.h"
+#include "cache/cache.h"
 
 SDL_Renderer *gRenderer = NULL;
 Element *body;
 TTF_Font *font;
+Cached_Font *fonts_head;
 Interval *intervals[LIST_SIZE];
 Text_Texture *text_textures[LIST_SIZE];
 
@@ -65,11 +67,11 @@ int graph_init()
         exit(-5);
     }
 
-    font = TTF_OpenFont("Sans.ttf", DEFAULT_FONT_SIZE);
+    /*    font = TTF_OpenFont("Sans.ttf", DEFAULT_FONT_SIZE);
     if (font == NULL) {
         printf("Failed to load font\n");
         exit(-7);
-    }
+	}*/
 
     SDL_SetRenderDrawBlendMode(gRenderer, SDL_BLENDMODE_BLEND);
     // SDL_UpdateWindowSurface(window);
@@ -86,7 +88,7 @@ SDL_Rect render_text(Element *el, char *text)
     SDL_Surface *surfaceMessage;
     SDL_Texture *Message;
     SDL_Color sdl_color;
-    TTF_Font *tmp_font;
+    Cached_Font *font;
     Node *element_color;
     Node *element_font_size;
     Node *node;
@@ -121,14 +123,12 @@ SDL_Rect render_text(Element *el, char *text)
     sdl_color.g = text_color.g;
     sdl_color.a = text_color.a;
    
-    /*    if (font_size != DEFAULT_FONT_SIZE) { // Unoptimized font size fix for the vita
-      tmp_font = TTF_OpenFont("Sans.ttf", font_size);
-    } else {
-      tmp_font = font;
-      }*/
-    tmp_font = font;
-
-    surfaceMessage = TTF_RenderUTF8_Blended_Wrapped(tmp_font, text, sdl_color, el->width);
+    font = Cached_Font_get(fonts_head, "Sans.ttf", font_size);
+    if (fonts_head == NULL) {
+      fonts_head = font;
+    }
+    
+    surfaceMessage = TTF_RenderUTF8_Blended_Wrapped(font->font, text, sdl_color, el->width);
 
     text_rect.w = surfaceMessage->w;
     text_rect.h = surfaceMessage->h;
@@ -177,7 +177,7 @@ SDL_Rect render_text(Element *el, char *text)
         text_rect.h = node->int_value;
     }
     
-    text_texture = Text_Texture_Create(tmp_font, text, surfaceMessage, &text_rect, sdl_color, font_size, el->x, el->y, gRenderer);
+    text_texture = Text_Texture_Create(font->font, text, surfaceMessage, &text_rect, sdl_color, font_size, el->x, el->y, gRenderer);
     SDL_RenderCopy(gRenderer, text_texture->texture, NULL, &text_rect);
     SDL_FreeSurface(surfaceMessage);
     return text_rect;
