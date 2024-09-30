@@ -86,6 +86,7 @@ SDL_Rect render_text(Element *el, char *text)
     SDL_Surface *surfaceMessage;
     SDL_Texture *Message;
     SDL_Color sdl_color;
+    TTF_Font *tmp_font;
     Node *element_color;
     Node *element_font_size;
     Node *node;
@@ -119,8 +120,15 @@ SDL_Rect render_text(Element *el, char *text)
     sdl_color.b = text_color.b;
     sdl_color.g = text_color.g;
     sdl_color.a = text_color.a;
+   
+    /*    if (font_size != DEFAULT_FONT_SIZE) { // Unoptimized font size fix for the vita
+      tmp_font = TTF_OpenFont("Sans.ttf", font_size);
+    } else {
+      tmp_font = font;
+      }*/
+    tmp_font = font;
 
-    surfaceMessage = TTF_RenderUTF8_Blended_Wrapped(font, text, sdl_color, el->width);
+    surfaceMessage = TTF_RenderUTF8_Blended_Wrapped(tmp_font, text, sdl_color, el->width);
 
     text_rect.w = surfaceMessage->w;
     text_rect.h = surfaceMessage->h;
@@ -168,8 +176,8 @@ SDL_Rect render_text(Element *el, char *text)
     if (node != NULL) {
         text_rect.h = node->int_value;
     }
-
-    text_texture = Text_Texture_Create(font, text, surfaceMessage, &text_rect, sdl_color, font_size, el->x, el->y, gRenderer);
+    
+    text_texture = Text_Texture_Create(tmp_font, text, surfaceMessage, &text_rect, sdl_color, font_size, el->x, el->y, gRenderer);
     SDL_RenderCopy(gRenderer, text_texture->texture, NULL, &text_rect);
     SDL_FreeSurface(surfaceMessage);
     return text_rect;
@@ -691,7 +699,7 @@ void render(Element *parent, int depth, duk_context *ctx) {
         }
         tmp = tmp->next;
     }
-    free(tmp);
+    //free(tmp);
 }
 
 void handle_click(duk_context *ctx, int x, int y) {
@@ -701,9 +709,10 @@ void handle_click(duk_context *ctx, int x, int y) {
     el = Element_get_by_pos(body, x, y);
     if (el != NULL) {
         duk_get_global_string(ctx, "quark_onClick");
-        // duk_push_int(ctx, el->internal_id);
         serialize_element(ctx, el);
         duk_call(ctx, 1);
+	// TODO : There is a bug here (probably b4 in the execution), when I call too many times a
+	// js function, I get a stack overflow from duktape of the ctx
     } else {
         printf("Warning : Invalid element clicked? x=%i y=%i\n", x, y);
     }
