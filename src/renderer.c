@@ -19,6 +19,7 @@ SDL_Renderer *gRenderer = NULL;
 Element *body;
 TTF_Font *font;
 Interval *intervals[LIST_SIZE];
+Text_Texture *text_textures[LIST_SIZE];
 
 /*
 
@@ -45,11 +46,8 @@ int graph_init()
         exit(-2);
     }
 
-    window = SDL_CreateWindow("Quark",
-                              SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED,
-                              SCREEN_WIDTH, SCREEN_HEIGHT,
-                              0);
+    window = SDL_CreateWindow("Quark", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    
 
     if (window == NULL)
     {
@@ -57,28 +55,25 @@ int graph_init()
         exit(-4);
     }
 
-    if ((gRenderer = SDL_CreateRenderer(window, -1, 0)) == NULL)
+    // Vita specific
+	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
+	gRenderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    //
+
+    if (gRenderer == NULL)
     {
         exit(-5);
     }
 
-    window_surface = SDL_GetWindowSurface(window);
-
-    if (window_surface == NULL)
-    {
-        printf("Failed to get the surface from the window\n");
-        exit(-6);
-    }
-
-    font = TTF_OpenFont("/usr/share/fonts/opentype/Sans.ttf", DEFAULT_FONT_SIZE);
+    font = TTF_OpenFont("Sans.ttf", DEFAULT_FONT_SIZE);
     if (font == NULL) {
         printf("Failed to load font\n");
         exit(-7);
     }
 
-
     SDL_SetRenderDrawBlendMode(gRenderer, SDL_BLENDMODE_BLEND);
-    SDL_UpdateWindowSurface(window);
+    // SDL_UpdateWindowSurface(window);
+    text_textures[0] = NULL;
 }
 
 /*
@@ -91,22 +86,24 @@ SDL_Rect render_text(Element *el, char *text)
     SDL_Surface *surfaceMessage;
     SDL_Texture *Message;
     SDL_Color sdl_color;
+    TTF_Font *tmp_font;
     Node *element_color;
     Node *element_font_size;
     Node *node;
+    Text_Texture *text_texture;
     char *text_align;
     css_color text_color = {0, 0, 0, 255};
     SDL_Rect text_rect;
     int font_size = DEFAULT_FONT_SIZE;
+    int i;
+
+
+    text_texture = NULL;
+    i = 0;
 
     node = Element_get_style_int(el, "font-size");
     if (node != NULL) {
         font_size = node->int_value;
-    }
-
-    if (TTF_SetFontSize(font, font_size) == -1) {
-        printf("Error when setting font size: %s\n", TTF_GetError());
-        exit(-7);
     }
 
     text_rect.x = el->computed_x;
@@ -123,13 +120,19 @@ SDL_Rect render_text(Element *el, char *text)
     sdl_color.b = text_color.b;
     sdl_color.g = text_color.g;
     sdl_color.a = text_color.a;
-    // TTF_RenderText_Blended_Wrapped might not be supported on all devices
-    surfaceMessage = TTF_RenderUTF8_Blended_Wrapped(font, text, sdl_color, el->width);
+   
+    /*    if (font_size != DEFAULT_FONT_SIZE) { // Unoptimized font size fix for the vita
+      tmp_font = TTF_OpenFont("Sans.ttf", font_size);
+    } else {
+      tmp_font = font;
+      }*/
+    tmp_font = font;
 
-    // surfaceMessage = TTF_RenderText_Blended_Wrapped(font, text, sdl_color, el->width);
+    surfaceMessage = TTF_RenderUTF8_Blended_Wrapped(tmp_font, text, sdl_color, el->width);
+
     text_rect.w = surfaceMessage->w;
     text_rect.h = surfaceMessage->h;
-    //
+
     node = Element_get_style(el, "text-align");
     if (node != NULL) {
         if (strncmp(node->str_value, "center", 6) == 0) {
@@ -173,11 +176,10 @@ SDL_Rect render_text(Element *el, char *text)
     if (node != NULL) {
         text_rect.h = node->int_value;
     }
-    Message = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage);
-
-    SDL_RenderCopy(gRenderer, Message, NULL, &text_rect);
+    
+    text_texture = Text_Texture_Create(tmp_font, text, surfaceMessage, &text_rect, sdl_color, font_size, el->x, el->y, gRenderer);
+    SDL_RenderCopy(gRenderer, text_texture->texture, NULL, &text_rect);
     SDL_FreeSurface(surfaceMessage);
-    SDL_DestroyTexture(Message);
     return text_rect;
 }
 
@@ -697,7 +699,7 @@ void render(Element *parent, int depth, duk_context *ctx) {
         }
         tmp = tmp->next;
     }
-    free(tmp);
+    //free(tmp);
 }
 
 void handle_click(duk_context *ctx, int x, int y) {
@@ -707,9 +709,10 @@ void handle_click(duk_context *ctx, int x, int y) {
     el = Element_get_by_pos(body, x, y);
     if (el != NULL) {
         duk_get_global_string(ctx, "quark_onClick");
-        // duk_push_int(ctx, el->internal_id);
         serialize_element(ctx, el);
         duk_call(ctx, 1);
+	// TODO : There is a bug here (probably b4 in the execution), when I call too many times a
+	// js function, I get a stack overflow from duktape of the ctx
     } else {
         printf("Warning : Invalid element clicked? x=%i y=%i\n", x, y);
     }

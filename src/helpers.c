@@ -1,7 +1,7 @@
 #include <lexbor/html/interfaces/document.h>
 #include <SDL2/SDL.h>
+#include "helpers.h"
 #include "browser/config.h"
-#include "rendering/interfaces.h"
 
 static char *UNITS[] = {
   "pt",

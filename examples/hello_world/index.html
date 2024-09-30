@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Quark Hello World</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <div id="container">
+    <h1 id="title">Hello, World</h1>
+    <p id="outputarea">Hello from Quark!</p>
+    <button id="button" onclick="counterup()">Here's a button!</button>
+  </div>
+
+  <script type="text/javascript">
+    var counter = 0
+
+    function counterup() {
+
+      var text = document.getElementById("outputarea")
+      console.log("Button clicked!")
+      counter += 1
+      text.innerText = "You have clicked the button " + counter + " time(s)!"
+    }
+  </script>
+
+</body>
+
+</html>
