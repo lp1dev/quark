@@ -8,6 +8,8 @@
 - curl
 - tar
 - unzip
+- make
+- cmake
 
 #### GNU/Linux (maybe MacOS as well?)
 
