@@ -1,8 +1,28 @@
-## TODO
+## Quark
 
-### Projects to test on the browser
+### Setup
 
-- https://github.com/burakcan/jsgs/blob/master/src/Screen/index.js
+#### Requirements
+
+- vita-sdk
+- curl
+- tar
+- unzip
+
+#### GNU/Linux (maybe MacOS as well?)
+
+Run `./setup.sh` which will setup source code dependencies.
+
+#### Build
+
+Run
+
+```
+cmake .
+./build.sh
+```
+
+And voilà!
 
 ---
 
@@ -27,3 +47,12 @@ Useful snippets
 
 - lexbor (only the lexbor dir containing the sources)
 - duktape
+
+---
+
+### To Do
+
+Enhance JS/HTML support to support projects like :
+
+- https://github.com/burakcan/jsgs/blob/master/src/Screen/index.js
+
