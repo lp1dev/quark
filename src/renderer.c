@@ -18,10 +18,8 @@
 
 SDL_Renderer *gRenderer = NULL;
 Element *body;
-TTF_Font *font;
 Cached_Font *fonts_head;
 Interval *intervals[LIST_SIZE];
-Text_Texture *text_textures[LIST_SIZE];
 
 /*
 
@@ -67,15 +65,7 @@ int graph_init()
         exit(-5);
     }
 
-    /*    font = TTF_OpenFont("Sans.ttf", DEFAULT_FONT_SIZE);
-    if (font == NULL) {
-        printf("Failed to load font\n");
-        exit(-7);
-	}*/
-
     SDL_SetRenderDrawBlendMode(gRenderer, SDL_BLENDMODE_BLEND);
-    // SDL_UpdateWindowSurface(window);
-    text_textures[0] = NULL;
 }
 
 /*
@@ -286,6 +276,7 @@ static duk_ret_t get_element_by_id(duk_context *ctx)
 
     // printf("In getElementById\n");
     id = (char *) duk_get_string(ctx, 0);
+    duk_pop(ctx);
     element = Element_get_by_id(body, id);
     if (element == NULL) {
         printf("#%s not found\n", id);
@@ -334,7 +325,9 @@ static duk_ret_t update_element(duk_context *ctx) {
             Element_set_attribute(element, update_key, update_value);
             break;
     }
-
+    duk_pop(ctx);
+    duk_pop(ctx);
+    duk_pop(ctx);
     return (duk_ret_t) 0;
 }
 
@@ -391,6 +384,9 @@ static duk_ret_t set_interval(duk_context *ctx) {
         exit(-1);
     }
     intervals[i] = interval_obj;
+    duk_pop(ctx);
+    duk_pop(ctx);
+    duk_pop(ctx);
     return (duk_ret_t) 0;
 }
 
@@ -400,7 +396,7 @@ static duk_ret_t set_interval(duk_context *ctx) {
 */
 void init_dom(duk_context *ctx) {
     duk_push_global_object(ctx);
-    duk_put_global_string(ctx, "quark"); // Creating a "document" global
+    duk_put_global_string(ctx, "quark"); // Creating a "quark" global
     duk_push_c_function(ctx, get_element_by_id, 1 /*nargs*/);
     duk_put_global_string(ctx, "c_getElementById");
     duk_push_c_function(ctx, update_element, 4 /*nargs*/);
@@ -503,8 +499,8 @@ void compute_element_dimensions_inline(Element *el) {
 SDL_Rect compute_smallest_element_size(Element *el) {
     Element *child;
     Element *prev;
-    Node *font_size;
     Node *node;
+    Node *font_size;
     int font_size_value;
     SDL_Rect smallest = {0, 0, 0, 0};
     SDL_Rect text_size = {0, 0, 0, 0};
@@ -711,6 +707,7 @@ void handle_click(duk_context *ctx, int x, int y) {
         duk_get_global_string(ctx, "quark_onClick");
         serialize_element(ctx, el);
         duk_call(ctx, 1);
+        duk_pop(ctx);
 	// TODO : There is a bug here (probably b4 in the execution), when I call too many times a
 	// js function, I get a stack overflow from duktape of the ctx
     } else {

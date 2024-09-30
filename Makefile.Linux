@@ -5,6 +5,7 @@ SOURCES=src/*.c \
  	src/browser/classes/*.c \
  	src/adapters/*.c \
   	src/rendering/*.c \
+	src/cache/*.c \
    	duktape/src/duktape.c \
    	duktape/extras/console/duk_console.c
 
