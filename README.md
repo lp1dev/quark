@@ -80,23 +80,36 @@ You will also need to have `Sans.ttf` and `quark.js` in the same directory as th
 ### JS
 
 - document.getElementById
-- document.style (for the font-size, color, background-color, padding, margin)
+- element.style
+- element.innerText
+- element.attributes
+- onclick
+- setInterval
+- setTimeout
 
 ### CSS
 
-- display: inline
+- display: inline and block
 - font-size
 - color
 - background-color
 - padding
 - margin
+- height
+- width
+- text-align
+- vertical-align
 
 ---
 
 ## To Do
 
+- Fix stack overflow error with duktape
+- Add a custom Font loader for cache purposes
+- Fix and use custom Text Texture loader for cache purposes
+- Add image loading
 - Implement img tags
-- Support external resources loading
+- Support external resources loading in HTML
 
 ---
 
