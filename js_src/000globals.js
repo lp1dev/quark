@@ -4,6 +4,10 @@ document = {}
 window = {
     intervals: []
 }
-quark = {}
+events = {
+    listeners: {
+        "keydown": []
+    }
+}
 
 //

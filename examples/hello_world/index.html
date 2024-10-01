@@ -11,6 +11,7 @@
   <div id="container">
     <h1 id="title">Hello, World</h1>
     <p id="outputarea">Hello from Quark!</p>
+    <p id="keypressed">No key pressed.</p>
     <button id="button" onclick="counterup()">Here's a button!</button>
   </div>
 
@@ -18,12 +19,16 @@
     var counter = 0
 
     function counterup() {
-
       var text = document.getElementById("outputarea")
       console.log("Button clicked!")
       counter += 1
       text.innerText = "You have clicked the button " + counter + " time(s)!"
     }
+
+   document.addEventListener("keydown", function(event) {
+      var keypressed = document.getElementById("keypressed")
+      keypressed.innerText = "Key pressed " + event.code
+   })
   </script>
 
 </body>

@@ -4,7 +4,11 @@ document = {}
 window = {
     intervals: []
 }
-quark = {}
+events = {
+    listeners: {
+        "keydown": []
+    }
+}
 
 //// In the C code, we have
 
@@ -259,5 +263,21 @@ quark_onClick = function(element) {
 setTimeout = window.setTimeout
 setInterval = window.setInterval
 getElementById = document.getElementById
+
+//
+
+quark_onEvent = function(type, datacode) {
+  if (events.listeners[type] !== undefined) {
+    events.listeners[type].forEach(function (callback) {
+        callback({type: type, code: datacode})
+    })
+  }
+}
+
+document.addEventListener = function (event, callback) {
+  if (events.listeners[event] !== undefined) {
+      events.listeners[event].push(callback)
+  }
+}
 
 //

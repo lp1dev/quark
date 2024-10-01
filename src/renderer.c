@@ -33,7 +33,7 @@ int graph_init()
     SDL_Window *window;
     SDL_Surface *window_surface;
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    if (SDL_Init((SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER)) < 0)
     {
         printf("Failed to initialize the SDL2 library\n");
         exit(-1);
@@ -300,6 +300,7 @@ static duk_ret_t update_element(duk_context *ctx) {
     int update_type;
     char *update_key;
     char *update_value;
+    char *str_buffer;
 
     internal_id = duk_get_number(ctx, 0);
     element = Element_get_by_internal_id(body, internal_id);
@@ -319,15 +320,16 @@ static duk_ret_t update_element(duk_context *ctx) {
             Element_set_style(element, update_key, update_value);
             break;
         case INNER_TEXT:
-            element->innerText = update_value;
+            str_buffer = malloc(sizeof(char) * strlen(update_value));
+            strncpy(str_buffer, update_value, strlen(update_value));
+            str_buffer[strlen(update_value)] = '\0';
+            element->innerText = str_buffer;
             break;
         case ATTRIBUTES:
             Element_set_attribute(element, update_key, update_value);
             break;
     }
-    duk_pop(ctx);
-    duk_pop(ctx);
-    duk_pop(ctx);
+    duk_pop_n(ctx, 4);
     return (duk_ret_t) 0;
 }
 
@@ -349,6 +351,7 @@ void check_intervals(duk_context *ctx) {
                 duk_get_global_string(ctx, "quark_executeInterval");
                 duk_push_number(ctx, intervals[i]->id);
                 duk_call(ctx, 1);
+                duk_pop(ctx);
                 intervals[i]->timeout = -123456789; // Temporary replacement for an actual delete of the interval
                 free(intervals[i]);
             }
@@ -357,6 +360,7 @@ void check_intervals(duk_context *ctx) {
                 duk_get_global_string(ctx, "quark_executeInterval");
                 duk_push_number(ctx, intervals[i]->id);
                 duk_call(ctx, 1);
+                duk_pop(ctx);
                 intervals[i]->start_time = current_time;
             }
         }
@@ -384,9 +388,7 @@ static duk_ret_t set_interval(duk_context *ctx) {
         exit(-1);
     }
     intervals[i] = interval_obj;
-    duk_pop(ctx);
-    duk_pop(ctx);
-    duk_pop(ctx);
+    duk_pop_3(ctx);
     return (duk_ret_t) 0;
 }
 
@@ -407,7 +409,6 @@ void init_dom(duk_context *ctx) {
     duk_put_global_string(ctx, "c_setInterval");
     duk_push_c_function(ctx, get_element_attributes, 1);
     duk_put_global_string(ctx, "c_getElementAttributes");
-
 }
 
 void compute_margin_padding(Element *el) {
@@ -581,7 +582,7 @@ void compute_element_dimensions(Element *el) {
         el->width = parent->computed_width; // By default an element will take all of the available width
         el->height = (parent->computed_height / siblings);
 
-        if (smallest_size.w != 0) {
+        if (smallest_size.w != 0) { 
             el->width = smallest_size.w;
             // I should add padding here
         }
@@ -701,19 +702,33 @@ void render(Element *parent, int depth, duk_context *ctx) {
 void handle_click(duk_context *ctx, int x, int y) {
     Element *el;
 
-    // printf("User click on %i, %i\n", x, y);
     el = Element_get_by_pos(body, x, y);
     if (el != NULL) {
         duk_get_global_string(ctx, "quark_onClick");
         serialize_element(ctx, el);
         duk_call(ctx, 1);
         duk_pop(ctx);
-	// TODO : There is a bug here (probably b4 in the execution), when I call too many times a
-	// js function, I get a stack overflow from duktape of the ctx
     } else {
         printf("Warning : Invalid element clicked? x=%i y=%i\n", x, y);
     }
     return;
+}
+
+
+void handle_keydown(duk_context *ctx, SDL_Keysym keysim) {
+    duk_get_global_string(ctx, "quark_onEvent");
+    duk_push_string(ctx, "keydown");
+    duk_push_int(ctx, (int)keysim.sym);
+    duk_call(ctx, 2);
+    duk_pop(ctx);
+}
+
+void handle_controllerbuttondown(duk_context *ctx, Uint8 button) {
+    duk_get_global_string(ctx, "quark_onEvent");
+    duk_push_string(ctx, "keydown");
+    duk_push_int(ctx, (int)button);
+    duk_call(ctx, 2);
+    duk_pop_2(ctx);
 }
 
 
@@ -736,11 +751,17 @@ void render_loop(duk_context *ctx) {
         // Element_draw_graph(body, 0);
         render(body, 0, ctx);
         SDL_RenderPresent(gRenderer);
-        if (SDL_PollEvent(&event)) {
+        while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 go_on = 0;
             } else if (event.type == SDL_MOUSEBUTTONDOWN) {
                 handle_click(ctx, event.button.x, event.button.y);
+            } else if (event.type == SDL_KEYDOWN) {
+                handle_keydown(ctx, event.key.keysym);
+            } else if (event.type == SDL_CONTROLLERBUTTONDOWN) {
+                handle_controllerbuttondown(ctx, event.cbutton.button);
+            } else {
+                // printf("Unhandled event type : %i\n", event.type);
             }
         }
         check_intervals(ctx);
