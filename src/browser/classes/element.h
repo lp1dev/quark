@@ -13,7 +13,8 @@ enum update_types {
     INTERNAL_ID,
     TAG,
     ID,
-    INNER_TEXT
+    INNER_TEXT,
+    INNER_HTML,
 };
 
 typedef struct Element Element;

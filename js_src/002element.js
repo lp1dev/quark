@@ -23,6 +23,12 @@ function Element(element_obj) {
         writable: true
     })
 
+    Object.defineProperty(this, "_innerHTML", {
+        enumerable: false,
+        value: element_obj.innerHTML,
+        writable: true
+    })
+
     Object.defineProperty(this, "_x", {
         enumerable: false,
         value: element_obj.x,
@@ -66,6 +72,17 @@ function Element(element_obj) {
         set: function(innerText) {
             this._innerText = innerText;
             quark.c_updateElement(this._internalId, 9, "innerText", innerText);
+        },
+        configurable: true
+    })
+
+    Object.defineProperty(this, "innerHTML", {
+        get: function() {
+            return this._innerHTML;
+        },
+        set: function(innerHTML) {
+            this._innerHTML = innerHTML;
+            quark.c_updateElement(this._internalId, 10, "innerHTML", innerHTML);
         },
         configurable: true
     })

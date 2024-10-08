@@ -392,6 +392,60 @@ static duk_ret_t set_interval(duk_context *ctx) {
     return (duk_ret_t) 0;
 }
 
+void get_controller_buttons(SDL_GameController *controller, duk_context *ctx) {
+    int max_buttons;
+    int pressed;
+    duk_idx_t array_index;
+
+
+
+    array_index = duk_push_array(ctx);
+    max_buttons = 22; // Only 22 buttons supported by SDL_GameControllerButton
+    for (int i = 0; i < max_buttons; i++) {
+        pressed = SDL_GameControllerGetButton(controller, i);
+        duk_push_object(ctx);
+        //
+        duk_push_boolean(ctx, pressed);
+        duk_put_prop_string(ctx, -2, "pressed");
+        //
+        duk_push_boolean(ctx, pressed);
+        duk_put_prop_string(ctx, -2, "touched");
+        //
+        duk_push_number(ctx, (double) pressed);
+        duk_put_prop_string(ctx, -2, "value");
+        //
+        duk_put_prop_index(ctx, array_index, i);
+    }
+}
+
+//
+static duk_ret_t get_controllers(duk_context *ctx) {
+    SDL_GameController *controller;
+    duk_idx_t array_index;
+
+    array_index = duk_push_array(ctx); // We create an empty JS array
+
+    for (int i = 0;i < SDL_NumJoysticks(); i++) {
+        if (SDL_IsGameController(i)) {
+            controller = SDL_GameControllerOpen(i);
+            duk_push_object(ctx); // We create an empty JS object
+            //
+            duk_push_boolean(ctx, true);
+            duk_put_prop_string(ctx, -2, "connected");
+            //
+            duk_push_string(ctx, SDL_GameControllerName(controller));
+            duk_put_prop_string(ctx, -2, "id");
+            //
+            get_controller_buttons(controller, ctx);
+            duk_put_prop_string(ctx, -2, "buttons");
+            duk_put_prop_index(ctx, array_index, i); // Adding the (updated) object to the array
+
+            printf("Added controller %i %s", i, SDL_GameControllerName(controller));
+        }
+    }
+    return (duk_ret_t) 1;
+}
+
 /* void init_dom
 
     Initializing dom objects in the JS context
@@ -409,6 +463,8 @@ void init_dom(duk_context *ctx) {
     duk_put_global_string(ctx, "c_setInterval");
     duk_push_c_function(ctx, get_element_attributes, 1);
     duk_put_global_string(ctx, "c_getElementAttributes");
+    duk_push_c_function(ctx, get_controllers, 0);
+    duk_put_global_string(ctx, "c_getGamepads");
 }
 
 void compute_margin_padding(Element *el) {
@@ -474,7 +530,6 @@ void compute_element_dimensions_inline(Element *el) {
         if ((parent->computed_x + el->x + el->width) > parent->computed_width) {
             parent->computed_width = parent->computed_x + el->x + el->width;
         }
-        // printf("%s{%i, %i, %i, %i}\n", el->tag, el->x, el->y, el->width, el->height);
     }
 
     node = Element_get_style_int(el, "height");
@@ -715,22 +770,30 @@ void handle_click(duk_context *ctx, int x, int y) {
 }
 
 
-void handle_keydown(duk_context *ctx, SDL_Keysym keysim) {
+// void handle_keydown(duk_context *ctx, SDL_Keysym keysim) {
+//     duk_get_global_string(ctx, "quark_onEvent");
+//     duk_push_string(ctx, "keydown");
+//     duk_push_int(ctx, (int)keysim.sym);
+//     duk_call(ctx, 2);
+//     duk_pop(ctx);
+// }
+
+// void handle_controllerbuttondown(duk_context *ctx, Uint8 button) {
+//     duk_get_global_string(ctx, "quark_onEvent");
+//     duk_push_string(ctx, "keydown");
+//     duk_push_int(ctx, (int)button);
+//     duk_call(ctx, 2);
+//     duk_pop(ctx);
+// }
+
+void trigger_js_event_int(duk_context *ctx, char *type, int value) {
     duk_get_global_string(ctx, "quark_onEvent");
-    duk_push_string(ctx, "keydown");
-    duk_push_int(ctx, (int)keysim.sym);
+    duk_push_string(ctx, type);
+    duk_push_int(ctx, value);
     duk_call(ctx, 2);
     duk_pop(ctx);
-}
 
-void handle_controllerbuttondown(duk_context *ctx, Uint8 button) {
-    duk_get_global_string(ctx, "quark_onEvent");
-    duk_push_string(ctx, "keydown");
-    duk_push_int(ctx, (int)button);
-    duk_call(ctx, 2);
-    duk_pop_2(ctx);
 }
-
 
 /* 
 void render_loop(dux_context *ctx)
@@ -757,9 +820,12 @@ void render_loop(duk_context *ctx) {
             } else if (event.type == SDL_MOUSEBUTTONDOWN) {
                 handle_click(ctx, event.button.x, event.button.y);
             } else if (event.type == SDL_KEYDOWN) {
-                handle_keydown(ctx, event.key.keysym);
+                trigger_js_event_int(ctx, "keydown", event.key.keysym.sym);
             } else if (event.type == SDL_CONTROLLERBUTTONDOWN) {
-                handle_controllerbuttondown(ctx, event.cbutton.button);
+                trigger_js_event_int(ctx, "button_press", event.cbutton.button);
+            } else if (event.type == SDL_CONTROLLERDEVICEADDED) {
+                trigger_js_event_int(ctx, "gamepadconnected", 0); // The last value should be the gamepad index
+                // TODO: We're using 0 as a placeholder, this should be changed to support multiple controllers!
             } else {
                 // printf("Unhandled event type : %i\n", event.type);
             }

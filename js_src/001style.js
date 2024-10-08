@@ -10,7 +10,8 @@
 //     INTERNAL_ID,
 //     TAG,
 //     ID,
-//     INNER_TEXT
+//     INNER_TEXT,
+//     HTML
 // };
 
 // == Style Class == 

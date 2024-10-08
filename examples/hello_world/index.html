@@ -29,6 +29,45 @@
       var keypressed = document.getElementById("keypressed")
       keypressed.innerText = "Key pressed " + event.code
    })
+  
+   document.addEventListener("gamepadconnected", function(event) {
+    console.log("GAMEPAD CONNECTED")
+   })
+   
+
+    function loop() {
+      var gamepad = navigator.getGamepads()[0] // Default console controller
+      // The mapping comes from
+      // https://wiki.libsdl.org/SDL2/SDL_GameControllerButton
+      //
+      var mapping = [ 
+        "INVALID", 
+        "A", 
+        "B",
+        "X",
+        "Y",
+        "BACK",
+        "GUIDE",
+        "LEFTSTICK",
+        "RIGHTSTICK",
+        "LEFTSHOULDER",
+        "RIGHTSHOULDER",
+        "DPAD_UP",
+        "DPAD_DOWN",
+        "DPAD_LEFT",
+        "DPAD_RIGHT",
+      ] // Only implemented the first 15 buttons
+        // TODO : Add the rest
+      for (var i = 0; i < mapping.length; i++) {
+        if (gamepad.buttons[i].pressed) {
+          console.log(mapping[i], "pressed")
+          document.getElementById("keypressed").innerText = mapping[i] + " pressed!!"
+        }
+      }
+      // console.log("Gamepads :: ", JSON.stringify(navigator.getGamepads()), typeof(navigator.getGamepads()))
+    }
+
+    setInterval(loop, 100)
   </script>
 
 </body>

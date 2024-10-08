@@ -50,7 +50,10 @@ getElementById = document.getElementById
 //
 
 quark_onEvent = function(type, datacode) {
-  if (events.listeners[type] !== undefined) {
+  if (events.listeners[type] == undefined) {
+    events.listeners[type] = []
+  }
+  else {
     events.listeners[type].forEach(function (callback) {
         callback({type: type, code: datacode})
     })
@@ -58,9 +61,15 @@ quark_onEvent = function(type, datacode) {
 }
 
 document.addEventListener = function (event, callback) {
-  if (events.listeners[event] !== undefined) {
-      events.listeners[event].push(callback)
+  if (events.listeners[event] == undefined) {
+    events.listeners[event] = []
   }
+  events.listeners[event].push(callback)
+}
+
+navigator.getGamepads = function() {
+  var gamepads = c_getGamepads()
+  return gamepads
 }
 
 //

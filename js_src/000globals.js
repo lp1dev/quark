@@ -6,8 +6,8 @@ window = {
 }
 events = {
     listeners: {
-        "keydown": []
     }
 }
+navigator = {}
 
 //
