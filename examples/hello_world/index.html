@@ -32,22 +32,35 @@
   
    document.addEventListener("gamepadconnected", function(event) {
     console.log("GAMEPAD CONNECTED")
+    navigator.getGamepads()
+
    })
    
 
-    function loop() {
-      var gamepad = navigator.getGamepads()[0] // Default console controller
-      // The mapping comes from
-      // https://wiki.libsdl.org/SDL2/SDL_GameControllerButton
-      //
-      var mapping = [ 
-        "INVALID", 
-        "A", 
-        "B",
-        "X",
-        "Y",
-        "BACK",
-        "GUIDE",
+    // function initGamepad() {
+    //   var gamepad = navigator.getGamepads()[0] // Default console controller
+
+    //   // for (var i = 0; i < mapping.length; i++) {
+    //   //   if (gamepad.buttons[i].pressed) {
+    //   //     console.log(mapping[i], "pressed")
+    //   //     document.getElementById("keypressed").innerText = mapping[i] + " pressed!!"
+    //   //   }
+    //   // }
+    // }
+
+    document.addEventListener('keydown', function(event) {
+      console.log("Key pressed ", event)
+      document.getElementById('keypressed').innerText = "Keyboard key pressed " + event.code
+    })
+
+    var mapping = [ 
+        "X", 
+        "CIRCLE", 
+        "TRIANGLE",
+        "SQUARE",
+        "SHARE",
+        "PS",
+        "OPTIONS",
         "LEFTSTICK",
         "RIGHTSTICK",
         "LEFTSHOULDER",
@@ -58,16 +71,15 @@
         "DPAD_RIGHT",
       ] // Only implemented the first 15 buttons
         // TODO : Add the rest
-      for (var i = 0; i < mapping.length; i++) {
-        if (gamepad.buttons[i].pressed) {
-          console.log(mapping[i], "pressed")
-          document.getElementById("keypressed").innerText = mapping[i] + " pressed!!"
-        }
-      }
-      // console.log("Gamepads :: ", JSON.stringify(navigator.getGamepads()), typeof(navigator.getGamepads()))
-    }
 
-    setInterval(loop, 100)
+
+
+    document.addEventListener('button_press', function(event) {
+      console.log("Button press", event)
+      document.getElementById('keypressed').innerText = mapping[event.code] + " pressed on the gamepad"
+      
+    })
+
   </script>
 
 </body>

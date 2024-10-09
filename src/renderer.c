@@ -19,6 +19,7 @@
 SDL_Renderer *gRenderer = NULL;
 Element *body;
 Cached_Font *fonts_head;
+Cached_Texture *textures_head;
 Interval *intervals[LIST_SIZE];
 
 /*
@@ -79,6 +80,7 @@ SDL_Rect render_text(Element *el, char *text)
     SDL_Texture *Message;
     SDL_Color sdl_color;
     Cached_Font *font;
+    Cached_Texture *texture;
     Node *element_color;
     Node *element_font_size;
     Node *node;
@@ -167,8 +169,11 @@ SDL_Rect render_text(Element *el, char *text)
         text_rect.h = node->int_value;
     }
     
-    text_texture = Text_Texture_Create(font->font, text, surfaceMessage, &text_rect, sdl_color, font_size, el->x, el->y, gRenderer);
-    SDL_RenderCopy(gRenderer, text_texture->texture, NULL, &text_rect);
+    texture = Cached_Texture_get(text, textures_head, gRenderer, surfaceMessage, &text_rect, &sdl_color, el->x, el->y);
+    if (textures_head == NULL) {
+        textures_head = texture;
+    }
+    SDL_RenderCopy(gRenderer, texture->texture, NULL, &text_rect);
     SDL_FreeSurface(surfaceMessage);
     return text_rect;
 }
@@ -320,10 +325,15 @@ static duk_ret_t update_element(duk_context *ctx) {
             Element_set_style(element, update_key, update_value);
             break;
         case INNER_TEXT:
-            str_buffer = malloc(sizeof(char) * strlen(update_value));
-            strncpy(str_buffer, update_value, strlen(update_value));
-            str_buffer[strlen(update_value)] = '\0';
-            element->innerText = str_buffer;
+            if (element->innerText != NULL) {
+                // free(element->innerText);
+                // Causes a double free exception
+                // It seems that at some point this section is not initialized
+            }
+            element->innerText = malloc(sizeof(char) * strlen(update_value) + 1);
+            strncpy(element->innerText, update_value, strlen(update_value));
+            element->innerText[strlen(update_value)] = '\0';
+            // element->innerText = str_buffer;
             break;
         case ATTRIBUTES:
             Element_set_attribute(element, update_key, update_value);
@@ -439,8 +449,6 @@ static duk_ret_t get_controllers(duk_context *ctx) {
             get_controller_buttons(controller, ctx);
             duk_put_prop_string(ctx, -2, "buttons");
             duk_put_prop_index(ctx, array_index, i); // Adding the (updated) object to the array
-
-            printf("Added controller %i %s", i, SDL_GameControllerName(controller));
         }
     }
     return (duk_ret_t) 1;
@@ -735,6 +743,7 @@ void draw_element(Element *el) {
 */
 void render(Element *parent, int depth, duk_context *ctx) {
     Element *tmp;
+    Element *to_delete;
     int position;
     int siblings;
 
@@ -744,14 +753,16 @@ void render(Element *parent, int depth, duk_context *ctx) {
         draw_element(tmp);
         if (strncmp(tmp->tag, "script", 6) == 0) {
             duk_eval_string(ctx, tmp->innerText);
-            Element_delete(parent, tmp->internal_id);
+            to_delete = tmp;
+            tmp = tmp->next;
+            Element_delete(parent, to_delete->internal_id);
+            continue;
         }
-        if (tmp->children != NULL) {
+        else if (tmp->children != NULL) {
             render(tmp->children, depth + 1, ctx);
         }
         tmp = tmp->next;
     }
-    //free(tmp);
 }
 
 void handle_click(duk_context *ctx, int x, int y) {
@@ -768,23 +779,6 @@ void handle_click(duk_context *ctx, int x, int y) {
     }
     return;
 }
-
-
-// void handle_keydown(duk_context *ctx, SDL_Keysym keysim) {
-//     duk_get_global_string(ctx, "quark_onEvent");
-//     duk_push_string(ctx, "keydown");
-//     duk_push_int(ctx, (int)keysim.sym);
-//     duk_call(ctx, 2);
-//     duk_pop(ctx);
-// }
-
-// void handle_controllerbuttondown(duk_context *ctx, Uint8 button) {
-//     duk_get_global_string(ctx, "quark_onEvent");
-//     duk_push_string(ctx, "keydown");
-//     duk_push_int(ctx, (int)button);
-//     duk_call(ctx, 2);
-//     duk_pop(ctx);
-// }
 
 void trigger_js_event_int(duk_context *ctx, char *type, int value) {
     duk_get_global_string(ctx, "quark_onEvent");

@@ -10,6 +10,8 @@ struct Cached_Texture {
     SDL_Texture     *texture;
     SDL_Rect        *rect;
     SDL_Color       *color;
+    SDL_Surface     *surface;
+    char            *name;
     int             x;
     int             y;
 };
@@ -23,8 +25,8 @@ struct Cached_Font {
     Cached_Font *next;
 };
 
-Cached_Texture *Cached_Texture_Create(SDL_Texture *texture, SDL_Rect *rect, SDL_Color *color, int x, int y);
-Cached_Texture *Cached_Texture_get(Cached_Texture *head, SDL_Texture *texture, SDL_Rect *rect, SDL_Color *color, int x, int y);
+Cached_Texture *Cached_Texture_Create(char *name, SDL_Renderer *renderer, SDL_Surface *surface, SDL_Rect *rect, SDL_Color *color, int x, int y);
+Cached_Texture *Cached_Texture_get(char *name, Cached_Texture *head, SDL_Renderer *renderer, SDL_Surface *surface, SDL_Rect *rect, SDL_Color *color, int x, int y);
 Cached_Font    *Cached_Font_Create(char *font_name, int font_size);
 Cached_Font    *Cached_Font_get(Cached_Font *head, char *font_name, int font_size);
 #endif

@@ -3,7 +3,6 @@
 
 document.getElementById = function(id) {
     element = quark.c_getElementById(id)
-    console.log(element)
     e = new Element(element); // Here, we're not doing return new Element() because it seems to override the same object in duktape
     return e
 }
@@ -26,7 +25,6 @@ quark_executeInterval = function(intervalID) {
   i = 0
   while (window.intervals[i]) {
     if (window.intervals[i].id == intervalID) {
-      console.log(window.intervals[i])
       window.intervals[i].callback()
     }
     i++
