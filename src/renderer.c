@@ -18,7 +18,9 @@
 
 SDL_Renderer *gRenderer = NULL;
 Element *body;
+lxb_css_stylesheet_t *css;
 Cached_Font *fonts_head;
+lxb_html_document_t *document;
 Cached_Texture *textures_head;
 Interval *intervals[LIST_SIZE];
 
@@ -291,6 +293,30 @@ static duk_ret_t get_element_by_id(duk_context *ctx)
     return (duk_ret_t)1;
 }
 
+Element *set_inner_html(Element *el, char *html) {
+    lxb_html_element_t *element;
+    lxb_html_body_element_t *body;
+    size_t document_html_len;
+    size_t html_len;
+
+    // We create a new empty document
+    element = lxb_html_document_create_element(document, "innerhtml", 9, NULL);
+
+    // Then, we set its innerHTML
+    html_len = sizeof(html) - 1;
+    element = lxb_html_element_inner_html_set(element, html, strlen(html));
+    if (element == NULL) {
+        printf("Failed to parse innerHTML\n%s\n", html);
+        return el;
+    }
+
+    // Then, we add the created element to the dom tree
+    el->children = walk_and_create_elements(el, lxb_dom_interface_node(element));
+    el->children = el->children->children;
+    el->children->parent = el;
+    return el;
+}
+
 /* 
 
 static duk_ret_t update_element(duk_context *ctx)
@@ -333,10 +359,14 @@ static duk_ret_t update_element(duk_context *ctx) {
             element->innerText = malloc(sizeof(char) * strlen(update_value) + 1);
             strncpy(element->innerText, update_value, strlen(update_value));
             element->innerText[strlen(update_value)] = '\0';
-            // element->innerText = str_buffer;
+            element->children = NULL; // Ugly Hack To avoid displaying twice the contents of the element (both in innerText and its innerHTML)
             break;
         case ATTRIBUTES:
             Element_set_attribute(element, update_key, update_value);
+            break;
+        case INNER_HTML:
+            element->innerText = NULL; // Ugly Hack To avoid displaying twice the contents of the element (both in innerText and its innerHTML)
+            set_inner_html(element, update_value);
             break;
     }
     duk_pop_n(ctx, 4);
@@ -838,8 +868,11 @@ void render_document(html_document *document)
 
     Rendering the DOM document item
 */
-void render_document(lxb_html_document_t *document) {
+void render_document(lxb_html_document_t *parsed_document, lxb_css_stylesheet_t *parsed_css) {
     duk_context *ctx;
+    //
+    css = parsed_css;
+    document = parsed_document;
     //
     body = parse_lxb_body((lxb_dom_node_t *) document->body);
     body->height = SCREEN_HEIGHT;

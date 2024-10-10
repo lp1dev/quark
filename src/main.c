@@ -78,7 +78,7 @@ int main(int argc, const char *argv[])
 {
     //
     lexbor_status_t status;
-    lxb_dom_collection_t *collection;
+    // lxb_dom_collection_t *collection;
 
     lxb_html_document_t *document = parse_html("index.html");
     lxb_html_element_t *element = lxb_html_element_interface_create(document);
@@ -88,15 +88,19 @@ int main(int argc, const char *argv[])
     if (status != LXB_STATUS_OK) {
         return EXIT_FAILURE;
     }
-    collection = lxb_dom_collection_make(lxb_dom_interface_document(document), 16);
-    if (collection == NULL) {
+    status = lxb_html_document_stylesheet_attach(document, css);
+    if (status != LXB_STATUS_OK) {
         return EXIT_FAILURE;
     }
+    // collection = lxb_dom_collection_make(lxb_dom_interface_document(document), 16);
+    // if (collection == NULL) {
+    //     return EXIT_FAILURE;
+    // }
 
     printf("Document parsed!\nGraph init...");
     graph_init();
     printf("Graph init done! Rendering.\n");
-    render_document(document);
+    render_document(document, css);
     (void) lxb_html_document_destroy(document);
     (void) lxb_css_stylesheet_destroy(css, true);
     return EXIT_SUCCESS;
