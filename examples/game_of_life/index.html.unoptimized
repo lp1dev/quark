@@ -12,7 +12,6 @@
   </div>
   <div id="controls">
     <button onclick="pause()">Pause</button>
-    <button onclick="clear()">Clear</button>
   </div>
 
   <script type="text/javascript">
@@ -53,8 +52,8 @@
 
     // Game logic
     var global_cells = [];
-    var NUM_CELLS_Y = 24
-    var NUM_CELLS_X = 49
+    var NUM_CELLS_Y = 36
+    var NUM_CELLS_X = 72
     var PAUSED = false
     var interval
 
@@ -80,7 +79,7 @@
         for (var x = 0; x <= NUM_CELLS_X; x++) {
           var alive = Math.random() > 0.6
           cells += "<div class='cell' id='cell" + y + "-" + x + "'></div>"
-          global_cells[y].push({alive: alive, next_status: alive, to_reset: false})
+          global_cells[y].push({alive: alive, next_status: alive})
 
         }
         line.innerHTML = cells
@@ -126,20 +125,15 @@
             var cell = document.getElementById('cell'+y+'-'+x)
 
           if (global_cells[y][x].next_status) {
-            cell.style.backgroundColor = '#08a9ff'
+            cell.style.backgroundColor = '#ffffff'
             global_cells[y][x].alive = true
             global_cells[y][x].next_status = true
           } else {
-            cell.style.backgroundColor = '#16445d'
+            cell.style.backgroundColor = '#000000'
             global_cells[y][x].alive = false
             global_cells[y][x].next_status = false
-            global_cells[y][x].to_reset = true
 
           }
-        } else if (global_cells[y][x].to_reset) {
-          var cell = document.getElementById('cell'+y+'-'+x)
-          cell.style.backgroundColor = '#000000'
-          global_cells[y][x].to_reset = false
         }
         }
       }
