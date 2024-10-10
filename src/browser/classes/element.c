@@ -170,25 +170,58 @@ void    Element_draw_graph(Element *element, int depth) {
     free(tabs);
 }
 
+// Element *Element_get_by_id(Element *element, char *id) {
+//     Element *tmp;
+//     Element *next;
+
+//     tmp = element;
+//     while (tmp != NULL) {
+//         if (tmp->id) {
+//            printf("\tnext->id %s\n", tmp->id);
+//         }
+//         if (tmp->id && strcmp(tmp->id, id) == 0) {
+//             return tmp;
+//         } else {
+//             next = tmp->next;
+//             while (next != NULL) {
+//                 if (next->id && strcmp(next->id, id) == 0) {
+//                     return next;
+//                 }
+//                 next = next->next;
+//             }
+//         }
+//         tmp = tmp->children;
+//     }
+// }
+
 Element *Element_get_by_id(Element *element, char *id) {
+    Element *match;
     Element *tmp;
-    Element *next;
+    Element *child;
 
     tmp = element;
+    match = NULL;
+    //
     while (tmp != NULL) {
         if (tmp->id && strcmp(tmp->id, id) == 0) {
             return tmp;
-        } else {
-            next = tmp->next;
-            while (next != NULL) {
-                if (next->id && strcmp(next->id, id) == 0) {
-                    return next;
+        }
+        if (tmp->children != NULL) {
+            child = tmp->children;
+            while (child != NULL) {
+                if (child->id && strcmp(child->id, id) == 0) {
+                    return child;
                 }
-                next = next->next;
+                match = Element_get_by_id(child->children, id);
+                if (match) {
+                    return match;
+                }
+                child = child->next;
             }
         }
-        tmp = tmp->children;
+        tmp = tmp->next;
     }
+    return match;
 }
 
 Element *Element_get_by_pos(Element *element, int x, int y) {

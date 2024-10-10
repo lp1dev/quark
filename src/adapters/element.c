@@ -106,6 +106,7 @@ Element *walk_and_create_elements(Element *parent, lxb_dom_node_t *root_node) {
 
     while (node != NULL) {
         html_element = lxb_html_interface_element(node);
+
         if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
 
             if (el_buffer != NULL) {

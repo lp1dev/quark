@@ -294,17 +294,22 @@ static duk_ret_t get_element_by_id(duk_context *ctx)
 }
 
 Element *set_inner_html(Element *el, char *html) {
+    Element *tmp;
     lxb_html_element_t *element;
-    lxb_html_body_element_t *body;
     size_t document_html_len;
     size_t html_len;
 
     // We create a new empty document
-    element = lxb_html_document_create_element(document, "innerhtml", 9, NULL);
+    element = lxb_html_document_create_element(document, el->tag, strlen(el->tag), NULL);
 
     // Then, we set its innerHTML
     html_len = sizeof(html) - 1;
     element = lxb_html_element_inner_html_set(element, html, strlen(html));
+    // We have an issue here that I think might be related to lexbor :
+    // CSS styles are applied to first-level items of innerHTML
+    // but not to any of the nested items
+    // TODO : Find a fix
+
     if (element == NULL) {
         printf("Failed to parse innerHTML\n%s\n", html);
         return el;
@@ -312,8 +317,16 @@ Element *set_inner_html(Element *el, char *html) {
 
     // Then, we add the created element to the dom tree
     el->children = walk_and_create_elements(el, lxb_dom_interface_node(element));
-    el->children = el->children->children;
-    el->children->parent = el;
+    if (el->children != NULL) {
+        el->children = el->children->children;
+    }
+    tmp = el->children;
+
+    while (tmp != NULL) {
+        tmp->parent = el;
+        tmp = tmp->next;
+    }
+    //
     return el;
 }
 

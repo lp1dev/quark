@@ -129,8 +129,8 @@ void NamedNodeMap_set(NamedNodeMap *map, char *key, char *value) {
     node = map->first;
 
     while (node != NULL) {
-        printf("\tNode %s=%s\n", node->key, node->str_value);
-        printf("\tSearched key %s\n", key);
+        // printf("\tNode %s=%s\n", node->key, node->str_value);
+        // printf("\tSearched key %s\n", key);
         if (strcmp(node->key, key) == 0) {
             node->str_value = value;
             return;
