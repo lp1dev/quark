@@ -1,0 +1,6 @@
+/home/lp1/Projects/quark/examples/game_of_life/CMakeFiles/game_of_life.dir
+/home/lp1/Projects/quark/examples/game_of_life/CMakeFiles/game_of_life-velf.dir
+/home/lp1/Projects/quark/examples/game_of_life/CMakeFiles/game_of_life.self-self.dir
+/home/lp1/Projects/quark/examples/game_of_life/CMakeFiles/game_of_life.vpk-vpk.dir
+/home/lp1/Projects/quark/examples/game_of_life/CMakeFiles/edit_cache.dir
+/home/lp1/Projects/quark/examples/game_of_life/CMakeFiles/rebuild_cache.dir

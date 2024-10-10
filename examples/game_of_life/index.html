@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Quark Game of Life</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <div id="container">
+  </div>
+  <div id="controls">
+    <button>Pause</button>
+  </div>
+
+  <script type="text/javascript">
+    var mapping = [ 
+        "X", 
+        "CIRCLE", 
+        "SQUARE",
+        "TRIANGLE",
+        "SHARE",
+        "PS",
+        "OPTIONS",
+        "LEFTSTICK",
+        "RIGHTSTICK",
+        "LEFTSHOULDER",
+        "RIGHTSHOULDER",
+        "DPAD_UP",
+        "DPAD_DOWN",
+        "DPAD_LEFT",
+        "DPAD_RIGHT",
+    ]
+
+   document.addEventListener("gamepadconnected", function(event) {
+    navigator.getGamepads()
+   })
+   
+    document.addEventListener('keydown', function(event) {
+      console.log("Key pressed ", event)
+    })
+
+    document.addEventListener('button_press', function(event) {
+      // The "button_press" event is not a classic JS event
+      // but it is a custom quark optimization for the non-existent gamepad
+      // button press event which usually requires a setTimeout +
+      // polling of all the gamepads that is done in JS.
+
+      console.log("Button press", event)
+    })
+
+    // Game logic
+    var global_cells = [];
+    var NUM_CELLS_Y = 40
+    var NUM_CELLS_X = 72
+
+    function init() {
+      // First, we draw the lines
+      var container = document.getElementById('container')
+      var cells = ""
+      for (var y = 0; y <= NUM_CELLS_Y; y++) {
+        cells += "<div class='line' id='line" + y + "'>"
+        cells += "</div>"
+        global_cells.push([]);
+      }
+      container.innerHTML = cells
+      // console.log(cells)
+      // We have an issue here that I think might be related to lexbor :
+      // CSS styles are applied to first-level items of innerHTML
+      // but not to any of the nested items
+      // TODO : Find a long-term fix
+      // The current fix is to do 2 innerHTML, first we draw the lines, then the cells :
+      for (var y = 0; y <= NUM_CELLS_Y; y++) {
+        cells = ""
+        var line = document.getElementById('line'+y)
+        for (var x = 0; x <= NUM_CELLS_X; x++) {
+          var alive = Math.random() > 0.6
+          cells += "<div class='cell' id='cell" + y + "-" + x + "'></div>"
+          global_cells[y].push({alive: alive, next_status: alive})
+
+        }
+        line.innerHTML = cells
+      }
+
+
+    }
+
+    function liveNeighbours(x, y) {
+      var alive = 0
+      if (x + 1 < NUM_CELLS_X) {
+        alive += global_cells[y][x + 1].alive ? 1 : 0
+      }
+      if (x - 1 >= 0) {
+        alive += global_cells[y][x - 1].alive ? 1 : 0
+      }
+      if (y + 1 < NUM_CELLS_Y) {
+        alive += global_cells[y + 1][x].alive ? 1 : 0
+      }
+      if (y - 1 >= 0) {
+        alive += global_cells[y - 1][x].alive ? 1 : 0
+      }
+      if (y - 1 >= 0 && x - 1 >= 0) {
+        alive += global_cells[y - 1][x - 1].alive ? 1 : 0
+      }
+      if (y + 1 < NUM_CELLS_Y && x + 1 < NUM_CELLS_X) {
+        alive += global_cells[y + 1][x + 1].alive ? 1 : 0
+      }
+      if (y - 1 >= 0 && x + 1 < NUM_CELLS_X) {
+        alive += global_cells[y - 1][x + 1].alive ? 1 : 0
+      }
+      if (y + 1 < NUM_CELLS_Y && x - 1 >= 0) {
+        alive += global_cells[y + 1][x - 1].alive ? 1 : 0
+      }
+      return alive
+    }
+
+    function graphUpdate() {
+      for (var y = 0; y <= NUM_CELLS_Y; y++) {
+        for (var x = 0; x <= NUM_CELLS_X; x++) {
+
+          if (global_cells[y][x].next_status != global_cells[y][x].alive) {
+            var cell = document.getElementById('cell'+y+'-'+x)
+
+          if (global_cells[y][x].next_status) {
+            cell.style.backgroundColor = '#ffffff'
+            global_cells[y][x].alive = true
+            global_cells[y][x].next_status = true
+          } else {
+            cell.style.backgroundColor = '#000000'
+            global_cells[y][x].alive = false
+            global_cells[y][x].next_status = false
+
+          }
+        }
+        }
+      }
+    }
+
+    function gameLoop() {
+      //
+      for (var y = 0; y <= NUM_CELLS_Y; y++) {
+        for (var x = 0; x <= NUM_CELLS_X; x++) {
+          var live_neighbours = liveNeighbours(x, y);
+          if (live_neighbours == 2) {
+          }
+          else if (liveNeighbours(x, y) == 3) {
+            global_cells[y][x].next_status = true
+          } else {
+            global_cells[y][x].next_status = false
+          }
+        }
+      }
+      graphUpdate()
+    }
+
+    init()
+    graphUpdate()
+    gameLoop()
+    setInterval(gameLoop, 10)
+
+
+
+  </script>
+
+</body>
+
+</html>
