@@ -421,6 +421,23 @@ void check_intervals(duk_context *ctx) {
     }
 }
 
+static duk_ret_t clear_interval(duk_context *ctx) {
+    int id;
+    int i;
+
+    id = duk_get_number(ctx, 0);
+
+    i = 0;
+    while (intervals[i] != NULL) {
+        if (intervals[i]->id == id) {
+            intervals[i]->interval = -123456789;
+            intervals[i]->timeout = -123456789;
+        }
+        i++;
+    }
+    return (duk_ret_t) 0;
+}
+
 static duk_ret_t set_interval(duk_context *ctx) {
     Interval *interval_obj;
     int i;
@@ -442,7 +459,8 @@ static duk_ret_t set_interval(duk_context *ctx) {
     }
     intervals[i] = interval_obj;
     duk_pop_3(ctx);
-    return (duk_ret_t) 0;
+    duk_push_number(ctx, id);
+    return (duk_ret_t) 1;
 }
 
 void get_controller_buttons(SDL_GameController *controller, duk_context *ctx) {
@@ -516,6 +534,8 @@ void init_dom(duk_context *ctx) {
     duk_put_global_string(ctx, "c_getElementAttributes");
     duk_push_c_function(ctx, get_controllers, 0);
     duk_put_global_string(ctx, "c_getGamepads");
+    duk_push_c_function(ctx, clear_interval, 1);
+    duk_put_global_string(ctx, "c_clearInterval");
 }
 
 void compute_margin_padding(Element *el) {

@@ -11,7 +11,7 @@
   <div id="container">
   </div>
   <div id="controls">
-    <button onclick="pause()">Pause</button>
+    <button id="button_pause" onclick="pause()">Pause</button>
     <button onclick="clear()">Clear</button>
   </div>
 
@@ -163,8 +163,15 @@
     }
 
     function pause() {
-      clearInterval(interval)
-      // TODO add clearInterval
+      if (interval) {
+        clearInterval(interval)
+        interval = undefined
+        document.getElementById('button_pause').innerText = 'Play'
+      } else {
+        interval = setInterval(gameLoop, 10)
+        document.getElementById('button_pause').innerText = 'Pause'
+
+      }
     }
 
     init()
