@@ -117,6 +117,12 @@ You will also need to have `Sans.ttf` and `quark.js` in the same directory as th
 
 ---
 
+## Known bugs
+
+- Negative padding (and probably margin) crashes Quark
+
+---
+
 ### Objectives
 
 Enhance JS/HTML support to support projects like :
