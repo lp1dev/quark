@@ -1,4 +1,4 @@
-CFLAGS= -g3 -I . -lSDL2 -lSDL2main -lSDL2_image -lSDL2_ttf -lm -Iduktape/src/
+CFLAGS= -g3 -I . -lSDL2 -lSDL2main -lSDL2_image -lSDL2_image -lSDL2_ttf -lm -Iduktape/src/
 
 SOURCES=src/*.c \
  	src/browser/*.c \

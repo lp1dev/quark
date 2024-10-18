@@ -75,17 +75,21 @@ You will also need to have `Sans.ttf` and `quark.js` in the same directory as th
 - body
 - head
 - h1,h2,h3,h4
+- img
 - script (only direct scripts in the tags, the *src* attribute isn't supported at the moment)
 
 ### JS
 
 - document.getElementById
-- element.style
+- document.addEventListener
+- element.style (not all style attributes)
 - element.innerText
-- element.attributes
+- element.innerHTML
+- element.attributes (not all attributes)
 - onclick
 - setInterval
 - setTimeout
+- Keyboard, touchscreen, click and gamepad events
 
 ### CSS
 

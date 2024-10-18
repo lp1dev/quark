@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Vipper Zero</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <div id="container">
+    <h1>Vipper Zero</h1>
+    <img src="avatar_trsp.png" id="avatar"/>
+  </div>
+
+  <script type="text/javascript">
+
+   document.addEventListener("gamepadconnected", function(event) {
+    console.log("GAMEPAD CONNECTED")
+    navigator.getGamepads()
+
+   })
+   
+    document.addEventListener('keydown', function(event) {
+      console.log("Key pressed ", event)
+    })
+
+    var mapping = [ 
+        "X", 
+        "CIRCLE", 
+        "SQUARE",
+        "TRIANGLE",
+        "SHARE",
+        "PS",
+        "OPTIONS",
+        "LEFTSTICK",
+        "RIGHTSTICK",
+        "LEFTSHOULDER",
+        "RIGHTSHOULDER",
+        "DPAD_UP",
+        "DPAD_DOWN",
+        "DPAD_LEFT",
+        "DPAD_RIGHT",
+      ] // Only implemented the first 15 buttons
+        // TODO : Add the rest
+
+
+
+    document.addEventListener('button_press', function(event) {
+      // The "button_press" event is not a classic JS event
+      // but it is a custom quark optimization for the non-existent gamepad
+      // button press event which usually requires a setTimeout +
+      // polling of all the gamepads that is done in JS.
+
+      console.log("Button press", event)
+    })
+
+  </script>
+
+</body>
+
+</html>

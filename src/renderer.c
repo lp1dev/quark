@@ -672,6 +672,7 @@ SDL_Rect compute_smallest_element_size(Element *el) {
     return smallest;
 }
 
+
 void compute_element_dimensions(Element *el) {
     Element *parent;
     Element *tmp;
@@ -800,6 +801,27 @@ void draw_element(Element *el) {
     free(node);
 }
 
+void render_image(Element *el) {
+    Node *src;
+    // Node *width;
+    // Node *height;
+    Cached_Texture *image;
+    SDL_Surface *image_surface;
+    SDL_Rect image_rect =  {el->x, el->y, el->width, el->height};
+
+    src = Element_get_attribute(el, "src");
+    // TODO: Future support of width and height attributes
+    // width = Element_get_attribute(el, "width");
+    // height = Element_get_attribute(el, "height");
+    if (src == NULL) {
+        printf("Warning: Img tag with no src attr.\n");
+        return;
+    }
+    image_surface = IMG_Load(src->str_value);
+    image = Cached_Texture_get(src->str_value, textures_head, gRenderer, image_surface, &image_rect, NULL, el->x, el->y);
+    SDL_RenderCopy(gRenderer, image->texture, NULL, &image_rect);
+}
+
 /* void render (Element *body)
 
     Rendering the Element body
@@ -820,6 +842,9 @@ void render(Element *parent, int depth, duk_context *ctx) {
             tmp = tmp->next;
             Element_delete(parent, to_delete->internal_id);
             continue;
+        }
+        else if (strncmp(tmp->tag, "img", 3) == 0) {
+            render_image(tmp);
         }
         else if (tmp->children != NULL) {
             render(tmp->children, depth + 1, ctx);
