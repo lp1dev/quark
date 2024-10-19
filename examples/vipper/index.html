@@ -11,25 +11,28 @@
   <div id="header-container">
     <div id="header">
       Vipper Zero | Version 00.01 | Battery 100%
-    </div>  
+    </div>
   </div>
 
   <div id="container" class="inline">
-    <img src="avatar_trsp.png" id="avatar"/>
+    <div id="vipper">
+      <img src="avatar_trsp.png" id="avatar" />
+      <p id="avatar-status">Psssssssssssss</p>
+    </div>
     <div id="menu">
-      <div class="button-container">
+      <div class="button-container" id="menuitem0" style="background-color: #f06901">
         <button class="menu-button">Apps</button>
-        
+
       </div>
-      <div class="button-container">
+      <div class="button-container" id="menuitem1">
         <button class="menu-button">Settings</button>
-        
+
       </div>
-      <div class="button-container">
+      <div class="button-container" id="menuitem2">
         <button class="menu-button">USB</button>
       </div>
 
-      <div class="button-container">
+      <div class="button-container" id="menuitem3">
         <button class="menu-button">Help</button>
       </div>
     </div>
@@ -40,43 +43,69 @@
   </div>
 
   <script type="text/javascript">
+    var menu_selected = 0
 
-   document.addEventListener("gamepadconnected", function(event) {
-    console.log("GAMEPAD CONNECTED")
-    navigator.getGamepads()
+    function menu_move(direction) {
+      var max_items = 3
+      // Because we have 4 items in the menu
 
-   })
-   
-    document.addEventListener('keydown', function(event) {
-      console.log("Key pressed ", event)
+      var selected_item = document.getElementById('menuitem'+menu_selected)
+      selected_item.style.backgroundColor = '#61573a'
+
+      if (direction === "UP") {
+        menu_selected = (menu_selected > 0) ? menu_selected - 1 : max_items
+      } else {
+        menu_selected = (menu_selected < max_items) ? menu_selected + 1 : 0
+      }
+      selected_item = document.getElementById('menuitem'+menu_selected)
+      selected_item.style.backgroundColor = '#f06901'
+    }
+
+    document.addEventListener("gamepadconnected", function (event) {
+      navigator.getGamepads()
+      // To initialize the gamepad
     })
 
-    var mapping = [ 
-        "X", 
-        "CIRCLE", 
-        "SQUARE",
-        "TRIANGLE",
-        "SHARE",
-        "PS",
-        "OPTIONS",
-        "LEFTSTICK",
-        "RIGHTSTICK",
-        "LEFTSHOULDER",
-        "RIGHTSHOULDER",
-        "DPAD_UP",
-        "DPAD_DOWN",
-        "DPAD_LEFT",
-        "DPAD_RIGHT",
-      ] // Only implemented the first 15 buttons
-        // TODO : Add the rest
+    document.addEventListener('keydown', function (event) {
+      console.log("Key pressed", event)
+      if (event.code === 1073741906) {
+        menu_move("UP")
+      } else if (event.code === 1073741905) {
+        menu_move("DOWN")
+      }
+    })
+
+    var mapping = [
+      "X",
+      "CIRCLE",
+      "SQUARE",
+      "TRIANGLE",
+      "SHARE",
+      "PS",
+      "OPTIONS",
+      "LEFTSTICK",
+      "RIGHTSTICK",
+      "LEFTSHOULDER",
+      "RIGHTSHOULDER",
+      "DPAD_UP",
+      "DPAD_DOWN",
+      "DPAD_LEFT",
+      "DPAD_RIGHT",
+    ] // Only implemented the first 15 buttons
+    // TODO : Add the rest
 
 
 
-    document.addEventListener('button_press', function(event) {
+    document.addEventListener('button_press', function (event) {
       // The "button_press" event is not a classic JS event
       // but it is a custom quark optimization for the non-existent gamepad
       // button press event which usually requires a setTimeout +
       // polling of all the gamepads that is done in JS.
+      if (mapping[event.code] === "DPAD_UP") {
+        menu_move("UP")
+      } else if (mapping[event.code] === "DPAD_DOWN") {
+        menu_move("DOWN")
+      }
 
       console.log("Button press", event)
     })
@@ -84,5 +113,4 @@
   </script>
 
 </body>
-
 </html>

@@ -15,7 +15,6 @@ button {
 
 #header-container {
     background-color: #75580a;
-    /* padding: 2px; */
     width: 100%;
     height: 45px;
 }
@@ -23,11 +22,11 @@ button {
 #header {
     background-color :#e9a547;
     width: 100%;
-    font-size: 11px;
+    font-size: 15px;
 }
 
 #container {
-    background-color: #fbbd12;
+    background-color: #f09801;
     width: 100%;
     height: 85%;
     color: #000000;
@@ -36,6 +35,10 @@ button {
 
 #menu {
     padding: 10px;
+}
+
+#vipper {
+    width: 35%;
 }
 
 .button-container {
@@ -50,6 +53,7 @@ button {
     color: #f09801;
     text-align: center;
     width: 100%;
+    font-size: 26px;
 }
 
 .inline {
@@ -62,9 +66,14 @@ button {
     width: 256px;
 }
 
+#avatar-status {
+    width: 100%;
+    margin: 50px;
+}
+
 #footer {
     text-align: center;
-    font-size: 9px;
+    font-size: 12px;
     width: 100%;
     color: #f09801;
     height: 10%;
