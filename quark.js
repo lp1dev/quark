@@ -2,7 +2,8 @@
 
 document = {}
 window = {
-    intervals: []
+    intervals: [],
+    _location: "index.html"
 }
 events = {
     listeners: {
@@ -238,7 +239,6 @@ function Element(element_obj) {
 
 document.getElementById = function(id) {
     element = quark.c_getElementById(id)
-    console.log(element)
     e = new Element(element); // Here, we're not doing return new Element() because it seems to override the same object in duktape
     return e
 }
@@ -257,11 +257,22 @@ window.setInterval = function(callback, interval_duration) {
   return intervalID
 }
 
+window.clearInterval = function(intervalID) {
+  c_clearInterval(intervalID)
+}
+
+window.clearTimeout = function(timeoutID) {
+  c_clearInterval(timeoutID)
+}
+
+window.close = function() {
+  c_exit()
+}
+
 quark_executeInterval = function(intervalID) {
   i = 0
   while (window.intervals[i]) {
     if (window.intervals[i].id == intervalID) {
-      console.log(window.intervals[i])
       window.intervals[i].callback()
     }
     i++
@@ -280,6 +291,8 @@ quark_onClick = function(element) {
 
 setTimeout = window.setTimeout
 setInterval = window.setInterval
+clearInterval = window.clearInterval
+clearTimeout = window.clearTimeout
 getElementById = document.getElementById
 
 //
@@ -306,5 +319,17 @@ navigator.getGamepads = function() {
   var gamepads = c_getGamepads()
   return gamepads
 }
+
+
+Object.defineProperty(window, "location", {
+  get: function() {
+      return window._location;
+  },
+  set: function(location) {
+      window._location = location;
+      c_setLocation(location);
+  },
+  configurable: true
+})
 
 //

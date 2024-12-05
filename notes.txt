@@ -1,0 +1,3 @@
+5/12/2024
+
+I started implementing a window.location, the JS/C plugging works, but I still need to actually load the new HTML/CSS and close/restart the gloal rendering loop. I moved the HTML/CSS parsing to adapters/parsers.*.

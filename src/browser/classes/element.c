@@ -90,6 +90,10 @@ void    Element_set_attribute(Element *element, char *key, char *value) {
     return NamedNodeMap_set(&element->attributes, key, value);
 }
 
+Node    *Element_get_attribute(Element *element, char *key) {
+    return NamedNodeMap_get(&element->attributes, key);
+} 
+
 Node     *Element_get_style_int(Element *element, char *name) {
     Node *new_node;
     Node *node;

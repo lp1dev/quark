@@ -2,7 +2,8 @@
 
 document = {}
 window = {
-    intervals: []
+    intervals: [],
+    _location: "index.html"
 }
 events = {
     listeners: {

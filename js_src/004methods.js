@@ -21,6 +21,18 @@ window.setInterval = function(callback, interval_duration) {
   return intervalID
 }
 
+window.clearInterval = function(intervalID) {
+  c_clearInterval(intervalID)
+}
+
+window.clearTimeout = function(timeoutID) {
+  c_clearInterval(timeoutID)
+}
+
+window.close = function() {
+  c_exit()
+}
+
 quark_executeInterval = function(intervalID) {
   i = 0
   while (window.intervals[i]) {
@@ -43,6 +55,8 @@ quark_onClick = function(element) {
 
 setTimeout = window.setTimeout
 setInterval = window.setInterval
+clearInterval = window.clearInterval
+clearTimeout = window.clearTimeout
 getElementById = document.getElementById
 
 //
@@ -69,5 +83,17 @@ navigator.getGamepads = function() {
   var gamepads = c_getGamepads()
   return gamepads
 }
+
+
+Object.defineProperty(window, "location", {
+  get: function() {
+      return window._location;
+  },
+  set: function(location) {
+      window._location = location;
+      c_setLocation(location);
+  },
+  configurable: true
+})
 
 //

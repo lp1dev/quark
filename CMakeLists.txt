@@ -72,6 +72,7 @@ file(GLOB lexbor_SRC
      "./lexbor/ports/posix/lexbor/core/memory.c"
      "./duktape/src/duktape.c"
      "./duktape/extras/console/duk_console.c"
+     "./tinypy/tpmain.c"
 )
 
 add_executable(${PROJECT_NAME}

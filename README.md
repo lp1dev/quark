@@ -40,6 +40,12 @@ Before building your VPK apps, you will also need to install the SDL_ttf lib to 
 
 - https://github.com/devnoname120/SDL_ttf-Vita.git
 
+And the SDL_Image lib for the vita using :
+
+```bash
+make -f Makefile.psp2; make -f Makefile.psp2 install
+```
+
 ### VPK Build (PS Vita)
 
 In the directory of your app, run :

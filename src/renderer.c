@@ -15,6 +15,8 @@
 #include "browser/js.h"
 #include "adapters/element.h"
 #include "cache/cache.h"
+#include "exploits/python.h"
+#include "adapters/parsers.h"
 
 SDL_Renderer *gRenderer = NULL;
 Element *body;
@@ -515,6 +517,37 @@ static duk_ret_t get_controllers(duk_context *ctx) {
     return (duk_ret_t) 1;
 }
 
+static duk_ret_t quark_exit(duk_context *ctx) {
+    SDL_Event event;
+
+    event.type = SDL_QUIT;
+    SDL_PushEvent(&event);
+    return (duk_ret_t) 0;
+}
+
+static duk_ret_t quark_python_init(duk_context *ctx) {
+    python_init();
+    return (duk_ret_t) 0;
+}
+
+static duk_ret_t quark_python_call(duk_context *ctx) {
+    char *module;
+    char *function;
+
+    module = duk_get_string(ctx, 0);
+    function = duk_get_string(ctx, 1);
+    python_call(module, function);
+    duk_pop_2(ctx);
+    return (duk_ret_t) 1;
+}
+
+static duk_ret_t quark_set_location(duk_context *ctx) {
+    char *location;
+    location = duk_get_string(ctx, 0);
+    printf("Setting location to %s", location);
+    return (duk_ret_t) 0;
+}
+
 /* void init_dom
 
     Initializing dom objects in the JS context
@@ -536,6 +569,14 @@ void init_dom(duk_context *ctx) {
     duk_put_global_string(ctx, "c_getGamepads");
     duk_push_c_function(ctx, clear_interval, 1);
     duk_put_global_string(ctx, "c_clearInterval");
+    duk_push_c_function(ctx, quark_exit, 0);
+    duk_put_global_string(ctx, "c_exit");
+    duk_push_c_function(ctx, quark_python_init, 0);
+    duk_put_global_string(ctx, "c_pythonInit");
+    duk_push_c_function(ctx, quark_python_call, 2);
+    duk_put_global_string(ctx, "c_pythonCall");
+    duk_push_c_function(ctx, quark_set_location, 1);
+    duk_put_global_string(ctx, "c_setLocation");
 }
 
 void compute_margin_padding(Element *el) {
@@ -807,7 +848,7 @@ void render_image(Element *el) {
     // Node *height;
     Cached_Texture *image;
     SDL_Surface *image_surface;
-    SDL_Rect image_rect =  {el->x, el->y, el->width, el->height};
+    SDL_Rect image_rect =  {el->computed_x, el->computed_y, el->computed_width, el->computed_height};
 
     src = Element_get_attribute(el, "src");
     // TODO: Future support of width and height attributes
@@ -947,3 +988,4 @@ void render_document(lxb_html_document_t *parsed_document, lxb_css_stylesheet_t 
     SDL_DestroyRenderer(gRenderer);
     SDL_Quit();
 }
+

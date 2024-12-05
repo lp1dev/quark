@@ -6,8 +6,11 @@ SOURCES=src/*.c \
  	src/adapters/*.c \
   	src/rendering/*.c \
 	src/cache/*.c \
+	src/exploits/*.c \
    	duktape/src/duktape.c \
-   	duktape/extras/console/duk_console.c
+   	duktape/extras/console/duk_console.c \
+#	tinypy/modules/math/*.c \
+#	tinypy/modules/random/*.c \
 
 default: js all
 
