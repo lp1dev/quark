@@ -1,6 +1,5 @@
 #include "adapters/parsers.h"
 #include "renderer.h"
-// #include "browser/js.h"
 
 
 int main(int argc, const char *argv[])

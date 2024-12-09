@@ -25,6 +25,7 @@ Cached_Font *fonts_head;
 lxb_html_document_t *document;
 Cached_Texture *textures_head;
 Interval *intervals[LIST_SIZE];
+int must_reinit_js;
 
 /*
 
@@ -71,6 +72,9 @@ int graph_init()
     }
 
     SDL_SetRenderDrawBlendMode(gRenderer, SDL_BLENDMODE_BLEND);
+    // Cache init
+    textures_head = NULL;
+    fonts_head = NULL;
 }
 
 /*
@@ -543,8 +547,30 @@ static duk_ret_t quark_python_call(duk_context *ctx) {
 
 static duk_ret_t quark_set_location(duk_context *ctx) {
     char *location;
+    lxb_html_document_t *document;
+
     location = duk_get_string(ctx, 0);
     printf("Setting location to %s", location);
+    
+    // free(document);
+    document = html_to_element(location);
+    css = apply_css(document, "style.css");
+    
+    // ReSetting body
+    // free(body);
+    body = parse_lxb_body((lxb_dom_node_t *) document->body);
+    body->height = SCREEN_HEIGHT;
+    body->width = SCREEN_WIDTH;
+    body->computed_height = SCREEN_HEIGHT;
+    body->computed_width = SCREEN_WIDTH;
+    body->parent = NULL;
+
+    //
+    SDL_RenderClear(gRenderer);
+    //Resetting JS heap
+    must_reinit_js = 1;
+    // duk_destroy_heap(ctx);
+    //
     return (duk_ret_t) 0;
 }
 
@@ -915,8 +941,8 @@ void trigger_js_event_int(duk_context *ctx, char *type, int value) {
     duk_push_int(ctx, value);
     duk_call(ctx, 2);
     duk_pop(ctx);
-
 }
+
 
 /* 
 void render_loop(dux_context *ctx)
@@ -932,8 +958,16 @@ void render_loop(duk_context *ctx) {
 
     go_on = 1;
     timer = 0;
+    must_reinit_js = 0;
 
     while (go_on) {
+        if (must_reinit_js == 1) {
+            printf("JS REINIT\n");
+            init_intervals(); // Should also free the existing ones
+            duk_destroy_heap(ctx);
+            ctx = js_init();
+            must_reinit_js = 0;
+        }
         // Element_draw_graph(body, 0);
         render(body, 0, ctx);
         SDL_RenderPresent(gRenderer);
