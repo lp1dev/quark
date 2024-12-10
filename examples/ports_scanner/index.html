@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Ports Scanner</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <div id="header-container">
+    <div id="header">
+      Vita Ports Scanner | Version 00.01
+    </div>
+  </div>
+
+  <div id="container" class="inline">
+    <div id="menu">
+      <div class="button-container" id="menuitem0" style="background-color: #01f019">
+        <button class="menu-button">Hosts Scanner</button>
+
+      </div>
+      <div class="button-container" id="menuitem1">
+        <button class="menu-button">Ports Scanner</button>
+
+      </div>
+
+    </div>
+  </div>
+
+  <div id="footer">
+    Pre-Release Version | Not production-ready
+  </div>
+
+  <script type="text/javascript">
+
+    console.log("JS LOADED")
+    var menu_selected = 1
+
+    function menu_move(direction) {
+      var max_items = 1
+      // Because we have 2 items in the menu
+
+      var selected_item = document.getElementById('menuitem'+menu_selected)
+      selected_item.style.backgroundColor = '#01f019'
+
+      if (direction === "UP") {
+        menu_selected = (menu_selected > 0) ? menu_selected - 1 : max_items
+      } else {
+        menu_selected = (menu_selected < max_items) ? menu_selected + 1 : 0
+      }
+      selected_item = document.getElementById('menuitem'+menu_selected)
+      selected_item.style.backgroundColor = '#106901'
+    }
+
+    document.addEventListener("gamepadconnected", function (event) {
+      navigator.getGamepads()
+      // To initialize the gamepad
+    })
+
+    document.addEventListener('keydown', function (event) {
+      console.log("Key pressed", event)
+      if (event.code === 1073741906) { /* Keyboard UP */
+        menu_move("UP")
+      } else if (event.code === 1073741905) { /* Keyboard DOWN */
+        menu_move("DOWN")
+      } else if (event.code === 27) { /* Keyboard Escape */
+        window.close()
+      } else if (event.code == 13) {
+	  if (menu_selected === 1) {
+              window.location = "hosts.html"
+	  } else {
+	      window.location = "ports.html"
+	  }
+      }
+    })
+
+    var mapping = [
+      "X",
+      "CIRCLE",
+      "SQUARE",
+      "TRIANGLE",
+      "SHARE",
+      "PS",
+      "OPTIONS",
+      "LEFTSTICK",
+      "RIGHTSTICK",
+      "LEFTSHOULDER",
+      "RIGHTSHOULDER",
+      "DPAD_UP",
+      "DPAD_DOWN",
+      "DPAD_LEFT",
+      "DPAD_RIGHT",
+    ] // Only implemented the first 15 buttons
+      // handled by SDL2
+    // TODO : Add the rest
+
+
+
+    document.addEventListener('button_press', function (event) {
+      // The "button_press" event is not a classic JS event
+      // but it is a custom quark optimization for the non-existent gamepad
+      // button press event which usually requires a setTimeout +
+      // polling of all the gamepads that is done in JS.
+      if (mapping[event.code] === "DPAD_UP") {
+        menu_move("UP")
+      } else if (mapping[event.code] === "DPAD_DOWN") {
+        menu_move("DOWN")
+      }
+
+      console.log("Button press", event)
+    })
+
+    // c_pythonInit() # We do not require Python for this so far
+
+  </script>
+
+</body>
+</html>

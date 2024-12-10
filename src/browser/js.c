@@ -75,12 +75,12 @@ static duk_ret_t quark_python_call(duk_context *ctx);
 
 */
 static duk_ret_t quark_python_call(duk_context *ctx) {
-    char *module;
-    char *function;
+    const char *module;
+    const char *function;
 
     module = duk_get_string(ctx, 0);
     function = duk_get_string(ctx, 1);
-    python_call(module, function);
+    python_call((char *)module, (char *)function);
     duk_pop_2(ctx);
     return (duk_ret_t) 1;
 }

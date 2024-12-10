@@ -349,7 +349,6 @@ static duk_ret_t update_element(duk_context *ctx) {
         case INNER_HTML:
             element->innerText = NULL; // Ugly Hack To avoid displaying twice the contents of the element (both in innerText and its innerHTML)
             Element_set_inner_html(element, update_value, document);
-            set_inner_html(element, update_value);
             break;
     }
     duk_pop_n(ctx, 4);
@@ -429,14 +428,14 @@ static duk_ret_t set_interval(duk_context *ctx) {
 }
 
 static duk_ret_t quark_set_location(duk_context *ctx) {
-    char *location;
+    const char *location;
     lxb_html_document_t *document;
 
     location = duk_get_string(ctx, 0);
     printf("Setting location to %s", location);
     
     // free(document);
-    document = html_to_element(location);
+    document = html_to_element((char *)location);
     css = apply_css(document, "style.css");
     
     // ReSetting body

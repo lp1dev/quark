@@ -118,7 +118,7 @@ Element *walk_and_create_elements(Element *parent, lxb_dom_node_t *root_node) {
                 first_element = el_buffer;
             }
 
-            el_buffer->tag = get_tag_name(node);
+            el_buffer->tag = (char *)get_tag_name(node);
             el_buffer->parent = parent;
             parse_attributes(el_buffer, (lxb_dom_element_t *) html_element);
             parse_style(el_buffer, html_element);
