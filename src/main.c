@@ -14,6 +14,7 @@ int main(int argc, const char *argv[])
     graph_init();
     printf("Graph init done! Rendering.\n");
     render_document(document, css);
+    
     (void) lxb_html_document_destroy(document);
     (void) lxb_css_stylesheet_destroy(css, true);
     return EXIT_SUCCESS;

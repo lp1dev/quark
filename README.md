@@ -95,6 +95,7 @@ You will also need to have `Sans.ttf` and `quark.js` in the same directory as th
 - onclick
 - setInterval
 - setTimeout
+- window.location (set)
 - Keyboard, touchscreen, click and gamepad events
 
 ### CSS

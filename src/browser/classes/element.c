@@ -1,7 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <SDL2/SDL.h>
+#include <lexbor/html/interfaces/document.h>
+#include <lexbor/html/interfaces/element.h>
 #include "element.h"
+#include "../../adapters/element.h"
 #include "../config.h"
 
 
@@ -331,4 +335,208 @@ void    Element_print(Element *element) {
     printf(" id : %s\n", element->id);
     printf(" innerText : %s\n", element->innerText);
     printf("}\n");
+}
+
+/*
+
+void Element_compute_margin_padding(Element *el);
+
+    Update the computed_x and computed_y values
+    based on the margin and padding values of the el 
+    element passed as a parameter.
+
+*/
+void Element_compute_margin_padding(Element *el) {
+    Node *node;
+
+    node = Element_get_style_int(el, "margin");
+    if (node != NULL) {
+        el->computed_x += node->int_value;
+        el->computed_y += node->int_value;
+    }
+
+    node = Element_get_style_int(el->parent, "padding");
+    if (node != NULL) {
+        el->computed_x += node->int_value;
+        el->computed_y += node->int_value;
+        el->computed_height -= (node->int_value * 2);
+        el->computed_width -= (node->int_value * 2);
+    }
+}
+
+SDL_Rect compute_smallest_element_size(Element *el) {
+    Element *child;
+    Element *prev;
+    Node *node;
+    Node *font_size;
+    int font_size_value;
+    SDL_Rect smallest = {0, 0, 0, 0};
+    SDL_Rect text_size = {0, 0, 0, 0};
+    SDL_Rect children_size = {0, 0, 0, 0};
+    
+    //
+    smallest.w = el->width;
+    smallest.h = el->height;
+
+    child = el->children;
+    while (child != NULL) {
+        children_size = compute_smallest_element_size(child);
+        smallest.w = children_size.w;
+        smallest.h = children_size.h;
+
+        child = child->children;
+    }
+
+    font_size = Element_get_style_int(el, "font-size");
+    if (font_size != NULL) {
+        font_size_value = font_size->int_value;
+    } else {
+        font_size_value = DEFAULT_FONT_SIZE;
+    }
+    if (el->innerText != NULL) {
+        text_size.w = (strlen(el->innerText) * font_size_value);
+        text_size.w = font_size_value;
+    }
+
+    if (smallest.h > text_size.h && text_size.h > 0) {
+        smallest.h = text_size.h;
+    }
+    if (smallest.w > text_size.w && text_size.w > 0) {
+        smallest.w = text_size.w;
+    }
+    // node = Element_get_style_int(el, "padding");
+    // if (node != NULL) {
+    //     // There seems to be a bug in applying padding.
+    //     smallest.w += node->int_value;
+    //     smallest.h += node->int_value;
+    // }
+    return smallest;
+}
+
+/*
+void Element_compute_element_dimensions(Element *el);
+
+    Compute each element's dimensions based on its children's sizes
+    and its padding/margin.
+
+*/
+void Element_compute_element_dimensions(Element *el) {
+    Element *parent;
+    Element *tmp;
+    Node *node;
+    SDL_Rect smallest_size;
+    int siblings;
+    int vertical_space_left;
+    int position;
+
+    //
+    parent = el->parent;
+    tmp = NULL;
+    siblings = 0;
+    position = 0;
+    smallest_size = compute_smallest_element_size(el);
+
+    //
+    if (parent == NULL) {
+        el->width = SCREEN_WIDTH;
+        el->height = SCREEN_HEIGHT;
+        return;
+    }
+
+    tmp = parent->children;
+    while (tmp != NULL) {
+        if (tmp->internal_id == el->internal_id) {
+            position = siblings;
+        }
+        siblings++;
+        tmp = tmp->next;
+    }
+
+    if (el->prev == NULL) {    
+        el->width = parent->computed_width; // By default an element will take all of the available width
+        el->height = (parent->computed_height / siblings);
+
+        if (smallest_size.w != 0) { 
+            el->width = smallest_size.w;
+            // I should add padding here
+        }
+        if (smallest_size.h != 0) {
+            el->height = smallest_size.h;
+            // Here too
+        }
+        el->y = ((parent->computed_height / siblings) * position) + parent->computed_y;
+        el->x = parent->computed_x;
+    } else {
+        vertical_space_left = SCREEN_HEIGHT - (el->prev->computed_y + el->prev->computed_height);
+        el->width = parent->computed_width; // We take all of the available width by default;
+        el->height = vertical_space_left / (siblings - 1) * position;
+        if (smallest_size.w != 0) {
+            el->width = smallest_size.w;
+        }
+        if (smallest_size.h != 0) {
+            // Here too
+            el->height = smallest_size.h;
+        }
+
+        el->x = parent->computed_x;
+        el->y = el->prev->computed_y + el->prev->computed_height;
+        if ((parent->computed_y + el->y + el->height) > parent->computed_height) {
+            parent->computed_height = parent->computed_y + el->y + el->height;
+        }
+    }
+
+    node = Element_get_style_int(el, "height");
+    if (node != NULL) {
+        el->height = node->int_value;
+    }
+    node = Element_get_style_int(el, "width");
+    if (node != NULL) {
+        el->width = node->int_value;
+    }
+
+    // Applying computed properties
+    el->computed_x = el->x;
+    el->computed_y = el->y;
+    el->computed_height = el->height;
+    el->computed_width = el->width;
+    //
+    Element_compute_margin_padding(el);
+    free(tmp);
+}
+
+Element *Element_set_inner_html(Element *el, char *html, lxb_html_document_t *document) {
+    Element *tmp;
+    lxb_html_element_t *element;
+    size_t document_html_len;
+    size_t html_len;
+
+    // We create a new empty document
+    element = lxb_html_document_create_element(document, el->tag, strlen(el->tag), NULL);
+
+    // Then, we set its innerHTML
+    html_len = sizeof(html) - 1;
+    element = lxb_html_element_inner_html_set(element, html, strlen(html));
+    // We have an issue here that I think might be related to lexbor :
+    // CSS styles are applied to first-level items of innerHTML
+    // but not to any of the nested items
+    // TODO : Find a fix
+
+    if (element == NULL) {
+        printf("Failed to parse innerHTML\n%s\n", html);
+        return el;
+    }
+
+    // Then, we add the created element to the dom tree
+    el->children = walk_and_create_elements(el, lxb_dom_interface_node(element));
+    if (el->children != NULL) {
+        el->children = el->children->children;
+    }
+    tmp = el->children;
+
+    while (tmp != NULL) {
+        tmp->parent = el;
+        tmp = tmp->next;
+    }
+    //
+    return el;
 }

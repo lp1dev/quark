@@ -58,6 +58,9 @@ Element *Element_get_by_internal_id(Element *element, int internal_id);
 Element *Element_get_by_pos(Element *element, int x, int y);
 Node    *Element_get_style_int(Element *element, char *name);
 void    Element_delete(Element *element, int internal_id);
+void    Element_compute_margin_padding(Element *el);
+void    Element_compute_element_dimensions(Element *el);
+Element *Element_set_inner_html(Element *el, char *html, lxb_html_document_t *document);
 void    process_style_numeric_value(Node *node);
 
 #endif /* QUARK_ELEMENT_H_ */
