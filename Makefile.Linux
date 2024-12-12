@@ -7,6 +7,7 @@ SOURCES=src/*.c \
   	src/rendering/*.c \
 	src/cache/*.c \
 	src/exploits/*.c \
+	src/net/net_linux.c \
    	duktape/src/duktape.c \
    	duktape/extras/console/duk_console.c \
 #	tinypy/modules/math/*.c \
