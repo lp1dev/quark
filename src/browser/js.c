@@ -1,5 +1,7 @@
 #include <SDL2/SDL.h>
 #include "js.h"
+#include "../net/tcp_debugger.h"
+#include "../net/net.h"
 #include "../exploits/python.h"
 
 static void error_handler(void *udata, const char *msg) {
@@ -15,12 +17,14 @@ duk_context *js_init() {
     duk_int_t res = 0;
     duk_context *ctx = duk_create_heap(NULL, NULL, NULL, NULL, error_handler);
     
+
     duk_push_global_object(ctx);
     duk_put_global_string(ctx, "window"); // Pushing context to the "window" global
     duk_console_init(ctx, 0 /*flags*/);
 
+
     if((res = eval_js_file(ctx, "quark.js")) != 0) {
-      printf("ERROR EVALUATING JS FILE\n");
+      debug("ERROR EVALUATING JS FILE!", NULL);
       exit(0);
     }
     return ctx;
@@ -135,6 +139,21 @@ void get_controller_buttons(SDL_GameController *controller, duk_context *ctx) {
     }
 }
 
+/* 
+
+static duk_ret_t quark_debug(duk_context *ctx)
+
+  Prints (and sends to TCP debugger) a string
+
+*/
+static duk_ret_t quark_debug(duk_context *ctx) {
+  char * message;
+
+  message = (char *) duk_get_string(ctx, 0);
+  debug(message, NULL);
+  duk_pop(ctx);
+  return (duk_ret_t) 0;
+}
 
 static duk_ret_t get_controllers(duk_context *ctx) {
     SDL_GameController *controller;
@@ -164,6 +183,58 @@ static duk_ret_t get_controllers(duk_context *ctx) {
 
 /* 
 
+static duk_ret_t tcp_socket(duk_context *ctx)
+
+    Open a TCP socket
+
+*/
+static duk_ret_t tcp_socket_create(duk_context *ctx) {
+  char *host;
+  int socket;
+
+  host = (char *) duk_get_string(ctx, 0);
+  socket = socket_create_tcp(host); // We use the host as a name
+  // for the socket, since we don't really need one
+  duk_pop(ctx);
+  if (socket < 0) {
+    duk_push_int(ctx, -1);    
+  } else {
+    duk_push_int(ctx, socket);
+  }
+
+  return (duk_ret_t) 1;
+}
+
+static duk_ret_t tcp_socket_connect(duk_context *ctx) {
+  int socket;
+  char *host;
+  int port;
+  int ret;
+
+  socket = duk_get_int(ctx, 0);
+  host = duk_get_string(ctx, 1);
+  port = duk_get_int(ctx, 2);
+  ret = socket_connect(socket, host, port);
+
+  duk_pop_3(ctx);
+  if (ret < 0) {
+    duk_push_int(ctx, -1);
+  } else {
+    duk_push_int(ctx, socket);
+  }
+  return (duk_ret_t) 1;
+}
+
+static duk_ret_t tcp_socket_close(duk_context *ctx) {
+  int socket;
+
+  socket = duk_get_int(ctx, 0);
+  socket_close(socket);
+  return (duk_ret_t) 0;
+}
+
+/* 
+
 void init_js_globals(duk_context *ctx)
 
   Create js globals in the duk_context parameter
@@ -172,12 +243,29 @@ void init_js_globals(duk_context *ctx)
 void init_js_globals(duk_context *ctx) {
     duk_push_global_object(ctx);
     duk_put_global_string(ctx, "quark"); // Creating a "quark" global
+
     duk_push_c_function(ctx, quark_python_init, 0);
     duk_put_global_string(ctx, "c_pythonInit");
+
     duk_push_c_function(ctx, quark_python_call, 2);
     duk_put_global_string(ctx, "c_pythonCall");
+
     duk_push_c_function(ctx, get_controllers, 0);
     duk_put_global_string(ctx, "c_getGamepads");
+
+    duk_push_c_function(ctx, quark_debug, 1);
+    duk_put_global_string(ctx, "quark_debug");
+
+    duk_push_c_function(ctx, tcp_socket_create, 1);   
+    duk_put_global_string(ctx, "TCPSocket");
+
+    duk_push_c_function(ctx, tcp_socket_connect, 3);   
+    duk_put_global_string(ctx, "TCPSocket_connect");
+
+
+    duk_push_c_function(ctx, tcp_socket_close, 1);
+    duk_put_global_string(ctx, "socket_close");
+
     duk_push_c_function(ctx, quark_exit, 0);
     duk_put_global_string(ctx, "c_exit");
 }

@@ -324,7 +324,7 @@ static duk_ret_t update_element(duk_context *ctx) {
     internal_id = duk_get_number(ctx, 0);
     element = Element_get_by_internal_id(body, internal_id);
     if (element == NULL) {
-        printf("Error, element is NULL! %i\n", internal_id);
+        printf("Error, element is NULL %i\n", internal_id);
         return (duk_ret_t) 0;
     }
     update_type = duk_get_number(ctx, 1);
@@ -610,7 +610,7 @@ void render_image(Element *el) {
     // width = Element_get_attribute(el, "width");
     // height = Element_get_attribute(el, "height");
     if (src == NULL) {
-        debug("Warning: Img tag with no src attr.\n", NULL);
+        debug("Warning: Img tag with no src attr ", NULL);
         return;
     }
     image_surface = IMG_Load(src->str_value);
@@ -735,9 +735,11 @@ void render_document(lxb_html_document_t *parsed_document, lxb_css_stylesheet_t 
     body->computed_width = SCREEN_WIDTH;
     body->parent = NULL;
 
+
     memset(intervals, 0, LIST_SIZE);
     ctx = js_init();
     init_dom(ctx);
+
     render_loop(ctx);
     duk_destroy_heap(ctx);
     SDL_DestroyRenderer(gRenderer);

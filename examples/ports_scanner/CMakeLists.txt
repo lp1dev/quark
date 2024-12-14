@@ -90,6 +90,7 @@ add_executable(${PROJECT_NAME}
   ../../src/cache/cache.c
   ../../src/exploits/python.c
   ../../src/net/net_vita.c
+  ../../src/net/tcp_debugger.c
 #  ./common/debugScreen.c
   ${lexbor_SRC}
 )

@@ -113,6 +113,22 @@
 
     // c_pythonInit() # We do not require Python for this so far
 
+    function scan_ports() {
+      var i = 0
+      while (i < 65535) {
+        var sock = TCPSocket("127.0.0.1");
+        var ret = TCPSocket_connect(sock, "127.0.0.1", i)
+        if (ret > 0) {
+          quark_debug("Port "+i+" is open."+sock)
+        }
+        socket_close(sock)
+
+        i++;
+      }
+    }
+
+    scan_ports()
+
   </script>
 
 </body>
