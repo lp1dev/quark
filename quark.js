@@ -327,7 +327,7 @@ Object.defineProperty(window, "location", {
   },
   set: function(location) {
       window._location = location;
-      c_setLocation(location);
+      c_setLocation(location.spit('?')[0]);
   },
   configurable: true
 })

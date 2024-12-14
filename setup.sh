@@ -17,5 +17,5 @@ rm -frv duktape.tar.xz
 curl -L https://github.com/philhassey/tinypy/archive/refs/tags/1.1.zip -o tinypy.zip
 unzip tinypy.zip -d tinypy_tmp
 mv tinypy_tmp/tinypy-1.1/tinypy/ .
-rm -fr tinypy_tmp
+rm -frv tinypy_tmp tinypy.zip
 

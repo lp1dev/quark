@@ -67,8 +67,6 @@ lxb_css_stylesheet_t *parse_css(char *filename) {
 }
 
 
-
-
 /* Parsing a HTML document and returning the output lxb_html_document_t*/
 lxb_html_document_t *html_to_element(char *filename) {
 
@@ -77,6 +75,13 @@ lxb_html_document_t *html_to_element(char *filename) {
     return document;
 }
 
+/* 
+
+lxb_css_stylesheet_t *apply_css(lxb_html_document_t *document, char *stylesheet)
+
+    Apply a css file to a html document.
+
+*/
 lxb_css_stylesheet_t *apply_css(lxb_html_document_t *document, char *stylesheet) {
     lexbor_status_t status;
     lxb_css_stylesheet_t *css = parse_css(stylesheet);

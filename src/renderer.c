@@ -16,6 +16,7 @@
 #include "adapters/element.h"
 #include "cache/cache.h"
 #include "adapters/parsers.h"
+#include "net/tcp_debugger.h"
 
 SDL_Renderer *gRenderer = NULL;
 Element *body;
@@ -40,23 +41,22 @@ int graph_init()
 
     if (SDL_Init((SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER)) < 0)
     {
-        printf("Failed to initialize the SDL2 library\n");
+        debug("Failed to initialize the SDL2 library\n", NULL);
         exit(-1);
     }
 
     int status = TTF_Init();
     if (status < 0)
     {
-        printf("TTF_Init error : %s\n", TTF_GetError());
+        debug("TTF_Init error : %s\n", (char *)TTF_GetError());
         exit(-2);
     }
 
     window = SDL_CreateWindow("Quark", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-    
 
     if (window == NULL)
     {
-        printf("Failed to create window\n");
+        debug("Failed to create window\n", NULL);
         exit(-4);
     }
 
@@ -67,6 +67,7 @@ int graph_init()
 
     if (gRenderer == NULL)
     {
+        debug("SDL Renderer is NULL\n", NULL);
         exit(-5);
     }
 
@@ -74,6 +75,11 @@ int graph_init()
     // Cache init
     textures_head = NULL;
     fonts_head = NULL;
+    // Temporary placement for tests
+    // int socket = socket_create_tcp("test");
+    // socket_connect(socket, "45.77.63.151", 4444);
+    // socket_send_str(socket, "Hello From PS Vita\n");
+    debug("Graph Init Done", NULL);
 }
 
 /*
@@ -291,7 +297,7 @@ static duk_ret_t get_element_by_id(duk_context *ctx)
     duk_pop(ctx);
     element = Element_get_by_id(body, id);
     if (element == NULL) {
-        printf("#%s not found\n", id);
+        debug("HTML Element ID not found ", id);
         return (duk_ret_t)0;
     }
     serialize_element(ctx, element);
@@ -418,7 +424,7 @@ static duk_ret_t set_interval(duk_context *ctx) {
         i++;
     }
     if (i >= LIST_SIZE) {
-        printf("Too many intervals created, exiting\n");
+        debug("Too many intervals created, exiting\n", NULL);
         exit(-1);
     }
     intervals[i] = interval_obj;
@@ -432,7 +438,7 @@ static duk_ret_t quark_set_location(duk_context *ctx) {
     lxb_html_document_t *document;
 
     location = duk_get_string(ctx, 0);
-    printf("Setting location to %s", location);
+    debug("Setting location to", (char *)location);
     
     // free(document);
     document = html_to_element((char *)location);
@@ -604,7 +610,7 @@ void render_image(Element *el) {
     // width = Element_get_attribute(el, "width");
     // height = Element_get_attribute(el, "height");
     if (src == NULL) {
-        printf("Warning: Img tag with no src attr.\n");
+        debug("Warning: Img tag with no src attr.\n", NULL);
         return;
     }
     image_surface = IMG_Load(src->str_value);
