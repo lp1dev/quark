@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <errno.h>
 #include "js.h"
 #include "../net/tcp_debugger.h"
 #include "../net/net.h"
@@ -189,12 +190,12 @@ static duk_ret_t tcp_socket(duk_context *ctx)
 
 */
 static duk_ret_t tcp_socket_create(duk_context *ctx) {
-  char *host;
+  char *name;
   int socket;
 
-  host = (char *) duk_get_string(ctx, 0);
-  socket = socket_create_tcp(host); // We use the host as a name
-  // for the socket, since we don't really need one
+  name = (char *) duk_get_string(ctx, 0);
+  socket = socket_create_tcp(name);
+  
   duk_pop(ctx);
   if (socket < 0) {
     duk_push_int(ctx, -1);    
@@ -202,6 +203,7 @@ static duk_ret_t tcp_socket_create(duk_context *ctx) {
     duk_push_int(ctx, socket);
   }
 
+  printf("C: Created socket %i\n", socket);
   return (duk_ret_t) 1;
 }
 
@@ -210,16 +212,23 @@ static duk_ret_t tcp_socket_connect(duk_context *ctx) {
   char *host;
   int port;
   int ret;
+  int error;
 
   socket = duk_get_int(ctx, 0);
-  host = duk_get_string(ctx, 1);
+  host = (char *)duk_get_string(ctx, 1);
   port = duk_get_int(ctx, 2);
   ret = socket_connect(socket, host, port);
 
   duk_pop_3(ctx);
   if (ret < 0) {
-    duk_push_int(ctx, -1);
-  } else {
+    error = errno;
+    if (error == 111) { // Connection Refused (RST)
+      duk_push_int(ctx, -1);
+    } else if (error == 110) {
+      duk_push_int(ctx, -2); // Connection Timed Out
+    } else {
+      duk_push_int(ctx, -3); // Other errors
+    }  } else {
     duk_push_int(ctx, socket);
   }
   return (duk_ret_t) 1;
@@ -232,6 +241,33 @@ static duk_ret_t tcp_socket_close(duk_context *ctx) {
   socket_close(socket);
   return (duk_ret_t) 0;
 }
+
+static duk_ret_t quark_socket_set_timeout(duk_context *ctx) {
+  int socket;
+  int timeout;
+  int ret;
+
+
+  socket = duk_get_int(ctx, 0);
+  timeout = duk_get_int(ctx, 1);
+	printf("Setting timeout to socket %i %i\n", socket, timeout);
+  ret = socket_set_timeout(socket, timeout);
+  duk_push_int(ctx, ret);
+  return (duk_ret_t) 1;
+}
+
+static duk_ret_t quark_socket_set_nonblocking(duk_context *ctx) {
+  int socket;
+  int nonblocking;
+  int ret;
+
+  socket = duk_get_int(ctx, 0);
+  nonblocking = duk_get_int(ctx, 1);
+  ret = socket_set_nonblocking(socket, nonblocking);
+  duk_push_int(ctx, ret);
+  return (duk_ret_t) 1;
+}
+
 
 /* 
 
@@ -256,8 +292,14 @@ void init_js_globals(duk_context *ctx) {
     duk_push_c_function(ctx, quark_debug, 1);
     duk_put_global_string(ctx, "quark_debug");
 
+    duk_push_c_function(ctx, quark_socket_set_timeout, 2);
+    duk_put_global_string(ctx, "socket_set_timeout");
+
+    duk_push_c_function(ctx, quark_socket_set_nonblocking, 2);
+    duk_put_global_string(ctx, "socket_set_nonblocking");
+
     duk_push_c_function(ctx, tcp_socket_create, 1);   
-    duk_put_global_string(ctx, "TCPSocket");
+    duk_put_global_string(ctx, "TCPSocket_create");
 
     duk_push_c_function(ctx, tcp_socket_connect, 3);   
     duk_put_global_string(ctx, "TCPSocket_connect");

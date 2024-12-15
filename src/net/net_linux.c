@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include "net.h"
+#include "tcp_debugger.h"
+#define TCP_USER_TIMEOUT 18 
 
 /* 
 
@@ -28,11 +30,30 @@ int socket_create_tcp(char *name) {
 	// struct protoent *protoent;
 	int socketfd;
 
-	socketfd = socket(AF_INET, SOCK_STREAM, 6);
+	socketfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 6);
+	// Setting sockets to
+	// nonblock makes TCP scanning much faster.
+	// Less reliable for other operations, but
+	// Necessary here
     if (socketfd == -1) {
-        // exit(-1);
+		// Cannot call debug here, we'd be in an infinite loop!
+		printf("Could not create new socket.\n");
+        exit(-1);
     }
+	//
+	int timeout = 100000;
 	return socketfd;
+}
+
+int socket_set_timeout(int sock, int timeout) {
+	int ret;
+	ret = setsockopt(sock, IPPROTO_TCP, TCP_USER_TIMEOUT, (char*) &timeout, sizeof (timeout));
+}
+
+int socket_set_nonblocking(int sock, int nonblocking) {
+	// At the moment, we set nonblocking when initializing the socket
+	// int ret;
+	// ret = setsockopt(sock, IPPROTO_TCP, TCP_USER_TIMEOUT, (char*) &timeout, sizeof (timeout));
 }
 
 int socket_connect(int socket, char *ip, int port) {

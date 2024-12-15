@@ -7,6 +7,7 @@
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
+#include "tcp_debugger.h"
 #include "net.h"
 
 /* 
@@ -74,6 +75,19 @@ int socket_create_tcp(char *name) {
         // exit(1);
 	}
 	return socket;
+}
+
+int socket_set_nonblocking(int socket, int nonblocking) {
+    return sceNetSetsockopt(socket, 
+		SCE_NET_SOL_SOCKET, 
+		SCE_NET_SO_NBIO, 
+		&nonblocking, sizeof(nonblocking));
+}
+
+int socket_set_timeout(int socket, int timeout) {
+    return sceNetSetsockopt(socket,
+                     SCE_NET_SOL_SOCKET, 
+					 SCE_NET_SO_RCVTIMEO, &timeout, 4);
 }
 
 /* 
