@@ -11,4 +11,16 @@ int socket_send_str(int socket, char *string);
 int socket_close(int socket);
 int socket_connect(int socket, char *ip, int port);
 
+typedef struct {
+    char ip_addr[16];
+    char netmask[16];
+    char gateway[16];
+    unsigned char ether_addr[6];
+    int state;
+// States are based on SceNetCtlState { SCE_NETCTL_STATE_DISCONNECTED , SCE_NETCTL_STATE_CONNECTING , SCE_NETCTL_STATE_FINALIZING , SCE_NETCTL_STATE_CONNECTED }
+} NetConfig;
+
+NetConfig *get_device_info();
+
+
 #endif

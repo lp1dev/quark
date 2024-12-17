@@ -72,3 +72,10 @@ int socket_send_str(int socket, char *string) {
 int socket_close(int socket) {
 	close(socket);
 }
+
+NetConfig *get_device_info(){
+	NetConfig *config;
+	//TODO
+	config = malloc(sizeof(NetConfig));
+	return config;
+}

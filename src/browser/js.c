@@ -269,6 +269,23 @@ static duk_ret_t quark_socket_set_nonblocking(duk_context *ctx) {
 }
 
 
+static duk_ret_t quark_get_device_info(duk_context *ctx) {
+  NetConfig *device_info;
+  device_info = get_device_info();
+  duk_push_object(ctx);
+  duk_push_string(ctx, device_info->ip_addr);
+  duk_put_prop_string(ctx, -2, "ipv4");
+  duk_push_string(ctx, device_info->ether_addr);
+  duk_put_prop_string(ctx, -2, "mac");
+  duk_push_string(ctx, device_info->gateway);
+  duk_put_prop_string(ctx, -2, "gateway");
+  duk_push_string(ctx, device_info->netmask);
+  duk_put_prop_string(ctx, -2, "netmask");
+  duk_push_int(ctx, device_info->state);
+  duk_put_prop_string(ctx, -2, "state");
+  return (duk_ret_t) 1;
+}
+
 /* 
 
 void init_js_globals(duk_context *ctx)
@@ -304,6 +321,8 @@ void init_js_globals(duk_context *ctx) {
     duk_push_c_function(ctx, tcp_socket_connect, 3);   
     duk_put_global_string(ctx, "TCPSocket_connect");
 
+    duk_push_c_function(ctx, quark_get_device_info, 0);
+    duk_put_global_string(ctx, "net_get_device_info");
 
     duk_push_c_function(ctx, tcp_socket_close, 1);
     duk_put_global_string(ctx, "socket_close");

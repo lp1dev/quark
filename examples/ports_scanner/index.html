@@ -68,7 +68,7 @@
         window.close()
       } else if (event.code == 13) {
 	  if (menu_selected === 1) {
-              window.location = "hosts.html"
+        window.location = "hosts.html"
 	  } else {
 	      window.location = "ports.html"
 	  }
@@ -108,27 +108,66 @@
         menu_move("DOWN")
       }
 
-      console.log("Button press", event)
+      quark_debug("Button pressed "+event.code)
     })
 
     // c_pythonInit() # We do not require Python for this so far
 
-    function scan_ports() {
+    // function scan_ports(host) {
+    //   var i = 0
+    //   while (i < 1000) {
+    //     var sock = TCPSocket(host)
+    //     quark_debug("Socket is "+sock);
+    //     var ret = TCPSocket_connect(sock, host, i)
+    //     // quark_debug("Ret is : "+ret)
+
+    //     if (ret > 0) {
+    //       quark_debug("Port "+i+" is open."+sock)
+    //     }
+    //     socket_close(sock)
+
+    //     i++;
+    //   }
+    // }
+
+    // function scan_hosts() {
+    //   var i = 1;
+
+    //   while (i < 2) {
+
+    //     ip = "192.168.0."+i
+    //     var sock = TCPSocket(ip)
+    //     var ret = TCPSocket_connect(sock, ip, 80)
+    //     quark_debug("Socket is "+sock);
+    //     if (ret > -2) {
+    //       quark_debug("Host is up : "+ip)
+    //       scan_ports(ip)
+    //     }
+
+    //     // quark_debug("Scanning "+ip)
+    //     socket_close(sock)
+    //     i++
+    //   }
+    // }
+
+    function sockets_test() {
       var i = 0
       while (i < 65535) {
-        var sock = TCPSocket("127.0.0.1");
-        var ret = TCPSocket_connect(sock, "127.0.0.1", i)
-        if (ret > 0) {
-          quark_debug("Port "+i+" is open."+sock)
-        }
-        socket_close(sock)
+        var socket = new Socket("192.168.0.59", 80)
+        socket.setNonBlocking(1)
+        socket.setTimeout(100)
+        var ret = socket.connect()
 
-        i++;
+        quark_debug('Created a new socket '+socket._fd)
+        socket.close()
+        i++
       }
     }
 
-    scan_ports()
-
+    // scan_ports()
+    // scan_hosts()
+    // sockets_test()
+    quark_debug("Net device info: " +JSON.stringify(net_get_device_info()))
   </script>
 
 </body>

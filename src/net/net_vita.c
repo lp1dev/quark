@@ -134,3 +134,50 @@ int socket_close(int socket);
 int socket_close(int socket) {
 	sceNetSocketClose(socket);
 }
+
+NetConfig *get_device_info() {
+	NetConfig *device_config;
+	SceNetCtlInfo info;
+	int ret;
+
+	device_config = malloc(sizeof(NetConfig));
+	ret = sceNetCtlInetGetInfo(SCE_NETCTL_INFO_GET_NETMASK, &info);
+	if (ret < 0) {
+		debug("DEBUG: Error getting netmask.\n", NULL);
+	}
+	debug("info.netmask-> ", info.netmask);
+	strncpy(device_config->netmask, info.netmask, 16);
+
+	ret = sceNetCtlInetGetInfo(SCE_NETCTL_INFO_GET_ETHER_ADDR, &info);
+	if (ret < 0) {
+		debug("DEBUG: Error getting mac address.\n", NULL);
+	}
+
+	debug("info.ether_addr.data-> ", info.ether_addr.data);
+	memcpy(device_config->ether_addr, info.ether_addr.data, 6);
+
+	ret = sceNetCtlInetGetInfo(SCE_NETCTL_INFO_GET_IP_ADDRESS, &info);
+	if (ret < 0) {
+		debug("DEBUG: Error getting ip addr.\n", NULL);
+	}
+
+	debug("info.ip_address-> ", info.ip_address);
+	strncpy(device_config->ip_addr, info.ip_address, 16);
+
+	ret = sceNetCtlInetGetInfo(SCE_NETCTL_INFO_GET_DEFAULT_ROUTE, &info);
+	if (ret < 0) {
+		debug("DEBUG: Error getting default route.\n", NULL);
+	}
+
+	debug("info.default_route-> ", info.default_route);
+	strncpy(device_config->gateway, info.default_route, 16);
+
+
+	ret = sceNetCtlInetGetState(&device_config->state);
+	if (ret < 0) {
+		debug("DEBUG: Error getting network state.\n", NULL);
+	}
+
+	return device_config;
+}
+

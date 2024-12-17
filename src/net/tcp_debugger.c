@@ -7,12 +7,12 @@ void debug_init() {
     int ret;
 
     if (socket == -1) {
-        socket = socket_create_tcp("test");
-        ret = socket_connect(socket, "127.0.0.1", 4444);
+        socket = socket_create_tcp("debugger");
+        ret = socket_connect(socket, "192.168.0.55", 4444);
     }
     if (ret < 0) {
         socket = -1;
-        printf("Warning: Could not connect to 127.0.0.1 4444\n");
+        printf("Warning: Could not connect to 192.168.0.55 4444\n");
     } else {
         socket_send_str(socket, "[Quark :: Debug Socket Initialized]\n");
     }
