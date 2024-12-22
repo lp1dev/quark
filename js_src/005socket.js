@@ -45,5 +45,9 @@ function Socket(host, port) {
         return socket_set_nonblocking(this._fd, nonblocking)
     }
 
+    this.ping = function() {
+        return TCPSocket_ping(this._fd, this._host, this._port)
+    }
+
     this._fd = TCPSocket_create(host+":"+port)
 }

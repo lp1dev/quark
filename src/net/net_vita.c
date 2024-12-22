@@ -1,13 +1,14 @@
-#include <psp2/net/net.h>
+// #include <psp2/net/net.h>
 #include <psp2/net/netctl.h>
 #include <psp2/net/http.h>
-#include <psp2/sysmodule.h>
+// #include <psp2/sysmodule.h>
 #include <psp2/kernel/processmgr.h>
 #include <psp2/display.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
 #include "tcp_debugger.h"
+#include "vita_structs.h"
 #include "net.h"
 
 /* 
@@ -85,10 +86,124 @@ int socket_set_nonblocking(int socket, int nonblocking) {
 }
 
 int socket_set_timeout(int socket, int timeout) {
-    return sceNetSetsockopt(socket,
-                     SCE_NET_SOL_SOCKET, 
-					 SCE_NET_SO_RCVTIMEO, &timeout, 4);
+	// struct timeval tv;
+
+	// tv.tv_sec = timeout / 1000;
+    // tv.tv_usec = (timeout % 1000) * 1000;
+	// result = sceNetSelect(sock + 1, &writefds, NULL, NULL, &tv);
+	// // It seems that we have no actual TCP timeout option on net for the PS Vita 
+	// int flag = 1;
+	// sceNetSetsockopt(socket, SCE_NET_IPPROTO_TCP, SCE_NET_TCP_NODELAY, (char *)&flag, sizeof(int));
+	// sceNetSetsockopt(socket, SCE_NET_SOL_SOCKET, SCE_NET_SO_KEEPALIVE, (char *)&timeout, sizeof(int));
+
+    // return sceNetSetsockopt(socket,
+    //                  SCE_NET_SOL_SOCKET, 
+	// 				 SCE_NET_SO_RCVTIMEO, &timeout, sizeof(timeout));
 }
+
+uint16_t in_cksum(uint16_t *ptr, int32_t nbytes){
+	uint32_t sum;
+	sum = 0;
+	while (nbytes > 1){
+		sum += *(ptr++);
+		nbytes -= 2;
+	}
+
+	if (nbytes > 0)
+		sum += *(char*)ptr;
+
+	while (sum>>16)
+		sum = (sum & 0xFFFF) + (sum >> 16);
+
+	return (~sum);
+}
+
+// unsigned short cksum(IcmpPacket *packet, int len){
+//        long sum = 0;  /* assume 32 bit long, 16 bit short */
+
+//        while(len > 1){
+//          sum += *((unsigned short*) packet)++;
+//          if(sum & 0x80000000)   /* if high order bit set, fold */
+//            sum = (sum & 0xFFFF) + (sum >> 16);
+//          len -= 2;
+//        }
+
+//        if(len)       /* take care of left over byte */
+//          sum += (unsigned short) *(unsigned char *)packet;
+
+//        while(sum>>16)
+//          sum = (sum & 0xFFFF) + (sum >> 16);
+
+//        return ~sum;
+//      }
+
+int socket = -1;
+
+
+int socket_ping(char *host) {
+	SceNetInAddr dst_addr;
+	SceNetSockaddr from_addr;
+	SceNetSockaddrIn serv_addr;
+	int ret;
+	IcmpUnion icmp; /* icmp union */
+	TcpUnion tcp;
+
+	sceNetInetPton(SCE_NET_AF_INET, host, (void*)&dst_addr);
+	if (socket == -1) {
+		socket = sceNetSocket("ping", SCE_NET_AF_INET, SCE_NET_SOCK_RAW, SCE_NET_IPPROTO_ICMP);
+	}
+	if (socket < 0) {
+		printf("Error: Could not create ICMP socket.\n");
+		return -1;
+	}
+	icmp.icmp_struct.hdr.type = SCE_NET_ICMP_TYPE_ECHO_REQUEST; /* set icmp type to echo request */
+	icmp.icmp_struct.hdr.code = SCE_NET_ICMP_CODE_DEST_UNREACH_NET_UNREACH;
+	icmp.icmp_struct.hdr.un.echo.id = 0x1; /* arbitrary id */
+	icmp.icmp_struct.hdr.un.echo.sequence = 0x1234; /* arbitrary sequence */
+	icmp.icmp_struct.hdr.checksum = 0;
+
+	strncpy(icmp.icmp_struct.payload, "Random Payload in ping", (32));
+	icmp.icmp_struct.hdr.checksum = in_cksum(icmp.icmp_u16buff, sizeof(IcmpPacket));
+
+	serv_addr.sin_family = SCE_NET_AF_INET; /* set packet to IPv4 */
+	serv_addr.sin_addr = dst_addr; /* set destination address */
+	memset(&serv_addr.sin_zero, 0, sizeof(serv_addr.sin_zero)); /* fill sin_zero with zeroes */
+	// Sending
+	ret = sceNetSendto(socket, icmp.icmp_packet, sizeof(IcmpPacket), 0, (SceNetSockaddr*)&serv_addr, sizeof(SceNetSockaddr));
+	// debug("Sending data to", host);
+	if (ret < 1) {
+		printf("Error: Could not send PING data.\n");
+		return -2;
+	}
+	// debug("Successfully sent data to", host);
+	uint32_t from_len = sizeof(from_addr);
+	// Setting timeout
+	int timeout = 2000;
+	ret = sceNetSetsockopt(socket,
+                     SCE_NET_SOCK_RAW, 
+					 SCE_NET_SO_RCVTIMEO, &timeout, sizeof(timeout));
+	printf("setTimeout ret is %i\n", ret);
+
+	ret = sceNetSetsockopt(socket,
+                     SCE_NET_SOCK_RAW, 
+					 SCE_NET_SO_KEEPALIVE, &timeout, sizeof(timeout));
+	printf("setTimeout ret is %i\n", ret);
+
+	// debug("Waiting from an answer from", host);
+	// Receiving
+
+	ret = sceNetRecvfrom(socket, icmp.icmp_packet, sizeof(IcmpPacket), SCE_NET_MSG_DONTWAIT, &from_addr, (unsigned int*)&from_len);
+	
+	if (ret < 1) {
+		printf("Error: Could not receive ICMP data\n");
+		return -3;
+	}
+	// sceNetSocketClose(socket);
+	return ret;
+	// debug("Got an answer from", host);
+
+}
+
 
 /* 
 
@@ -104,8 +219,101 @@ int socket_connect(int socket, char *ip, int port) {
 	addr.sin_family = SCE_NET_AF_INET;
 	addr.sin_port = sceNetHtons(port);
     sceNetInetPton(SCE_NET_AF_INET, ip, &addr.sin_addr);
-    // Probably to move somewhere else after
     return sceNetConnect(socket, (SceNetSockaddr*)&addr, sizeof(addr));
+}
+
+/**
+ * Set a timeout for connecting to a TCP server.
+ *
+ * @param socket The socket descriptor.
+ * @param server The server address structure.
+ * @param timeout The timeout value in milliseconds.
+ * @return 0 on success, -5 on timeout, -6 on RST and other values on other errors.
+ */
+int socket_tcp_ping(int socket, char *ip, int port) {
+	struct SceNetSockaddrIn addr = { 0 };
+
+    addr.sin_len = sizeof(addr);
+	addr.sin_family = SCE_NET_AF_INET;
+	addr.sin_port = sceNetHtons(port);
+    sceNetInetPton(SCE_NET_AF_INET, ip, &addr.sin_addr);
+
+    int result;
+    int epoll_fd;
+    SceNetEpollEvent event = {0};
+    int flags;
+
+	// We force create a new socket for debug
+    socket = sceNetSocket("debug", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
+    if (socket < 0) {
+		debug("Failed to create socket\n", NULL);
+		return -7;
+    }
+
+    // Set the socket to non-blocking mode
+    flags = 1; // Non-blocking flag
+    result = sceNetSetsockopt(socket, SCE_NET_SOL_SOCKET, SCE_NET_SO_NBIO, &flags, sizeof(flags));
+    if (result < 0) {
+		sceNetSocketClose(socket);
+        return -1; // Failed to set non-blocking mode
+    }
+
+    // Attempt to connect
+    result = sceNetConnect(socket, (SceNetSockaddr *)&addr, sizeof(addr));
+    if (result < 0 && result != -2143223516) { // Ignore EINPROGRESS
+		// debug("sceNetConnect failed?!", NULL);
+		sceNetSocketClose(socket);
+        return -2; // Failed to connect
+    }
+
+    // Create an epoll instance
+    epoll_fd = sceNetEpollCreate("connect_epoll", 0);
+    if (epoll_fd < 0) {
+		// debug("Could not create epoll.", NULL);
+		sceNetSocketClose(socket);
+        return -3; // Failed to create epoll instance
+    }
+
+    // Add the socket to the epoll instance
+    event.events |= SCE_NET_EPOLLOUT; // Monitor for writable state
+    // event.data.u32 = 0;
+	event.data.fd = socket;
+    result = sceNetEpollControl(epoll_fd, SCE_NET_EPOLL_CTL_ADD, socket, &event);
+    if (result < 0) {
+        sceNetEpollDestroy(epoll_fd);
+		sceNetSocketClose(socket);
+		// debug("Could not add socket to epoll.", NULL);
+        return -4; // Failed to add socket to epoll
+    }
+
+    // Wait for the connection to be established or timeout
+	// 1 * 1000000 = 1 Second
+	// 300000 = 1/3rd of a second
+	// 100000 = 1/10th of a second
+	
+    result = sceNetEpollWait(epoll_fd, &event, 1, 100000); // epoll, events, max_events
+    if (result <= 0) {
+        sceNetEpollDestroy(epoll_fd);
+		sceNetSocketClose(socket);
+        return -5; // Connection timed out or error
+    }
+
+    // Check if the connection was successful
+    int error = 0;
+    unsigned int len = sizeof(error);
+    result = sceNetGetsockopt(socket, SCE_NET_SOL_SOCKET, SCE_NET_SO_ERROR, &error, &len);
+    if (result < 0 || error != 0) {
+        sceNetEpollDestroy(epoll_fd);
+		sceNetSocketClose(socket);
+		// debug("Connection failed, all OK but timeout or RST.", NULL);
+        return -6; // Connection failed
+    }
+
+    // Clean up epoll instance
+    sceNetEpollDestroy(epoll_fd);
+	// debug("Connection seems to have succeeded.", NULL);
+	sceNetSocketClose(socket);
+    return 0; // Success
 }
 
 /* 

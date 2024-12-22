@@ -10,70 +10,37 @@
 
   <div id="header-container">
     <div id="header">
-      Vita Ports Scanner | Version 00.01
+      Vita Ports Scanner | Version 00.02
     </div>
   </div>
 
   <div id="container" class="inline">
+
     <div id="menu">
-      <div class="button-container" id="menuitem0" style="background-color: #01f019">
-        <button class="menu-button">Hosts Scanner</button>
+
+      <div class="item-container">
+        <div class="device">
+
+          <!-- <img src="./playstation.png" /> -->
+          <i id="device-ipv4">IPv4 &nbsp;&nbsp;&nbsp; 0.0.0.0</i>
+          <i id="device-netmask">netmask &nbsp;&nbsp;&nbsp; 255.255.255.255</i>
+          <i id="device-status">Status &nbsp;DISCONNECTED</i>
+        </div>
 
       </div>
-      <div class="button-container" id="menuitem1">
-        <button class="menu-button">Ports Scanner</button>
 
+      <div style="background-color: #01f019" class="button-container" id="scan_devices">
+        <button id="single-button" class="menu-button">Scan local network devices</button>
       </div>
 
     </div>
   </div>
 
   <div id="footer">
-    Pre-Release Version | Not production-ready
+    Pre-Release Version | Not production-ready | Select (X)
   </div>
 
   <script type="text/javascript">
-
-    console.log("JS LOADED")
-    var menu_selected = 1
-
-    function menu_move(direction) {
-      var max_items = 1
-      // Because we have 2 items in the menu
-
-      var selected_item = document.getElementById('menuitem'+menu_selected)
-      selected_item.style.backgroundColor = '#01f019'
-
-      if (direction === "UP") {
-        menu_selected = (menu_selected > 0) ? menu_selected - 1 : max_items
-      } else {
-        menu_selected = (menu_selected < max_items) ? menu_selected + 1 : 0
-      }
-      selected_item = document.getElementById('menuitem'+menu_selected)
-      selected_item.style.backgroundColor = '#106901'
-    }
-
-    document.addEventListener("gamepadconnected", function (event) {
-      navigator.getGamepads()
-      // To initialize the gamepad
-    })
-
-    document.addEventListener('keydown', function (event) {
-      console.log("Key pressed", event)
-      if (event.code === 1073741906) { /* Keyboard UP */
-        menu_move("UP")
-      } else if (event.code === 1073741905) { /* Keyboard DOWN */
-        menu_move("DOWN")
-      } else if (event.code === 27) { /* Keyboard Escape */
-        window.close()
-      } else if (event.code == 13) {
-	  if (menu_selected === 1) {
-        window.location = "hosts.html"
-	  } else {
-	      window.location = "ports.html"
-	  }
-      }
-    })
 
     var mapping = [
       "X",
@@ -91,84 +58,232 @@
       "DPAD_DOWN",
       "DPAD_LEFT",
       "DPAD_RIGHT",
-    ] // Only implemented the first 15 buttons
-      // handled by SDL2
-    // TODO : Add the rest
+    ]
+
+    var menu_selected = 0
+    var max_items = 0
+    var unique_menuitem
+    var num_menu_items = 0
+    var device_info
+    var candidates = {}
+
+    function menu_create_item(name) {
+      unique_menuitem = undefined
+      document.getElementById('scan_devices').innerHTML += ' <button id="single-button" class="menu-button">'+name+'</button>'
+    }
+
+    function menu_create_items(items) {
+      var html = ''
+      var i = 0
+      unique_menuitem = undefined
+      max_items = items.length
+
+      items.forEach(function(item) {
+        if (i === 0) {
+          html += ' <button id="menuitem'+i+'" class="menu-button">'+item+'</button>'
+        } else {
+          html += ' <button id="menuitem'+i+'" class="menu-button">'+item+'</button>'
+        }
+      })
+      quark_debug(html)
+      document.getElementById('scan_devices').innerHTML += html
+    }
 
 
+    function menu_move(direction) {
+      if (max_items == 0) {
+        return
+      }
+
+      var selected_item = document.getElementById('menuitem' + menu_selected)
+      selected_item.style.backgroundColor = '#01f019'
+
+      if (direction === "UP") {
+        menu_selected = (menu_selected > 0) ? menu_selected - 1 : max_items
+      } else {
+        menu_selected = (menu_selected < max_items) ? menu_selected + 1 : 0
+      }
+      selected_item = document.getElementById('menuitem' + menu_selected)
+      selected_item.style.backgroundColor = '#106901'
+    }
+
+    function decimalToIpv4(decimal) {
+      var octet1 = (decimal >>> 24) & 0xFF; // First octet (most significant 8 bits)
+      var octet2 = (decimal >>> 16) & 0xFF; // Second octet
+      var octet3 = (decimal >>> 8) & 0xFF;  // Third octet
+      var octet4 = decimal & 0xFF;         // Fourth octet (least significant 8 bits)
+      return octet1 + "." + octet2 + "." + octet3 + "." + octet4
+    }
+
+    function ipv4ToDecimal(ipv4) {
+      var octets = ipv4.split('.')
+      var octet = octets.map(Number);
+      var decimal = (octet[0] << 24) | (octet[1] << 16) | (octet[2] << 8) | octet[3];
+      return decimal;
+    }
+
+    function enumerateIpAddresses(gateway, netmask) {
+      var gatewayDecimal = ipv4ToDecimal(gateway);
+      var netmaskDecimal = ipv4ToDecimal(netmask);
+
+      var networkAddress = gatewayDecimal & netmaskDecimal;
+      var broadcastAddress = networkAddress | (~netmaskDecimal & 0xFFFFFFFF);
+
+      var ipAddresses = [];
+      for (var i = networkAddress + 1; i < broadcastAddress; i++) {
+        ipAddresses.push(decimalToIpv4(i));
+      }
+      quark_debug("IP range is " + ipAddresses[0] + "->" + ipAddresses[ipAddresses.length - 1])
+
+      return ipAddresses;
+    }
+
+    function scan_ports(host) {
+      quark_debug("Scanning ports on " + host)
+      var i = 0
+      while (i < 1000) {
+        var socket = new Socket(host, i)
+        // socket.setTimeout(1000000)
+        var ret = socket.connect()
+
+        if (ret >= 0) {
+          quark_debug("Port " + i + " is open." + ret)
+        } else if (ret === -6) {
+          quark_debug("Port "+i+" is closed. Got a RST."+ret)
+        } else if (ret === -5) {
+          quark_debug("Port "+i+" is maybe closed? No response."+ret)
+        }
+        socket.close()
+
+        i++;
+      }
+      quark_debug('Scan done')
+    }
+
+    function scan_port(host, port) {
+      var socket = new Socket(host, port)
+      var ret = socket  ()
+      socket.close()
+      return ret
+    }
+
+
+    function scan_hosts_single() {
+      var gw = device_info.gateway
+      var netmask = device_info.netmask
+
+      enumerateIpAddresses(gw, netmask).forEach(
+        function (ip) {
+
+          var ret = (ip)
+          if (ret >= 0) {
+
+            if (!candidates[ip]) {
+              candidates[ip] = 0
+            }
+            candidates[ip] += 1
+          }
+        }
+      )
+    }
+
+    function scan_hosts() {
+      var gw = device_info.gateway
+      var netmask = device_info.netmask
+      // Debug overrides
+      gw = "192.168.128.1"
+      netmask = "255.255.254.0"
+      //
+      var validated = []
+
+      quark_debug("Scanning hosts...")
+      enumerateIpAddresses(gw, netmask).forEach(
+        function(ip) {
+          var socket = new Socket(ip, 80)
+          var ret = socket.ping()
+          socket.close()
+          if (ret >= 0 || ret == -6) { // Either a RST or a SYN+ACK 
+            quark_debug("Host is validated as up " + ip)
+            validated.push(ip)
+          }
+          quark_debug('Ret is '+ret+' for '+ip+ ' on port 80')
+        }
+      )
+      menu_create_items(validated)
+    }
+
+    function menu_select(item) {
+      if (item === "scan_hosts") {
+        scan_hosts()
+      } else if (item === "scan_ports") {
+        scan_ports("192.168.129.12")
+      } else if (item === "reload") {
+        get_device_info()
+      }
+    }
+
+    function handle_button(event, type) {
+      if (event.code === 1073741906 || (type === 'joystick'
+        && mapping[event.code] === "DPAD_UP")) {
+        menu_move("UP")
+      } else if (event.code === 1073741905 || (type === 'joystick'
+        && mapping[event.code] === "DPAD_DOWN")) {
+        menu_move("DOWN")
+      } else if (event.code === 13 && type === 'keyboard'
+        || mapping[event.code] === "X") {
+        if (unique_menuitem) {
+          menu_select(unique_menuitem)
+        }
+      }
+      quark_debug("Code " + event.code + " " + type)
+    }
+
+    document.addEventListener('keydown', function (event) {
+      handle_button(event, 'keyboard')
+    })
 
     document.addEventListener('button_press', function (event) {
       // The "button_press" event is not a classic JS event
       // but it is a custom quark optimization for the non-existent gamepad
       // button press event which usually requires a setTimeout +
       // polling of all the gamepads that is done in JS.
-      if (mapping[event.code] === "DPAD_UP") {
-        menu_move("UP")
-      } else if (mapping[event.code] === "DPAD_DOWN") {
-        menu_move("DOWN")
-      }
+      handle_button(event, 'joystick')
+    })
 
-      quark_debug("Button pressed "+event.code)
+    document.addEventListener("gamepadconnected", function (event) {
+      navigator.getGamepads()
     })
 
     // c_pythonInit() # We do not require Python for this so far
 
-    // function scan_ports(host) {
-    //   var i = 0
-    //   while (i < 1000) {
-    //     var sock = TCPSocket(host)
-    //     quark_debug("Socket is "+sock);
-    //     var ret = TCPSocket_connect(sock, host, i)
-    //     // quark_debug("Ret is : "+ret)
+    function get_device_info() {
+      device_info = net_get_device_info()
+      console.log("Got device info", device_info)
+      quark_debug("Device Info", JSON.stringify(device_info))
 
-    //     if (ret > 0) {
-    //       quark_debug("Port "+i+" is open."+sock)
-    //     }
-    //     socket_close(sock)
+      document.getElementById('device-ipv4').innerText = 'ipv4 ' + device_info.ipv4
+      document.getElementById('device-netmask').innerText = 'Netmask ' + device_info.netmask
 
-    //     i++;
-    //   }
-    // }
+      if (device_info['state'] === 3) { // CONNECTED
+        document.getElementById("single-button").innerText = 'Scan local netork devices'
+        document.getElementById('device-status').innerText = 'Status    CONNECTED'
 
-    // function scan_hosts() {
-    //   var i = 1;
-
-    //   while (i < 2) {
-
-    //     ip = "192.168.0."+i
-    //     var sock = TCPSocket(ip)
-    //     var ret = TCPSocket_connect(sock, ip, 80)
-    //     quark_debug("Socket is "+sock);
-    //     if (ret > -2) {
-    //       quark_debug("Host is up : "+ip)
-    //       scan_ports(ip)
-    //     }
-
-    //     // quark_debug("Scanning "+ip)
-    //     socket_close(sock)
-    //     i++
-    //   }
-    // }
-
-    function sockets_test() {
-      var i = 0
-      while (i < 65535) {
-        var socket = new Socket("192.168.0.59", 80)
-        socket.setNonBlocking(1)
-        socket.setTimeout(100)
-        var ret = socket.connect()
-
-        quark_debug('Created a new socket '+socket._fd)
-        socket.close()
-        i++
+        unique_menuitem = "scan_hosts"
+      } else {
+        document.getElementById("single-button").innerText = 'Reload device configuration'
+        unique_menuitem = "reload"
       }
+      document.getElementById("single-button").style.display = "block"
+
     }
 
-    // scan_ports()
-    // scan_hosts()
-    // sockets_test()
-    quark_debug("Net device info: " +JSON.stringify(net_get_device_info()))
+						    get_device_info()
+
+						    // scan_ports("192.168.129.129")
+                // scan_hosts()
+
   </script>
 
 </body>
+
 </html>

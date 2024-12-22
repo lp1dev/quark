@@ -197,13 +197,7 @@ static duk_ret_t tcp_socket_create(duk_context *ctx) {
   socket = socket_create_tcp(name);
   
   duk_pop(ctx);
-  if (socket < 0) {
-    duk_push_int(ctx, -1);    
-  } else {
-    duk_push_int(ctx, socket);
-  }
-
-  printf("C: Created socket %i\n", socket);
+  duk_push_int(ctx, socket);
   return (duk_ret_t) 1;
 }
 
@@ -212,7 +206,6 @@ static duk_ret_t tcp_socket_connect(duk_context *ctx) {
   char *host;
   int port;
   int ret;
-  int error;
 
   socket = duk_get_int(ctx, 0);
   host = (char *)duk_get_string(ctx, 1);
@@ -220,17 +213,25 @@ static duk_ret_t tcp_socket_connect(duk_context *ctx) {
   ret = socket_connect(socket, host, port);
 
   duk_pop_3(ctx);
-  if (ret < 0) {
-    error = errno;
-    if (error == 111) { // Connection Refused (RST)
-      duk_push_int(ctx, -1);
-    } else if (error == 110) {
-      duk_push_int(ctx, -2); // Connection Timed Out
-    } else {
-      duk_push_int(ctx, -3); // Other errors
-    }  } else {
-    duk_push_int(ctx, socket);
-  }
+  duk_push_int(ctx, ret);
+
+  return (duk_ret_t) 1;
+}
+
+static duk_ret_t tcp_socket_ping(duk_context *ctx) {
+  int socket;
+  char *host;
+  int port;
+  int ret;
+
+  socket = duk_get_int(ctx, 0);
+  host = (char *)duk_get_string(ctx, 1);
+  port = duk_get_int(ctx, 2);
+  ret = socket_tcp_ping(socket, host, port);
+
+  duk_pop_3(ctx);
+  duk_push_int(ctx, ret);
+
   return (duk_ret_t) 1;
 }
 
@@ -250,9 +251,22 @@ static duk_ret_t quark_socket_set_timeout(duk_context *ctx) {
 
   socket = duk_get_int(ctx, 0);
   timeout = duk_get_int(ctx, 1);
-	printf("Setting timeout to socket %i %i\n", socket, timeout);
+	// printf("Setting timeout to socket %i %i\n", socket, timeout);
   ret = socket_set_timeout(socket, timeout);
+  duk_pop_2(ctx);
   duk_push_int(ctx, ret);
+  return (duk_ret_t) 1;
+}
+
+static duk_ret_t quark_ping(duk_context *ctx) {
+  char *host;
+  int ret;
+
+  host = duk_get_string(ctx, 0);
+  ret = socket_ping(host);
+  duk_pop(ctx);
+  duk_push_int(ctx, ret);
+
   return (duk_ret_t) 1;
 }
 
@@ -321,11 +335,18 @@ void init_js_globals(duk_context *ctx) {
     duk_push_c_function(ctx, tcp_socket_connect, 3);   
     duk_put_global_string(ctx, "TCPSocket_connect");
 
+    duk_push_c_function(ctx, tcp_socket_ping, 3);
+    duk_put_global_string(ctx, "TCPSocket_ping");
+
+
     duk_push_c_function(ctx, quark_get_device_info, 0);
     duk_put_global_string(ctx, "net_get_device_info");
 
     duk_push_c_function(ctx, tcp_socket_close, 1);
     duk_put_global_string(ctx, "socket_close");
+
+    duk_push_c_function(ctx, quark_ping, 1);
+    duk_put_global_string(ctx, "quark_ping");
 
     duk_push_c_function(ctx, quark_exit, 0);
     duk_put_global_string(ctx, "c_exit");

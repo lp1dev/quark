@@ -10,6 +10,8 @@ int socket_set_nonblocking(int socket, int nonblocking);
 int socket_send_str(int socket, char *string);
 int socket_close(int socket);
 int socket_connect(int socket, char *ip, int port);
+int socket_tcp_ping(int socket, char *ip, int port);
+int socket_ping(char *host);
 
 typedef struct {
     char ip_addr[16];

@@ -30,7 +30,7 @@ int socket_create_tcp(char *name) {
 	// struct protoent *protoent;
 	int socketfd;
 
-	socketfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 6);
+	socketfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	// Setting sockets to
 	// nonblock makes TCP scanning much faster.
 	// Less reliable for other operations, but
@@ -41,11 +41,11 @@ int socket_create_tcp(char *name) {
         exit(-1);
     }
 	//
-	int timeout = 100000;
 	return socketfd;
 }
 
 int socket_set_timeout(int sock, int timeout) {
+	// Timeout should be in milliseconds
 	int ret;
 	ret = setsockopt(sock, IPPROTO_TCP, TCP_USER_TIMEOUT, (char*) &timeout, sizeof (timeout));
 }
@@ -71,6 +71,14 @@ int socket_send_str(int socket, char *string) {
 
 int socket_close(int socket) {
 	close(socket);
+}
+
+int socket_ping(char *host) {
+	// TODO implement
+	return -1;
+}
+
+int socket_tcp_ping(int socket, char *ip, int port) {
 }
 
 NetConfig *get_device_info(){

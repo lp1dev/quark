@@ -9,7 +9,10 @@ Cached_Texture *Cached_Texture_Create(char *name, SDL_Renderer *renderer, SDL_Su
     cached->next = NULL;
     cached->name = name;
     cached->texture = SDL_CreateTextureFromSurface(renderer, surface);
-    cached->rect = rect;
+    // I replaced cached->rect = rect; with an actual copy of the value, seems to fix a rendering issue
+    cached->rect = malloc(sizeof(SDL_Rect));
+    memcpy(cached->rect, rect, sizeof(SDL_Rect));
+    //
     cached->surface = surface;
     cached->color = color;
     cached->x = x;

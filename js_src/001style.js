@@ -31,6 +31,13 @@ function Style(style_obj) {
 	configurable: true
     })
 
+    Object.defineProperty(this, "_display", {
+        enumerable: false,
+        value: style_obj['display'] ? style_obj['display'] : 'block',
+        writable: true,
+        configurable: true
+    })
+
     Object.defineProperty(this, "color", {
         get: function() {
             return this._color;
@@ -49,6 +56,17 @@ function Style(style_obj) {
         set: function(backgroundColor) {
             this._backgroundColor = backgroundColor;
             quark.c_updateElement(style_obj['internalId'], 4, "background-color", backgroundColor)
+        },
+        configurable: true
+    })
+
+    Object.defineProperty(this, "display", {
+        get: function() {
+            return this._display;
+        },
+        set: function(displayValue) {
+            this._display = displayValue;
+            quark.c_updateElement(style_obj['internalId'], 4, "display", displayValue)
         },
         configurable: true
     })

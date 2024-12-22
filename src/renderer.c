@@ -119,6 +119,8 @@ SDL_Rect render_text(Element *el, char *text)
     text_rect.h = font_size * 3;
 
     //
+
+    //
     element_color = Element_get_style(el, "color");
     if (element_color != NULL) {
         text_color = parse_color(element_color->str_value);
@@ -182,7 +184,7 @@ SDL_Rect render_text(Element *el, char *text)
         text_rect.h = node->int_value;
     }
     
-    texture = Cached_Texture_get(text, textures_head, gRenderer, surfaceMessage, &text_rect, &sdl_color, el->x, el->y);
+    texture = Cached_Texture_get(text, textures_head, gRenderer, surfaceMessage, &text_rect, &sdl_color, el->computed_x, el->computed_y);
     if (textures_head == NULL) {
         textures_head = texture;
     }
@@ -376,7 +378,7 @@ void check_intervals(duk_context *ctx) {
                 duk_call(ctx, 1);
                 duk_pop(ctx);
                 intervals[i]->timeout = -123456789; // Temporary replacement for an actual delete of the interval
-                free(intervals[i]);
+                // free(intervals[i]); // Leads to double free
             }
         } else if (intervals[i]->interval != -123456789) {
             if (current_time > (intervals[i]->start_time + intervals[i]->interval)) {
@@ -561,15 +563,34 @@ void draw_element(Element *el) {
 
     node = NULL;
     is_inline = 0;
+
+    // Handling display: none
+    node = Element_get_style(el, "display");
+    if (node != NULL && \
+        strncmp(node->str_value, "none", 4) == 0) {
+            return;
+    }
+    if (el->parent != NULL) {
+        node = Element_get_style(el->parent, "display");
+        if (node != NULL && \
+            strncmp(node->str_value, "none", 4) == 0) {
+                return;
+            }
+    }
+    //
+
     if (el->parent != NULL) {
         node = Element_get_style(el->parent, "display");
     }
+
     if (node != NULL && \
         strncmp(node->str_value, "inline-block", 12) == 0) {
         compute_element_dimensions_inline(el);
     } else {
         Element_compute_element_dimensions(el);
     }
+
+    
     node = Element_get_style(el, "background-color");
     if (node != NULL) {
         background_color = parse_color(node->str_value);
@@ -614,6 +635,9 @@ void render_image(Element *el) {
         return;
     }
     image_surface = IMG_Load(src->str_value);
+    // debug("Rendering image ", src->str_value);
+    // printf("Image surface is %p\n", image_surface);
+
     image = Cached_Texture_get(src->str_value, textures_head, gRenderer, image_surface, &image_rect, NULL, el->x, el->y);
     SDL_RenderCopy(gRenderer, image->texture, NULL, &image_rect);
 }
