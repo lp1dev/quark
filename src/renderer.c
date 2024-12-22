@@ -338,6 +338,7 @@ static duk_ret_t update_element(duk_context *ctx) {
             element->id = update_value;
             break;
         case STYLE:
+            printf("Setting style %s %s to %s\n", update_key, update_value, element->tag);
             Element_set_style(element, update_key, update_value);
             break;
         case INNER_TEXT:
@@ -488,6 +489,7 @@ void init_dom(duk_context *ctx) {
 }
 
 
+
 void compute_element_dimensions_inline(Element *el) {
     Element *parent;
     Element *tmp;
@@ -514,11 +516,13 @@ void compute_element_dimensions_inline(Element *el) {
         if (tmp->internal_id == el->internal_id) {
             position = siblings;
         }
-        siblings++;
+        if (Element_is_tangible(tmp)) {
+            siblings++;
+        }
         tmp = tmp->next;
     }
 
-    if (el->prev == NULL) {
+    if (el->prev == NULL || !Element_is_tangible(el->prev)) {
         el->width = (parent->computed_width / (siblings));
         el->height = parent->computed_height;
         el->x = ((parent->computed_width / (siblings)) * position) + parent->computed_x;
@@ -560,14 +564,17 @@ void draw_element(Element *el) {
     css_color background_color = {255, 255, 255, 0};
     Node *node;
     int is_inline;
+    int fixed;
 
     node = NULL;
     is_inline = 0;
+    fixed = 0;
 
     // Handling display: none
     node = Element_get_style(el, "display");
     if (node != NULL && \
         strncmp(node->str_value, "none", 4) == 0) {
+            // printf("We have a display none!\n");
             return;
     }
     if (el->parent != NULL) {
@@ -579,18 +586,49 @@ void draw_element(Element *el) {
     }
     //
 
+    //Handling fixed positions
+    node = Element_get_style(el, "position");
+    if (node != NULL && \
+        strncmp(node->str_value, "fixed", 4) == 0) {
+            fixed = 1;
+            // top
+            node = Element_get_style(el, "top");
+            el->computed_y = (node != NULL) ? node->int_value : 0;
+            // bottom
+            node = Element_get_style(el, "bottom");
+            el->computed_height = (node != NULL) ? SCREEN_HEIGHT - node->int_value : SCREEN_HEIGHT;
+            // left
+            node = Element_get_style(el, "left");
+            el->computed_x = (node != NULL) ? node->int_value : 0;
+            // right
+            node = Element_get_style(el, "right");
+            el->computed_width = (node != NULL) ? SCREEN_WIDTH - node->int_value : SCREEN_WIDTH;
+            // height
+            node = Element_get_style(el, "height");
+            el->computed_height = (node != NULL) ? node->int_value : SCREEN_HEIGHT;
+            // width
+            node = Element_get_style(el, "width");
+            el->computed_height = (node != NULL) ? node->int_value : SCREEN_WIDTH;
+    }
+    //
+
     if (el->parent != NULL) {
         node = Element_get_style(el->parent, "display");
     }
 
-    if (node != NULL && \
-        strncmp(node->str_value, "inline-block", 12) == 0) {
-        compute_element_dimensions_inline(el);
-    } else {
-        Element_compute_element_dimensions(el);
+    if (!fixed)
+    {
+        if (node != NULL &&
+            strncmp(node->str_value, "inline-block", 12) == 0)
+        {
+            compute_element_dimensions_inline(el);
+        }
+        else
+        {
+            Element_compute_element_dimensions(el);
+        }
     }
 
-    
     node = Element_get_style(el, "background-color");
     if (node != NULL) {
         background_color = parse_color(node->str_value);
@@ -615,7 +653,7 @@ void draw_element(Element *el) {
     if (el->innerText && strlen(el->innerText) > 0) {
         render_text(el, el->innerText);
     }
-    free(node);
+    // free(node);
 }
 
 void render_image(Element *el) {

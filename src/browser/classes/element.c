@@ -146,6 +146,49 @@ Node     *Element_get_style_int(Element *element, char *name) {
     return NULL;
 }
 
+/*
+
+int Element_is_tangible(Element *el)
+
+    Checking if an element's size should be accounted for in the
+    global geometry or not.
+
+*/
+int Element_is_tangible(Element *el) {
+    Node *node;
+
+    // Checking if el is not displayed
+    node = Element_get_style(el, "display");
+    if (node != NULL && \
+        strncmp(node->str_value, "none", 4) == 0) {
+            return 0;
+    }
+
+    // Checking if position is fixed
+    node = Element_get_style(el, "position");
+    if (node != NULL && \
+        strncmp(node->str_value, "fixed", 5) == 0) {
+            return 0;
+    }
+    if (el->parent != NULL) {
+
+    // Checking if parent position is fixed
+    node = Element_get_style(el->parent, "position");
+    if (node != NULL && \
+        strncmp(node->str_value, "fixed", 5) == 0) {
+            return 0;
+    }
+    // Checking if parent el is not displayed
+    node = Element_get_style(el->parent, "display");
+    if (node != NULL && \
+        strncmp(node->str_value, "none", 4) == 0) {
+            return 0;
+    }
+    }
+    // TODO : Also do this for all of the parents of the element!
+    return 1;
+}
+
 void    Element_draw_graph(Element *element, int depth) {
     char *tabs;
     Element *sibling;
@@ -380,10 +423,12 @@ SDL_Rect compute_smallest_element_size(Element *el) {
 
     child = el->children;
     while (child != NULL) {
-        children_size = compute_smallest_element_size(child);
-        smallest.w = children_size.w;
-        smallest.h = children_size.h;
+        if (Element_is_tangible(child)) {
+            children_size = compute_smallest_element_size(child);
+            smallest.w = children_size.w;
+            smallest.h = children_size.h;
 
+        }
         child = child->children;
     }
 
@@ -447,12 +492,16 @@ void Element_compute_element_dimensions(Element *el) {
     while (tmp != NULL) {
         if (tmp->internal_id == el->internal_id) {
             position = siblings;
+            // siblings++;
         }
-        siblings++;
+        else if (Element_is_tangible(tmp)) {
+            siblings++;
+        }
         tmp = tmp->next;
     }
 
-    if (el->prev == NULL) {    
+    if (el->prev == NULL || siblings == 0) {
+        siblings = siblings ? 1 : 1;
         el->width = parent->computed_width; // By default an element will take all of the available width
         el->height = (parent->computed_height / siblings);
 
@@ -469,7 +518,10 @@ void Element_compute_element_dimensions(Element *el) {
     } else {
         vertical_space_left = SCREEN_HEIGHT - (el->prev->computed_y + el->prev->computed_height);
         el->width = parent->computed_width; // We take all of the available width by default;
-        el->height = vertical_space_left / (siblings - 1) * position;
+
+        el->height = vertical_space_left / (siblings) * position;
+
+
         if (smallest_size.w != 0) {
             el->width = smallest_size.w;
         }

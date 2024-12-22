@@ -7,6 +7,10 @@ Node *Node_create(char *key, char* value) {
     Node *node;
 
     node = malloc(sizeof(Node));
+    node->key = malloc(sizeof(char) * (strlen(key) + 1));
+    node->str_value = malloc(sizeof(char) * (strlen(value) + 1));
+    // strncpy(node->key, key, strlen(key));
+    // strncpy(node->str_value, value, strlen(value));
     node->key = key;
     node->str_value = value;
     node->int_value = -123456789;
@@ -42,6 +46,8 @@ void Node_print(Node *node) {
 void NamedNodeMap_append(NamedNodeMap *map, char* key, char *value) {
     Node *tmp;
     Node *last;
+
+    // We seem to have a segfault when appending a new item
 
     if (map->length == 0) {
         map->first = Node_create(key, value);
@@ -131,7 +137,9 @@ void NamedNodeMap_set(NamedNodeMap *map, char *key, char *value) {
     while (node != NULL) {
         // printf("\tNode %s=%s\n", node->key, node->str_value);
         // printf("\tSearched key %s\n", key);
-        if (strcmp(node->key, key) == 0) {
+
+        if (strncmp(node->key, key, strlen(key)) == 0) {
+            node->key = key;
             node->str_value = value;
             return;
         }
