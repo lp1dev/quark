@@ -137,7 +137,6 @@ uint16_t in_cksum(uint16_t *ptr, int32_t nbytes){
 //        return ~sum;
 //      }
 
-int socket = -1;
 
 
 int socket_ping(char *host) {
@@ -145,6 +144,7 @@ int socket_ping(char *host) {
 	SceNetSockaddr from_addr;
 	SceNetSockaddrIn serv_addr;
 	int ret;
+	int socket;
 	IcmpUnion icmp; /* icmp union */
 	TcpUnion tcp;
 
@@ -173,12 +173,13 @@ int socket_ping(char *host) {
 	// debug("Sending data to", host);
 	if (ret < 1) {
 		printf("Error: Could not send PING data.\n");
+		sceNetSocketClose(socket);
 		return -2;
 	}
 	// debug("Successfully sent data to", host);
 	uint32_t from_len = sizeof(from_addr);
 	// Setting timeout
-	int timeout = 2000;
+	int timeout = 100000;
 	ret = sceNetSetsockopt(socket,
                      SCE_NET_SOCK_RAW, 
 					 SCE_NET_SO_RCVTIMEO, &timeout, sizeof(timeout));
@@ -198,7 +199,7 @@ int socket_ping(char *host) {
 		printf("Error: Could not receive ICMP data\n");
 		return -3;
 	}
-	// sceNetSocketClose(socket);
+	sceNetSocketClose(socket);
 	return ret;
 	// debug("Got an answer from", host);
 
@@ -290,7 +291,7 @@ int socket_tcp_ping(int socket, char *ip, int port) {
 	// 1 * 1000000 = 1 Second
 	// 300000 = 1/3rd of a second
 	// 100000 = 1/10th of a second
-	
+
     result = sceNetEpollWait(epoll_fd, &event, 1, 100000); // epoll, events, max_events
     if (result <= 0) {
         sceNetEpollDestroy(epoll_fd);
