@@ -3,7 +3,7 @@
 #include "js.h"
 #include "../net/tcp_debugger.h"
 #include "../net/net.h"
-#include "../exploits/python.h"
+//#include "../exploits/python.h"
 
 static void error_handler(void *udata, const char *msg) {
     (void) udata;  /* ignored in this case, silence warning */
@@ -79,6 +79,7 @@ static duk_ret_t quark_python_call(duk_context *ctx);
   Call a function inside a Python module.
 
 */
+/*
 static duk_ret_t quark_python_call(duk_context *ctx) {
     const char *module;
     const char *function;
@@ -88,18 +89,18 @@ static duk_ret_t quark_python_call(duk_context *ctx) {
     python_call((char *)module, (char *)function);
     duk_pop_2(ctx);
     return (duk_ret_t) 1;
-}
+    }*/
 
 /* 
 static duk_ret_t quark_python_init(duk_context *ctx)
 
   Initialize the Python environment
 
-*/
+*//*
 static duk_ret_t quark_python_init(duk_context *ctx) {
     python_init();
     return (duk_ret_t) 0;
-}
+    }*/
 
 
 /* 
@@ -311,11 +312,11 @@ void init_js_globals(duk_context *ctx) {
     duk_push_global_object(ctx);
     duk_put_global_string(ctx, "quark"); // Creating a "quark" global
 
-    duk_push_c_function(ctx, quark_python_init, 0);
+    /*    duk_push_c_function(ctx, quark_python_init, 0);
     duk_put_global_string(ctx, "c_pythonInit");
 
     duk_push_c_function(ctx, quark_python_call, 2);
-    duk_put_global_string(ctx, "c_pythonCall");
+    duk_put_global_string(ctx, "c_pythonCall");*/
 
     duk_push_c_function(ctx, get_controllers, 0);
     duk_put_global_string(ctx, "c_getGamepads");

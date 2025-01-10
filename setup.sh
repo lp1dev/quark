@@ -14,8 +14,9 @@ mv duktape-2.7.0 duktape
 rm -frv duktape.tar.xz
 
 # Locally installing tinypy sources to build for the vita (Python Support)
-curl -L https://github.com/philhassey/tinypy/archive/refs/tags/1.1.zip -o tinypy.zip
-unzip tinypy.zip -d tinypy_tmp
-mv tinypy_tmp/tinypy-1.1/tinypy/ .
-rm -frv tinypy_tmp tinypy.zip
+# Temporarily disabled
+#curl -L https://github.com/philhassey/tinypy/archive/refs/tags/1.1.zip -o tinypy.zip
+#unzip tinypy.zip -d tinypy_tmp
+#mv tinypy_tmp/tinypy-1.1/tinypy/ .
+#rm -frv tinypy_tmp tinypy.zip
 
