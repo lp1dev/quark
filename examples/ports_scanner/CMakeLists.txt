@@ -88,7 +88,7 @@ add_executable(${PROJECT_NAME}
   ../../src/browser/classes/node.c
   ../../src/rendering/interfaces.c
   ../../src/cache/cache.c
-  ../../src/exploits/python.c
+#  ../../src/exploits/python.c
   ../../src/net/net_vita.c
   ../../src/net/tcp_debugger.c
 #  ./common/debugScreen.c
