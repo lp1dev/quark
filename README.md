@@ -48,10 +48,13 @@ make -f Makefile.psp2; make -f Makefile.psp2 install
 
 ### VPK Build (PS Vita)
 
+Then, to work on a new project, you can either start anew or copy one of the examples.
+
+Create a new **projects** directory, then create a **new directory inside** for your project with the name of your choice!
+
 In the directory of your app, run :
 
 ```
-cmake .
 ./build.sh
 ```
 
@@ -110,17 +113,14 @@ You will also need to have `Sans.ttf` and `quark.js` in the same directory as th
 - width
 - text-align
 - vertical-align
+- position: 
 
 ---
 
 ## To Do
 
-- Fix stack overflow error with duktape
-- Add a custom Font loader for cache purposes
-- Fix and use custom Text Texture loader for cache purposes
-- Add image loading
-- Implement img tags
-- Support external resources loading in HTML
+- Add image cache (different from texture cache)
+- Support external resources loading in HTML (such as JSON/JS/CSS files)
 
 ---
 
