@@ -1,5 +1,7 @@
 # Quark
 
+![](./quark_logo.png)
+
 Quark is a C-written framework to build universal apps using web technologies.
 
 The goal of this project is to make desktop/console development accessible to anyone with (even little) knowledge in web development.
