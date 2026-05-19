@@ -14,7 +14,74 @@ Example apps are available in the *examples* directory.
 
 ---
 
-## Setup
+## Docker Setup
+
+As of today, the Docker setup is the easiest to get started regardless of your OS, the Dockerfiles in this project should package everything you need to run and debug your quark projects in a few minutes.
+
+### Building the image you need
+
+As of today, there is three available Dockerfiles to help you build three different images depending on what you need to achieve.  
+
+**For each of the docker build commands below, run them from the root of this repository!**
+
+#### CLI only
+
+The default CLI interface, use it to build .vpk files from your project directory.
+
+Build the image with:
+
+```bash
+docker build -f ./Dockerfiles/Dockerfile -t quark:0.1 .
+```
+
+Then, build your own quark project with:
+
+```bash
+docker run --rm -v {your_project_directory}:/quark/projects/project -it quark:0.1 /quark/projects/project/
+```
+
+> For the moment, the build scripts absolutely need your project to be in `/quark/projects/{your_project}` or `/quark/examples/{your_project}`!
+
+Your new *.vpk* files will be created in {your_project_directory}, you can new install them on your PS Vita or in your own emulator!
+
+#### X11 Quark
+
+If you want to use the Linux version of quark and render your project natively using a VNC server, build the VNC version with:
+
+```bash
+docker build -f ./Dockerfiles/Dockerfile_X11 -t quark:0.1-vnc .
+```
+
+Then, run your project in a quark window with :
+
+```bash
+docker run --rm -p 127.0.0.1:5900:5900 -v {your_project_directory}:/quark/projects/project -it quark:0.1-vnc /quark/projects/project/
+```
+
+The prompt will ask you to setup a password. 
+Once you're done you can connect to `127.0.0.1:5900` using the password you specified with the VNC client of your choice!
+
+
+#### Vita3k Emulator
+
+Finally, this one will install the Vita3K emulator along VNC, build your project and then run your (if the build was successful) compiled .vpk file in the emulator.
+
+```bash
+docker build -f ./Dockerfiles/Dockerfile_X11_Vita3k -t quark:0.1-vita3k .
+```
+
+Build and run your project with:
+
+```bash
+docker run --rm -p 5900:5900 -v {your_project_directory}:/quark/projects/project -it quark:0.1-vita3k /quark/projects/project/
+```
+
+Here too, the prompt will ask you to setup a password. 
+Once you're done you can connect to `127.0.0.1:5900` using the password you specified with the VNC client of your choice!
+
+---
+
+## Local Setup
 
 ### Requirements
 
@@ -38,6 +105,8 @@ Run `./setup.sh` which will setup source code dependencies.
 
 ### Vita lib install
 
+> **Note**: It seems that this step is not required on the latest VitaSDK versions, this will be left here for reference.
+
 Before building your VPK apps, you will also need to install the SDL_ttf lib to your vita-sdk :
 
 - https://github.com/devnoname120/SDL_ttf-Vita.git
@@ -59,6 +128,8 @@ In the directory of your app, run :
 ```
 ./build.sh
 ```
+
+> **Note**: The ./build.sh can be copied and adapted from the examples! Same for the other required build files.
 
 And voilà! You should have a working .vpk file that you can install on your console or run in an emulator.
 

@@ -24,3 +24,5 @@ WORKDIR /quark
 COPY . .
 
 RUN /quark/scripts/setup.sh && make -f Makefile.Linux && cp /quark/liblexbor.so /lib/liblexbor.so.2
+
+ENTRYPOINT [ "bash", "/quark/scripts/build_project.sh" ]
