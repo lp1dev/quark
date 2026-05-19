@@ -1,10 +1,5 @@
-## This file is a quick tutorial on writing CMakeLists for targeting the Vita
 cmake_minimum_required(VERSION 3.2)
 
-## This includes the Vita toolchain, must go before project definition
-# It is a convenience so you do not have to type
-# -DCMAKE_TOOLCHAIN_FILE=$VITASDK/share/vita.toolchain.cmake for cmake. It is
-# highly recommended that you include this block for all projects.
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   if(DEFINED ENV{VITASDK})
     set(CMAKE_TOOLCHAIN_FILE "$ENV{VITASDK}/share/vita.toolchain.cmake" CACHE PATH "toolchain file")
@@ -13,20 +8,12 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   endif()
 endif()
 
-## Define project parameters here
 # Name of the project
-
 project(quarkulator)
-
-# This line adds Vita helper macros, must go after project definition in order
-# to build Vita specific artifacts (self/vpk).
 
 include("${VITASDK}/share/vita.cmake" REQUIRED)
 
 find_package(SDL2 REQUIRED)
-#find_package(Freetype REQUIRED)
-#find_package(SDL2_ttf REQUIRED)
-
 
 ## Configuration options for this app
 # Display name (under bubble in LiveArea)
@@ -79,25 +66,32 @@ add_executable(${PROJECT_NAME}
   ../../src/renderer.c
   ../../src/helpers.c
   ../../src/adapters/element.c
+  ../../src/adapters/parsers.c
   ../../src/browser/css.c
   ../../src/browser/js.c
   ../../src/browser/classes/element.c
   ../../src/browser/classes/interval.c
   ../../src/browser/classes/node.c
   ../../src/rendering/interfaces.c
-#  ./common/debugScreen.c
+  ../../src/cache/cache.c
+  ../../src/net/net_vita.c
+  ../../src/net/tcp_debugger.c
   ${lexbor_SRC}
 )
 
 target_link_libraries(${PROJECT_NAME}
   SDL2::SDL2
   SDL2_ttf
+  SDL2_image
+  webp
+  webpdemux
   # SDL2_ttf dependencies
   freetype
   png
   z
   bz2
   m
+  pthread
   SceLibKernel_stub
   SceAudio_stub
   SceDisplay_stub
@@ -110,7 +104,6 @@ target_link_libraries(${PROJECT_NAME}
   SceHid_stub
   SceMotion_stub
 )
-
 
 vita_create_self(${PROJECT_NAME}.self ${PROJECT_NAME})
 
