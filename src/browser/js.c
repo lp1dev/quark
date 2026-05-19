@@ -3,6 +3,7 @@
 #include "js.h"
 #include "../net/tcp_debugger.h"
 #include "../net/net.h"
+#include "../audio/audio.h"
 //#include "../exploits/python.h"
 
 static void error_handler(void *udata, const char *msg) {
@@ -102,6 +103,23 @@ static duk_ret_t quark_python_init(duk_context *ctx) {
     return (duk_ret_t) 0;
     }*/
 
+
+/* 
+
+static duk_ret_t js_audio_note_on(duk_context *ctx)
+
+   Plays a note on a channel using SDL (multiple simple instruments created).
+
+*/
+static duk_ret_t js_audio_note_on(duk_context *ctx) {
+    int channel = duk_get_int(ctx, 0);
+    int note = duk_get_int(ctx, 1);
+    int instrument = duk_get_int(ctx, 2);
+    int effect = duk_get_int(ctx, 3);
+    
+    audio_note_on(channel, note, instrument, effect);
+    return 0;
+}
 
 /* 
 static duk_ret_t quark_exit(duk_context *ctx)
@@ -349,6 +367,9 @@ void init_js_globals(duk_context *ctx) {
     duk_push_c_function(ctx, quark_ping, 1);
     duk_put_global_string(ctx, "quark_ping");
 
+    duk_push_c_function(ctx, js_audio_note_on, 4);
+    duk_put_global_string(ctx, "quark_audio_note_on");
+    
     duk_push_c_function(ctx, quark_exit, 0);
     duk_put_global_string(ctx, "c_exit");
 }
