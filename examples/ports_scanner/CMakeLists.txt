@@ -98,12 +98,18 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   SDL2::SDL2
   SDL2_image
+  # SDL2_image dependencies
+  webp
+  webpdemux
+  #
   SDL2_ttf
   # SDL2_ttf dependencies
   freetype
   png
   z
   bz2
+  #
+  pthread
   m
   SceLibKernel_stub
   SceAudio_stub

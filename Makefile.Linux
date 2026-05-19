@@ -6,7 +6,6 @@ SOURCES=src/*.c \
  	src/adapters/*.c \
   	src/rendering/*.c \
 	src/cache/*.c \
-	src/exploits/*.c \
 	src/net/net_linux.c \
 	src/net/tcp_debugger.c \
    	duktape/src/duktape.c \
