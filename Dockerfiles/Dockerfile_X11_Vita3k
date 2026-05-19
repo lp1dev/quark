@@ -29,10 +29,10 @@ COPY . .
 RUN /quark/scripts/setup.sh && cp /quark/liblexbor.so /lib/liblexbor.so.2
 
 # Requirements for Vita3K
-RUN apt-get install -y qt6-base-dev libqt6svg6-dev qt6-base-private-dev
+RUN apt-get install -y qt6-base-dev libqt6svg6-dev qt6-base-private-dev pulseaudio p7zip
 
-RUN wget https://github.com/Vita3K/Vita3K-builds/releases/download/3619/ubuntu-latest.zip && unzip ubuntu-latest.zip && chmod +x Vita3K
+RUN wget https://github.com/Vita3K/Vita3K-builds/releases/download/3773/vita3k-3773-9226cb52_ubuntu.7z && 7z x -o/quark/ vita3k-3773-9226cb52_ubuntu.7z && chmod +x /quark/vita3k-9226cb52-zip-ubuntu-22.04/Vita3K && ln -s /quark/vita3k-9226cb52-zip-ubuntu-22.04/Vita3K /usr/bin/Vita3K
 
-RUN chmod +x /quark/scripts/run_emulator.sh
+RUN chmod +x /quark/scripts/run_emulator.sh && mkdir -p /root/.config/i3 && cp /quark/scripts/i3config /root/.config/i3/config
 
 ENTRYPOINT [ "bash", "/quark/scripts/build_run_emulator.sh" ]
