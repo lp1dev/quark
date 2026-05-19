@@ -2,7 +2,6 @@ FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-
 ENV VITASDK=/usr/local/vitasdk
 ENV PATH=${PATH}:${VITASDK}/bin
 
@@ -24,4 +23,4 @@ WORKDIR /quark
 
 COPY . .
 
-RUN ./setup.sh
+RUN /quark/scripts/setup.sh && make -f Makefile.Linux && cp /quark/liblexbor.so /lib/liblexbor.so.2

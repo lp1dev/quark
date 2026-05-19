@@ -2,7 +2,8 @@
 
 document = {}
 window = {
-    intervals: []
+    intervals: [],
+    _location: "index.html"
 }
 events = {
     listeners: {
@@ -107,6 +108,13 @@ function Style(style_obj) {
 	configurable: true
     })
 
+    Object.defineProperty(this, "_display", {
+        enumerable: false,
+        value: style_obj['display'] ? style_obj['display'] : 'block',
+        writable: true,
+        configurable: true
+    })
+
     Object.defineProperty(this, "color", {
         get: function() {
             return this._color;
@@ -125,6 +133,17 @@ function Style(style_obj) {
         set: function(backgroundColor) {
             this._backgroundColor = backgroundColor;
             quark.c_updateElement(style_obj['internalId'], 4, "background-color", backgroundColor)
+        },
+        configurable: true
+    })
+
+    Object.defineProperty(this, "display", {
+        get: function() {
+            return this._display;
+        },
+        set: function(displayValue) {
+            this._display = displayValue;
+            quark.c_updateElement(style_obj['internalId'], 4, "display", displayValue)
         },
         configurable: true
     })
@@ -256,6 +275,18 @@ window.setInterval = function(callback, interval_duration) {
   return intervalID
 }
 
+window.clearInterval = function(intervalID) {
+  c_clearInterval(intervalID)
+}
+
+window.clearTimeout = function(timeoutID) {
+  c_clearInterval(timeoutID)
+}
+
+window.close = function() {
+  c_exit()
+}
+
 quark_executeInterval = function(intervalID) {
   i = 0
   while (window.intervals[i]) {
@@ -278,6 +309,8 @@ quark_onClick = function(element) {
 
 setTimeout = window.setTimeout
 setInterval = window.setInterval
+clearInterval = window.clearInterval
+clearTimeout = window.clearTimeout
 getElementById = document.getElementById
 
 //
@@ -305,4 +338,69 @@ navigator.getGamepads = function() {
   return gamepads
 }
 
+
+Object.defineProperty(window, "location", {
+  get: function() {
+      return window._location;
+  },
+  set: function(location) {
+      window._location = location;
+      c_setLocation(location.split('?')[0]);
+  },
+  configurable: true
+})
+
 //
+// == Socket Class ==
+
+function Socket(host, port) {
+    Object.defineProperty(this, "_protocol", {
+        enumerable: false,
+        value: "tcp",
+        writable: true,
+        configurable: true
+    })
+
+    Object.defineProperty(this, "_fd", {
+        enumerable: false,
+        value: -1,
+        writable: true,
+        configurable: true
+    })
+
+    Object.defineProperty(this, "_host", {
+        enumerable: false,
+        value: host,
+        writable: true,
+        configurable: true
+    })
+
+    Object.defineProperty(this, "_port", {
+        enumerable: false,
+        value: port,
+        writable: true,
+        configurable: true
+    })
+
+    this.connect = function() {
+        return TCPSocket_connect(this._fd, this._host, this._port)
+    }
+
+    this.close = function() {
+        socket_close(this._fd)
+    }
+
+    this.setTimeout = function(timeout) {
+        return socket_set_timeout(this._fd, timeout)
+    }
+
+    this.setNonBlocking = function(nonblocking) {
+        return socket_set_nonblocking(this._fd, nonblocking)
+    }
+
+    this.ping = function() {
+        return TCPSocket_ping(this._fd, this._host, this._port)
+    }
+
+    this._fd = TCPSocket_create(host+":"+port)
+}
