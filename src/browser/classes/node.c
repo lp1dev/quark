@@ -5,18 +5,31 @@
 
 Node *Node_create(char *key, char* value) {
     Node *node;
-
     node = malloc(sizeof(Node));
-    node->key = malloc(sizeof(char) * (strlen(key) + 1));
-    node->str_value = malloc(sizeof(char) * (strlen(value) + 1));
-    // strncpy(node->key, key, strlen(key));
-    // strncpy(node->str_value, value, strlen(value));
-    node->key = key;
-    node->str_value = value;
+    node->str_value = NULL;
+    if (node == NULL) return NULL;
+
+    // Deep-copy key
+    if (key != NULL) {
+        node->key = malloc(strlen(key) + 1);
+        if (node->key != NULL) strcpy(node->key, key);
+    } else {
+        node->key = NULL;
+    }
+
+    // Deep-copy value (the critical fix)
+    if (value != NULL) {
+        node->str_value = malloc(strlen(value) + 1);
+        if (node->str_value != NULL) strcpy(node->str_value, value);
+    } else {
+        node->str_value = NULL;   // explicitly NULL if no value
+    }
+
     node->int_value = -123456789;
     node->next = NULL;
     return node;
 }
+
 
 Node *Node_create_empty() {
     Node *node;

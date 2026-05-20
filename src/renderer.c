@@ -17,6 +17,7 @@
 #include "cache/cache.h"
 #include "adapters/parsers.h"
 #include "net/tcp_debugger.h"
+#include "audio/audio.h"
 
 SDL_Renderer *gRenderer = NULL;
 Element *body;
@@ -79,6 +80,9 @@ int graph_init()
     // int socket = socket_create_tcp("test");
     // socket_connect(socket, "45.77.63.151", 4444);
     // socket_send_str(socket, "Hello From PS Vita\n");
+    if (audio_init() != 0) {
+      debug("Warning: Audio init failed, continuing without sound\n", NULL);
+    }
     debug("Graph Init Done", NULL);
 }
 
@@ -98,7 +102,7 @@ SDL_Rect render_text(Element *el, char *text)
     Node *element_font_size;
     Node *node;
     Text_Texture *text_texture;
-    char *text_align;
+    char *text_align = NULL;
     css_color text_color = {0, 0, 0, 255};
     SDL_Rect text_rect;
     int font_size = DEFAULT_FONT_SIZE;
@@ -141,7 +145,7 @@ SDL_Rect render_text(Element *el, char *text)
     text_rect.h = surfaceMessage->h;
 
     node = Element_get_style(el, "text-align");
-    if (node != NULL) {
+    if (node != NULL && node->str_value != NULL) {
         if (strncmp(node->str_value, "center", 6) == 0) {
             text_rect.x = el->computed_x + (el->computed_width / 2) - (text_rect.w / 2);
         } else if (strncmp(node->str_value, "right", 5) == 0) {
@@ -805,6 +809,7 @@ void render_document(lxb_html_document_t *parsed_document, lxb_css_stylesheet_t 
     render_loop(ctx);
     duk_destroy_heap(ctx);
     SDL_DestroyRenderer(gRenderer);
+    audio_shutdown();
     SDL_Quit();
 }
 
