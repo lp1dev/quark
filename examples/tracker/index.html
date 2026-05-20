@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PS VITA TRACKER</title>
+</head>
+<body style="background-color:#000018; color:#c0c0ff; font-size:15px; width:100%; height:100vh;">
+
+    <div id="topBar" style="width:100%; height:34px; background-color:#180040; color:#ff80ff; font-size:16px;"></div>
+    <div id="headerRow" style="width:100%; height:24px; background-color:#100030; color:#80ccff; font-size:15px;"></div>
+
+    <!-- 17 rows (00-10 in hex) -->
+    <div id="row00" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(0)"></div>
+    <div id="row01" style="width:100%; height:24px; background-color:#000028; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(1)"></div>
+    <div id="row02" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(2)"></div>
+    <div id="row03" style="width:100%; height:24px; background-color:#000028; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(3)"></div>
+    <div id="row04" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(4)"></div>
+    <div id="row05" style="width:100%; height:24px; background-color:#000028; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(5)"></div>
+    <div id="row06" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(6)"></div>
+    <div id="row07" style="width:100%; height:24px; background-color:#000028; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(7)"></div>
+    <div id="row08" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(8)"></div>
+    <div id="row09" style="width:100%; height:24px; background-color:#000028; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(9)"></div>
+    <div id="row0A" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(10)"></div>
+    <div id="row0B" style="width:100%; height:24px; background-color:#000028; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(11)"></div>
+    <div id="row0C" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(12)"></div>
+    <div id="row0D" style="width:100%; height:24px; background-color:#000028; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(13)"></div>
+    <div id="row0E" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(14)"></div>
+    <div id="row0F" style="width:100%; height:24px; background-color:#000028; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(15)"></div>
+    <div id="row10" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(16)"></div>
+    <div id="row11" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(17)"></div>
+    <div id="row12" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(18)"></div>
+    <div id="row13" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(19)"></div>
+    <div id="row14" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(20)"></div>
+    <div id="row15" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(21)"></div>
+    <div id="row16" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(22)"></div>
+    <div id="row17" style="width:100%; height:24px; background-color:#000020; color:#c0c0ff; font-size:15px;" onclick="handleRowClick(23)"></div>
+
+    <div id="bottomBar" style="width:100%; height:40px; background-color:#180040; color:#ff80ff; font-size:15px;"></div>
+
+<script>
+    // ============================================
+    // PS VITA TRACKER - Fixed Controls
+    // ============================================
+
+    var SDLK = {
+        BACKSPACE: 8, ENTER: 13, SPACE: 32, ESCAPE: 27,
+        MINUS: 45, EQUALS: 61,
+        UP: 1073741906, DOWN: 1073741905, LEFT: 1073741904, RIGHT: 1073741903,
+        C: 99, S: 115, T: 116, X: 120, L: 108, R: 114,
+        LSQBRACKET: 91, RSQBRACKET: 93, TAB: 9
+    };
+
+    var mapping = [
+        "X", "CIRCLE", "SQUARE", "TRIANGLE",
+        "SHARE", "PS", "OPTIONS", "LEFTSTICK", "RIGHTSTICK",
+        "LEFTSHOULDER", "RIGHTSHOULDER",
+        "DPAD_UP", "DPAD_DOWN", "DPAD_LEFT", "DPAD_RIGHT"
+    ];
+
+    function toHex(num, digits) {
+        digits = digits || 2;
+        var hexChars = "0123456789ABCDEF";
+        var result = "";
+        var n = num;
+        for (var i = 0; i < digits; i++) {
+            result = hexChars[n & 0xF] + result;
+            n = Math.floor(n / 16);
+        }
+        return result;
+    }
+
+    var NOTE_NAMES = ["C-","C#","D-","D#","E-","F-","F#","G-","G#","A-","A#","B-"];
+    var NUM_PATTERNS = 4;
+    var ROWS_PER_PATTERN = 64;
+    var NUM_CHANNELS = 5;
+    var VISIBLE_ROWS = 24;
+    var MAX_INSTRUMENT = 16;
+
+    var state = {
+        patterns: [],
+        currentPattern: 0,
+        cursorRow: 0,
+        cursorChannel: 0,
+        cursorField: 0,
+        viewOffset: 0,
+        isPlaying: false,
+        playRow: 0,
+        playTimerId: null,
+        bpm: 140
+    };
+
+    function initPatterns() {
+        state.patterns = [];
+        for (var p = 0; p < NUM_PATTERNS; p++) {
+            var pattern = [];
+            for (var ch = 0; ch < NUM_CHANNELS; ch++) {
+                var channel = [];
+                for (var r = 0; r < ROWS_PER_PATTERN; r++) {
+                    channel.push({ note: 0, inst: 0, effect: 0 });
+                }
+                pattern.push(channel);
+            }
+            state.patterns.push(pattern);
+        }
+        // Lead melody
+        var leadMelody = [
+            { r: 0,  n: 37, i: 1, e: 0xC40 }, { r: 2,  n: 42, i: 1, e: 0x000 },
+            { r: 4,  n: 44, i: 1, e: 0x000 }, { r: 6,  n: 42, i: 1, e: 0x000 },
+            { r: 8,  n: 37, i: 1, e: 0x000 }, { r: 10, n: 44, i: 1, e: 0x000 },
+            { r: 12, n: 49, i: 1, e: 0x000 }, { r: 14, n: 44, i: 1, e: 0x000 },
+            { r: 16, n: 40, i: 1, e: 0x000 }, { r: 18, n: 44, i: 1, e: 0x000 },
+            { r: 20, n: 47, i: 1, e: 0x000 }, { r: 22, n: 44, i: 1, e: 0x000 },
+            { r: 24, n: 40, i: 1, e: 0x000 }, { r: 26, n: 47, i: 1, e: 0x000 },
+            { r: 28, n: 52, i: 1, e: 0x000 }, { r: 30, n: 47, i: 1, e: 0x000 },
+            { r: 32, n: 42, i: 1, e: 0x000 }, { r: 34, n: 46, i: 1, e: 0x000 },
+            { r: 36, n: 49, i: 1, e: 0x000 }, { r: 38, n: 46, i: 1, e: 0x000 },
+            { r: 40, n: 42, i: 1, e: 0x000 }, { r: 42, n: 49, i: 1, e: 0x000 },
+            { r: 44, n: 54, i: 1, e: 0x000 }, { r: 46, n: 49, i: 1, e: 0x000 },
+            { r: 48, n: 37, i: 1, e: 0x000 }, { r: 50, n: 44, i: 1, e: 0x000 },
+            { r: 52, n: 49, i: 1, e: 0x000 }, { r: 54, n: 44, i: 1, e: 0x000 },
+            { r: 56, n: 37, i: 1, e: 0x000 }, { r: 58, n: 42, i: 1, e: 0x000 },
+            { r: 60, n: 44, i: 1, e: 0x000 }, { r: 62, n: 37, i: 1, e: 0xC30 }
+        ];
+        for (var i = 0; i < leadMelody.length; i++) {
+            var m = leadMelody[i];
+            state.patterns[0][0][m.r] = { note: m.n, inst: m.i, effect: m.e };
+        }
+        // Bass
+        var bassLine = [
+            { r: 0,  n: 25, i: 3, e: 0xC50 }, { r: 8,  n: 30, i: 3, e: 0x000 },
+            { r: 16, n: 28, i: 3, e: 0x000 }, { r: 24, n: 32, i: 3, e: 0x000 },
+            { r: 32, n: 30, i: 3, e: 0x000 }, { r: 40, n: 25, i: 3, e: 0x000 },
+            { r: 48, n: 28, i: 3, e: 0x000 }, { r: 56, n: 25, i: 3, e: 0xC40 }
+        ];
+        for (var i = 0; i < bassLine.length; i++) {
+            var m = bassLine[i];
+            state.patterns[0][1][m.r] = { note: m.n, inst: m.i, effect: m.e };
+        }
+        // Chords
+        var chords = [
+            { r: 0, n: 37, i: 2, e: 0xC30 }, { r: 16, n: 40, i: 2, e: 0x000 },
+            { r: 32, n: 42, i: 2, e: 0x000 }, { r: 48, n: 40, i: 2, e: 0xC20 }
+        ];
+        for (var i = 0; i < chords.length; i++) {
+            var m = chords[i];
+            state.patterns[0][2][m.r] = { note: m.n, inst: m.i, effect: m.e };
+        }
+        // Percussion
+        for (var r = 0; r < 64; r += 2) {
+            state.patterns[0][3][r] = { note: 60, inst: 5, effect: 0xC20 };
+        }
+        for (var r = 4; r < 64; r += 8) {
+            state.patterns[0][3][r] = { note: 58, inst: 5, effect: 0xC30 };
+        }
+        for (var r = 0; r < 64; r += 8) {
+            state.patterns[0][3][r] = { note: 48, inst: 5, effect: 0xC40 };
+        }
+        // Harmony
+        for (var r = 0; r < 64; r += 8) {
+            state.patterns[0][4][r] = { note: 41, inst: 2, effect: 0xC20 };
+            state.patterns[0][4][r+4] = { note: 44, inst: 2, effect: 0x000 };
+        }
+    }
+
+    function noteToString(noteNum) {
+        if (noteNum === 0) return "---";
+        var n = noteNum - 1;
+        if (n < 0) return "---";
+        var octave = Math.floor(n / 12) + 1;
+        var noteIndex = n % 12;
+        return NOTE_NAMES[noteIndex] + octave;
+    }
+
+    function instToString(instNum) {
+        if (instNum === 0) return "--";
+        if (instNum < 10) return "0" + instNum;
+        return "" + instNum;
+    }
+
+    function effectToString(effNum) {
+        if (effNum === 0) return "---";
+        var type = (effNum >> 8) & 0xFF;
+        var value = effNum & 0xFF;
+        var hexChars = "0123456789ABCDEF";
+        var typeChar = hexChars[Math.min(type, 15)];
+        var vStr = value.toString(16).toUpperCase();
+        if (vStr.length < 2) vStr = "0" + vStr;
+        return typeChar + vStr;
+    }
+
+    function formatChannel(ch, row) {
+        var pattern = state.patterns[state.currentPattern];
+        var cell = pattern[ch][row];
+        
+        var noteStr = (cell.note === 0) ? "---" : noteToString(cell.note);
+        var instStr = instToString(cell.inst);
+        var effStr = effectToString(cell.effect);
+        
+        while (noteStr.length < 3) noteStr = " " + noteStr;
+        while (instStr.length < 2) instStr = " " + instStr;
+        while (effStr.length < 3) effStr = " " + effStr;
+        
+        var isCursor = (row === state.cursorRow && ch === state.cursorChannel);
+        
+        if (isCursor && state.cursorField === 0) noteStr = "[" + noteStr + "]";
+        else noteStr = " " + noteStr + " ";
+        if (isCursor && state.cursorField === 1) instStr = "[" + instStr + "]";
+        else instStr = " " + instStr + " ";
+        if (isCursor && state.cursorField === 2) effStr = "[" + effStr + "]";
+        else effStr = " " + effStr + " ";
+        
+        return noteStr + " " + instStr + " " + effStr;
+    }
+
+    function formatRow(rowNum) {
+        var hexRow = toHex(rowNum, 2);
+        var cells = [];
+        for (var ch = 0; ch < NUM_CHANNELS; ch++) {
+            cells.push(formatChannel(ch, rowNum));
+        }
+        return hexRow + " │ " + cells.join(" │ ");
+    }
+
+    function getRowDivId(visibleIndex) {
+        return "row" + toHex(visibleIndex, 2);
+    }
+
+    function renderAllRows() {
+        for (var i = 0; i < VISIBLE_ROWS; i++) {
+            var actualRow = state.viewOffset + i;
+            var el = document.getElementById(getRowDivId(i));
+            if (el) {
+                var empty = " ---  --  --- ";
+                var emptyRow = toHex(actualRow,2) + " │ " + empty + "│ " + empty + "│ " + empty + "│ " + empty + "│ " + empty;
+                var text = (actualRow < ROWS_PER_PATTERN) ? formatRow(actualRow) : emptyRow;
+                el.innerText = text;
+                updateRowStyle(el, i, actualRow);
+            }
+        }
+        var topBar = document.getElementById("topBar");
+        if (topBar) {
+            var fieldNames = ["NOTE", "INST", "EFFECT"];
+            topBar.innerText = " PS VITA TRACKER | PAT " + toHex(state.currentPattern,2) +
+                               " | " + (state.isPlaying ? "PLAYING" : "STOPPED") +
+                               " | BPM:" + state.bpm +
+                               " | CH" + (state.cursorChannel+1) + " " + fieldNames[state.cursorField] +
+                               " | ROW:" + toHex(state.cursorRow, 2);
+        }
+        var header = document.getElementById("headerRow");
+        if (header) {
+            header.innerText = "   CH1                CH2                CH3                CH4                CH5";
+        }
+        var bottomBar = document.getElementById("bottomBar");
+        if (bottomBar) {
+            bottomBar.innerText = "▲▼:Row  ◄►:Channel  △:Next Field  ✕:Note  ○:Play  □:Clear  L1/R1:Pat  START:Play  SELECT:Stop";
+        }
+    }
+
+    function updateRowStyle(el, visibleIndex, actualRow) {
+        var bgColor = (visibleIndex % 2 === 0) ? "#000020" : "#000028";
+        var textColor = "#c0c0ff";
+        if (actualRow === state.cursorRow && actualRow < ROWS_PER_PATTERN) {
+            bgColor = "#200050";
+            textColor = "#ffffff";
+        }
+        if (state.isPlaying && actualRow === state.playRow && actualRow < ROWS_PER_PATTERN) {
+            if (actualRow === state.cursorRow) {
+                bgColor = "#004030";
+            } else {
+                bgColor = "#001810";
+                textColor = "#80ffc0";
+            }
+        }
+        el.style.backgroundColor = bgColor;
+        el.style.color = textColor;
+    }
+
+    function ensureCursorVisible() {
+        if (state.cursorRow < state.viewOffset) state.viewOffset = state.cursorRow;
+        if (state.cursorRow >= state.viewOffset + VISIBLE_ROWS) state.viewOffset = state.cursorRow - VISIBLE_ROWS + 1;
+        if (state.viewOffset < 0) state.viewOffset = 0;
+        if (state.viewOffset > ROWS_PER_PATTERN - VISIBLE_ROWS) state.viewOffset = ROWS_PER_PATTERN - VISIBLE_ROWS;
+    }
+
+    function moveCursor(dRow, dChan, dField) {
+        if (dField !== 0) {
+            state.cursorField += dField;
+            if (state.cursorField < 0) state.cursorField = 2;
+            if (state.cursorField > 2) state.cursorField = 0;
+        }
+        if (dChan !== 0) {
+            state.cursorChannel += dChan;
+            if (state.cursorChannel < 0) state.cursorChannel = NUM_CHANNELS - 1;
+            if (state.cursorChannel >= NUM_CHANNELS) state.cursorChannel = 0;
+        }
+        if (dRow !== 0) {
+            state.cursorRow += dRow;
+            if (state.cursorRow < 0) state.cursorRow = 0;
+            if (state.cursorRow >= ROWS_PER_PATTERN) state.cursorRow = ROWS_PER_PATTERN - 1;
+        }
+        ensureCursorVisible();
+        renderAllRows();
+    }
+
+    function handleRowClick(visibleIndex) {
+        state.cursorRow = state.viewOffset + visibleIndex;
+        if (state.cursorRow >= ROWS_PER_PATTERN) state.cursorRow = ROWS_PER_PATTERN - 1;
+        renderAllRows();
+    }
+
+    function editField(direction) {
+        var cell = state.patterns[state.currentPattern][state.cursorChannel][state.cursorRow];
+        if (state.cursorField === 0) {
+            cell.note += direction;
+            if (cell.note < 0) cell.note = 72;
+            if (cell.note > 72) cell.note = 0;
+        } else if (state.cursorField === 1) {
+            cell.inst += direction;
+            if (cell.inst < 0) cell.inst = MAX_INSTRUMENT;
+            if (cell.inst > MAX_INSTRUMENT) cell.inst = 0;
+        } else if (state.cursorField === 2) {
+            var type = (cell.effect >> 8) & 0xFF;
+            var value = cell.effect & 0xFF;
+            value += direction;
+            if (value < 0) value = 255;
+            if (value > 255) value = 0;
+            cell.effect = (type << 8) | value;
+        }
+        renderAllRows();
+    }
+
+    function clearCell() {
+        state.patterns[state.currentPattern][state.cursorChannel][state.cursorRow] = { note: 0, inst: 0, effect: 0 };
+        renderAllRows();
+    }
+
+    function insertNoteHere() {
+        var cell = state.patterns[state.currentPattern][state.cursorChannel][state.cursorRow];
+        if (cell.note === 0) {
+            cell.note = 37;
+            cell.inst = 1;
+        } else {
+            editField(1);
+        }
+        renderAllRows();
+    }
+
+    function togglePlay() {
+        if (state.isPlaying) stopPlayback(); else startPlayback();
+    }
+
+    function startPlayback() {
+        if (state.isPlaying) return;
+        state.isPlaying = true;
+        state.playRow = state.cursorRow;
+        schedulePlayTick();
+        renderAllRows();
+    }
+
+    function stopPlayback() {
+        state.isPlaying = false;
+        if (state.playTimerId !== null) { clearInterval(state.playTimerId); state.playTimerId = null; }
+        for (var ch = 0; ch < NUM_CHANNELS; ch++) {
+            if (typeof quark_audio_note_off === 'function') quark_audio_note_off(ch);
+        }
+        renderAllRows();
+    }
+
+    function schedulePlayTick() {
+        if (state.playTimerId !== null) clearInterval(state.playTimerId);
+        var intervalMs = Math.round(60000 / (state.bpm * 4));
+        if (intervalMs < 20) intervalMs = 20;
+        state.playTimerId = setInterval(playbackTick, intervalMs);
+    }
+
+    function playbackTick() {
+        if (!state.isPlaying) return;
+        for (var ch = 0; ch < NUM_CHANNELS; ch++) {
+            if (typeof quark_audio_note_off === 'function') quark_audio_note_off(ch);
+        }
+        for (var ch = 0; ch < NUM_CHANNELS; ch++) {
+            var cell = state.patterns[state.currentPattern][ch][state.playRow];
+            if (cell.note > 0) {
+                if (typeof quark_audio_note_on === 'function') quark_audio_note_on(ch, cell.note, cell.inst, cell.effect);
+            }
+        }
+        state.playRow++;
+        if (state.playRow >= ROWS_PER_PATTERN) state.playRow = 0;
+        if (state.playRow < state.viewOffset || state.playRow >= state.viewOffset + VISIBLE_ROWS) {
+            state.viewOffset = state.playRow - Math.floor(VISIBLE_ROWS / 2);
+            if (state.viewOffset < 0) state.viewOffset = 0;
+            if (state.viewOffset > ROWS_PER_PATTERN - VISIBLE_ROWS) state.viewOffset = ROWS_PER_PATTERN - VISIBLE_ROWS;
+        }
+        renderAllRows();
+    }
+
+    function changePattern(direction) {
+        state.currentPattern += direction;
+        if (state.currentPattern < 0) state.currentPattern = NUM_PATTERNS - 1;
+        if (state.currentPattern >= NUM_PATTERNS) state.currentPattern = 0;
+        state.cursorRow = 0;
+        state.viewOffset = 0;
+        if (state.isPlaying) { state.playRow = 0; schedulePlayTick(); }
+        renderAllRows();
+    }
+
+    function changeBpm(delta) {
+        state.bpm += delta;
+        if (state.bpm < 40) state.bpm = 40;
+        if (state.bpm > 300) state.bpm = 300;
+        if (state.isPlaying) schedulePlayTick();
+        renderAllRows();
+    }
+
+    // ============================================
+    // INPUT HANDLING - Simple and direct
+    // ============================================
+
+    document.addEventListener("gamepadconnected", function (event) {
+        navigator.getGamepads();
+    });
+
+    document.addEventListener("keydown", function (event) {
+        var code = event.code;
+        switch (code) {
+            case SDLK.UP: moveCursor(-1, 0, 0); break;
+            case SDLK.DOWN: moveCursor(1, 0, 0); break;
+            case SDLK.LEFT: moveCursor(0, -1, 0); break;
+            case SDLK.RIGHT: moveCursor(0, 1, 0); break;
+            case SDLK.TAB: moveCursor(0, 0, 1); break;
+            case SDLK.X: case SDLK.ENTER: insertNoteHere(); break;
+            case SDLK.C: case SDLK.SPACE: togglePlay(); break;
+            case SDLK.S: case SDLK.BACKSPACE: clearCell(); break;
+            case SDLK.L: case SDLK.LSQBRACKET: changePattern(-1); break;
+            case SDLK.R: case SDLK.RSQBRACKET: changePattern(1); break;
+            case SDLK.EQUALS: changeBpm(5); break;
+            case SDLK.MINUS: changeBpm(-5); break;
+            case SDLK.ESCAPE: stopPlayback(); renderAllRows(); break;
+        }
+    });
+
+    document.addEventListener("button_press", function (event) {
+        var buttonName = mapping[event.code];
+        
+        switch (buttonName) {
+            case "DPAD_UP":    moveCursor(-1, 0, 0); break;
+            case "DPAD_DOWN":  moveCursor(1, 0, 0); break;
+            case "DPAD_LEFT":  moveCursor(0, -1, 0); break;
+            case "DPAD_RIGHT": moveCursor(0, 1, 0); break;
+            case "TRIANGLE":   moveCursor(0, 0, 1); break;
+            case "X":          insertNoteHere(); break;
+            case "CIRCLE":     togglePlay(); break;
+            case "SQUARE":     clearCell(); break;
+            case "LEFTSHOULDER":  changePattern(-1); break;
+            case "RIGHTSHOULDER": changePattern(1); break;
+            case "OPTIONS":    state.cursorRow = state.playRow; if (!state.isPlaying) startPlayback(); renderAllRows(); break;
+            case "SHARE":      stopPlayback(); renderAllRows(); break;
+            case "PS":         changeBpm(-5); break;
+            case "LEFTSTICK":  changeBpm(5); break;
+        }
+    });
+
+    function initTracker() {
+        initPatterns();
+        renderAllRows();
+    }
+    initTracker();
+</script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+cmake_minimum_required(VERSION 3.2)
+
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  if(DEFINED ENV{VITASDK})
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VITASDK}/share/vita.toolchain.cmake" CACHE PATH "toolchain file")
+  else()
+    message(FATAL_ERROR "Please define VITASDK to point to your SDK path!")
+  endif()
+endif()
+
+# Name of the project
+project(tracker)
+
+include("${VITASDK}/share/vita.cmake" REQUIRED)
+
+find_package(SDL2 REQUIRED)
+
+## Configuration options for this app
+# Display name (under bubble in LiveArea)
+set(VITA_APP_NAME "Vitracker")
+# Unique ID must be exactly 9 characters. Recommended: XXXXYYYYY where X =
+# unique string of developer and Y = a unique number for this app
+set(VITA_TITLEID  "LP1D00003")
+# Optional version string to show in LiveArea's more info screen
+set(VITA_VERSION  "00.01")
+
+## Flags and includes for building
+# Note that we make sure not to overwrite previous flags
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+# Optional. You can specify more param.sfo flags this way.
+set(VITA_MKSFOEX_FLAGS "${VITA_MKSFOEX_FLAGS} -d PARENTAL_LEVEL=1")
+
+# Add any additional include paths here
+include_directories(
+  ../../duktape/src # For duktape JS lib
+  ../../src
+  ../../ # For lexbor HTML lib
+)
+
+# Add any additional library paths here
+# ${CMAKE_CURRENT_BINARY_DIR} lets you use any library currently being built
+link_directories(
+  ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+## Build and link
+# Add all the files needed to compile here
+
+file(GLOB lexbor_SRC
+     "../../lexbor/*/*.c"
+     "../../lexbor/*/*.h"
+     "../../lexbor/*/*/*.h"
+     "../../lexbor/*/*/*.c"
+     "../../lexbor/*/*/*/*.c"
+     "../../lexbor/*/*/*/*.h"
+     "../../lexbor/*/*/*/*/*.c"
+     "../../lexbor/*/*/*/*/*.h"
+     "../../lexbor/ports/posix/lexbor/core/memory.c"
+     "../../duktape/src/duktape.c"
+     "../../duktape/extras/console/duk_console.c"
+)
+
+add_executable(${PROJECT_NAME}
+  ../../src/main.c
+  ../../src/renderer.c
+  ../../src/helpers.c
+  ../../src/adapters/element.c
+  ../../src/adapters/parsers.c
+  ../../src/browser/css.c
+  ../../src/browser/js.c
+  ../../src/browser/classes/element.c
+  ../../src/browser/classes/interval.c
+  ../../src/browser/classes/node.c
+  ../../src/rendering/interfaces.c
+  ../../src/cache/cache.c
+  ../../src/net/net_vita.c
+  ../../src/net/tcp_debugger.c
+  ../../src/audio/audio.c
+  ${lexbor_SRC}
+)
+
+target_link_libraries(${PROJECT_NAME}
+  SDL2::SDL2
+  SDL2_ttf
+  SDL2_image
+  webp
+  webpdemux
+  # SDL2_ttf dependencies
+  freetype
+  png
+  z
+  bz2
+  m
+  pthread
+  SceLibKernel_stub
+  SceAudio_stub
+  SceDisplay_stub
+  SceCtrl_stub
+  SceSysmodule_stub
+  SceGxm_stub
+  SceCommonDialog_stub
+  SceAppMgr_stub
+  SceTouch_stub
+  SceHid_stub
+  SceMotion_stub
+)
+
+vita_create_self(${PROJECT_NAME}.self ${PROJECT_NAME})
+
+# The FILE directive lets you add additional files to the VPK, the syntax is
+# FILE src_path dst_path_in_vpk. In this case, we add the LiveArea paths.
+vita_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} ${PROJECT_NAME}.self
+  VERSION ${VITA_VERSION}
+  NAME ${VITA_APP_NAME}
+  FILE sce_sys/icon0.png sce_sys/icon0.png
+  FILE sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
+  FILE sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
+  FILE sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
+)
