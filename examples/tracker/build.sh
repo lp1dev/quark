@@ -1,3 +1,3 @@
 cmake .
 make
-zip -j -u *.vpk ../../quark.js index.html ./Sans.ttf style.css
+zip -j -u tracker.vpk quark.js index.html Sans.ttf style.css
