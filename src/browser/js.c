@@ -105,23 +105,6 @@ static duk_ret_t quark_python_init(duk_context *ctx) {
 
 
 /* 
-
-static duk_ret_t js_audio_note_on(duk_context *ctx)
-
-   Plays a note on a channel using SDL (multiple simple instruments created).
-
-*/
-static duk_ret_t js_audio_note_on(duk_context *ctx) {
-    int channel = duk_get_int(ctx, 0);
-    int note = duk_get_int(ctx, 1);
-    int instrument = duk_get_int(ctx, 2);
-    int effect = duk_get_int(ctx, 3);
-    
-    audio_note_on(channel, note, instrument, effect);
-    return 0;
-}
-
-/* 
 static duk_ret_t quark_exit(duk_context *ctx)
 
 */
@@ -158,6 +141,28 @@ void get_controller_buttons(SDL_GameController *controller, duk_context *ctx) {
         duk_put_prop_index(ctx, array_index, i);
     }
 }
+
+static duk_ret_t js_audio_note_on(duk_context *ctx) {
+    int channel = duk_get_int(ctx, 0);
+    int note = duk_get_int(ctx, 1);
+    int instrument = duk_get_int(ctx, 2);
+    int effect = duk_get_int(ctx, 3);
+    
+    printf("JS->C audio_note_on: ch=%d note=%d inst=%d effect=0x%03X\n", 
+           channel, note, instrument, effect);
+    
+    audio_note_on(channel, note, instrument, effect);
+    return 0;
+}
+
+static duk_ret_t js_audio_note_off(duk_context *ctx) {
+    int channel = duk_get_int(ctx, 0);
+    
+    printf("JS->C note OFF: ch=%d\n", channel);
+    audio_note_off(channel);
+    return 0;
+}
+
 
 /* 
 
@@ -369,6 +374,9 @@ void init_js_globals(duk_context *ctx) {
 
     duk_push_c_function(ctx, js_audio_note_on, 4);
     duk_put_global_string(ctx, "quark_audio_note_on");
+
+    duk_push_c_function(ctx, js_audio_note_off, 1);
+    duk_put_global_string(ctx, "quark_audio_note_off");
     
     duk_push_c_function(ctx, quark_exit, 0);
     duk_put_global_string(ctx, "c_exit");
