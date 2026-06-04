@@ -4,6 +4,7 @@
 #include "../net/tcp_debugger.h"
 #include "../net/net.h"
 #include "../audio/audio.h"
+#include "../usb/keyboard_vita.h"
 //#include "../exploits/python.h"
 
 static void error_handler(void *udata, const char *msg) {
@@ -74,6 +75,7 @@ void trigger_js_event_int(duk_context *ctx, char *type, int value) {
 }
 
 
+// Python support is disabled at the moment
 /* 
 static duk_ret_t quark_python_call(duk_context *ctx);
 
@@ -116,6 +118,10 @@ static duk_ret_t quark_exit(duk_context *ctx) {
     return (duk_ret_t) 0;
 }
 
+/* 
+void get_controller_buttons(SDL_GameController *controller, duk_context *ctx)
+
+*/
 void get_controller_buttons(SDL_GameController *controller, duk_context *ctx) {
     int max_buttons;
     int pressed;
@@ -142,6 +148,12 @@ void get_controller_buttons(SDL_GameController *controller, duk_context *ctx) {
     }
 }
 
+/* 
+
+static duk_ret_t js_audio_note_on(duk_context *ctx)
+
+*/
+
 static duk_ret_t js_audio_note_on(duk_context *ctx) {
     int channel = duk_get_int(ctx, 0);
     int note = duk_get_int(ctx, 1);
@@ -152,17 +164,61 @@ static duk_ret_t js_audio_note_on(duk_context *ctx) {
            channel, note, instrument, effect);
     
     audio_note_on(channel, note, instrument, effect);
-    return 0;
+    return (duk_ret_t) 0;
 }
+
+/* 
+
+static duk_ret_t js_audio_note_off(duk_context *ctx)
+
+*/
 
 static duk_ret_t js_audio_note_off(duk_context *ctx) {
     int channel = duk_get_int(ctx, 0);
     
     printf("JS->C note OFF: ch=%d\n", channel);
     audio_note_off(channel);
-    return 0;
+    return (duk_ret_t) 0;
 }
 
+/*
+
+static duk_ret_t keyboard_init(duk_context *ctx)
+
+*/
+
+static duk_ret_t keyboard_init(duk_context *ctx) {
+  int ret = vita_keyboard_init();
+  debug("keyboard_init returned", NULL);
+  duk_push_int(ctx, ret);
+  return (duk_ret_t) 1;
+}
+
+/*
+
+static duk_ret_t keyboard_send_string(duk_context *ctx)
+
+*/
+static duk_ret_t keyboard_send_string(duk_context *ctx) {
+  const char *str = duk_get_string(ctx, 0);
+  debug("keyboard_send_string called with: ", NULL);
+  debug(str, NULL);
+  int ret = vita_keyboard_send_string(str);
+  debug("vita_keyboard_send_string returned", NULL);
+  duk_push_int(ctx, ret);
+  return (duk_ret_t) 1;
+}
+
+
+/*
+
+static duk_ret_t keyboard_send_string(duk_context *ctx)
+
+*/
+static duk_ret_t keyboard_shutdown(duk_context *ctx) {
+  vita_keyboard_shutdown();
+  return (duk_ret_t) 0;
+}
 
 /* 
 
@@ -341,6 +397,15 @@ void init_js_globals(duk_context *ctx) {
     duk_push_c_function(ctx, quark_python_call, 2);
     duk_put_global_string(ctx, "c_pythonCall");*/
 
+    duk_push_c_function(ctx, keyboard_init, 0);
+    duk_put_global_string(ctx, "keyboard_init");
+
+    duk_push_c_function(ctx, keyboard_send_string, 1);
+    duk_put_global_string(ctx, "keyboard_send_string");
+
+    duk_push_c_function(ctx, keyboard_shutdown, 0);
+    duk_put_global_string(ctx, "keyboard_shutdown");
+
     duk_push_c_function(ctx, get_controllers, 0);
     duk_put_global_string(ctx, "c_getGamepads");
 
@@ -361,7 +426,6 @@ void init_js_globals(duk_context *ctx) {
 
     duk_push_c_function(ctx, tcp_socket_ping, 3);
     duk_put_global_string(ctx, "TCPSocket_ping");
-
 
     duk_push_c_function(ctx, quark_get_device_info, 0);
     duk_put_global_string(ctx, "net_get_device_info");

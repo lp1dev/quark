@@ -718,7 +718,9 @@ void render(Element *parent, int depth, duk_context *ctx) {
 void handle_click(duk_context *ctx, int x, int y) {
     Element *el;
 
+    char str[255];
     el = Element_get_by_pos(body, x, y);
+
     if (el != NULL) {
         duk_get_global_string(ctx, "quark_onClick");
         serialize_element(ctx, el);
@@ -758,11 +760,15 @@ void render_loop(duk_context *ctx) {
         // Element_draw_graph(body, 0);
         render(body, 0, ctx);
         SDL_RenderPresent(gRenderer);
+
         while (SDL_PollEvent(&event)) {
+
             if (event.type == SDL_QUIT) {
                 go_on = 0;
             } else if (event.type == SDL_MOUSEBUTTONDOWN) {
                 handle_click(ctx, event.button.x, event.button.y);
+            } else if (event.type == SDL_FINGERDOWN) {
+                handle_click(ctx, SCREEN_WIDTH * event.tfinger.x, SCREEN_HEIGHT * event.tfinger.y);
             } else if (event.type == SDL_KEYDOWN) {
                 trigger_js_event_int(ctx, "keydown", event.key.keysym.sym);
             } else if (event.type == SDL_CONTROLLERBUTTONDOWN) {
@@ -770,7 +776,13 @@ void render_loop(duk_context *ctx) {
             } else if (event.type == SDL_CONTROLLERDEVICEADDED) {
                 trigger_js_event_int(ctx, "gamepadconnected", 0); // The last value should be the gamepad index
                 // TODO: We're using 0 as a placeholder, this should be changed to support multiple controllers!
-            } else {
+            } else if (event.type == SDL_AUDIODEVICEADDED) {
+                debug("SDL :: Audio device added\n", NULL);
+            }
+            else {
+                char str[255];
+                sprintf(str, "%d", event.type);
+                debug("Unhandled event type\n", str);
                 // printf("Unhandled event type : %i\n", event.type);
             }
         }
