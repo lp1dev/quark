@@ -768,7 +768,10 @@ void render_loop(duk_context *ctx) {
             } else if (event.type == SDL_MOUSEBUTTONDOWN) {
                 handle_click(ctx, event.button.x, event.button.y);
             } else if (event.type == SDL_FINGERDOWN) {
-                handle_click(ctx, SCREEN_WIDTH * event.tfinger.x, SCREEN_HEIGHT * event.tfinger.y);
+                // On the vita, the touchId 1 is the front screen and touchId 2 is the back panel.
+                if (event.tfinger.touchId == 1) {
+                    handle_click(ctx, SCREEN_WIDTH * event.tfinger.x, SCREEN_HEIGHT * event.tfinger.y);
+                }
             } else if (event.type == SDL_KEYDOWN) {
                 trigger_js_event_int(ctx, "keydown", event.key.keysym.sym);
             } else if (event.type == SDL_CONTROLLERBUTTONDOWN) {
@@ -780,9 +783,9 @@ void render_loop(duk_context *ctx) {
                 debug("SDL :: Audio device added\n", NULL);
             }
             else {
-                char str[255];
-                sprintf(str, "%d", event.type);
-                debug("Unhandled event type\n", str);
+                // char str[255];
+                // sprintf(str, "%d", event.type);
+                // debug("Unhandled event type\n", str);
                 // printf("Unhandled event type : %i\n", event.type);
             }
         }

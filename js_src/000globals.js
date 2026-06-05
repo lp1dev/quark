@@ -10,5 +10,6 @@ events = {
     }
 }
 navigator = {}
+keyboard = {}
 
 //

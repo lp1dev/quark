@@ -212,13 +212,31 @@ static duk_ret_t keyboard_send_string(duk_context *ctx) {
 
 /*
 
-static duk_ret_t keyboard_send_string(duk_context *ctx)
+static duk_ret_t keyboard_shutdown(duk_context *ctx)
 
 */
 static duk_ret_t keyboard_shutdown(duk_context *ctx) {
   vita_keyboard_shutdown();
   return (duk_ret_t) 0;
 }
+
+/*
+ *
+ static duk_ret_t keyboard_send_key(duk_context *ctx)
+ * Sends a raw HID keycode with optional modifier. JS-side constants live
+ * in keyboard.js — this binding only handles the syscall plumbing.
+ */
+static duk_ret_t keyboard_send_key(duk_context *ctx)
+{
+    unsigned char modifier = (unsigned char)duk_require_uint(ctx, 0);
+    unsigned char hid_code = (unsigned char)duk_require_uint(ctx, 1);
+ 
+    int ret = vita_keyboard_send_modifier_key((char)modifier, (char)hid_code);
+    duk_push_int(ctx, ret);
+    return 1;
+}
+
+
 
 /* 
 
@@ -402,6 +420,9 @@ void init_js_globals(duk_context *ctx) {
 
     duk_push_c_function(ctx, keyboard_send_string, 1);
     duk_put_global_string(ctx, "keyboard_send_string");
+
+    duk_push_c_function(ctx, keyboard_send_key, 2);
+    duk_put_global_string(ctx, "keyboard_send_key");
 
     duk_push_c_function(ctx, keyboard_shutdown, 0);
     duk_put_global_string(ctx, "keyboard_shutdown");
