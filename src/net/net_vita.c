@@ -19,10 +19,8 @@ void net_init()
 
 */
 void net_init() {
-	printf("Loading module SCE_SYSMODULE_NET\n");
 	sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
 
-	printf("Running sceNetInit\n");
 	SceNetInitParam netInitParam;
 	int size = 1*1024*1024;
 	netInitParam.memory = malloc(size);
@@ -30,7 +28,6 @@ void net_init() {
 	netInitParam.flags = 0;
 	sceNetInit(&netInitParam);
 
-	printf("Running sceNetCtlInit\n");
 	sceNetCtlInit();
 }
 
@@ -42,11 +39,7 @@ void net_init()
 
 */
 void http_init() {
-	printf("Loading module SCE_SYSMODULE_HTTP\n");
 	sceSysmoduleLoadModule(SCE_SYSMODULE_HTTP);
-
-	printf("Running sceHttpInit\n");
-	// sceHttpInit(1*1024*1024);
 }
 
 /* 
@@ -57,7 +50,6 @@ void ssl_init()
 
 */
 void ssl_init() {
-    // sceSslInit(1024 * 1024);
 }
 
 /* 
@@ -153,7 +145,7 @@ int socket_ping(char *host) {
 		socket = sceNetSocket("ping", SCE_NET_AF_INET, SCE_NET_SOCK_RAW, SCE_NET_IPPROTO_ICMP);
 	}
 	if (socket < 0) {
-		printf("Error: Could not create ICMP socket.\n");
+		debug("Error: Could not create ICMP socket.\n");
 		return -1;
 	}
 	icmp.icmp_struct.hdr.type = SCE_NET_ICMP_TYPE_ECHO_REQUEST; /* set icmp type to echo request */
@@ -172,7 +164,7 @@ int socket_ping(char *host) {
 	ret = sceNetSendto(socket, icmp.icmp_packet, sizeof(IcmpPacket), 0, (SceNetSockaddr*)&serv_addr, sizeof(SceNetSockaddr));
 	// debug("Sending data to", host);
 	if (ret < 1) {
-		printf("Error: Could not send PING data.\n");
+		debug("Error: Could not send PING data.\n");
 		sceNetSocketClose(socket);
 		return -2;
 	}
@@ -183,12 +175,10 @@ int socket_ping(char *host) {
 	ret = sceNetSetsockopt(socket,
                      SCE_NET_SOCK_RAW, 
 					 SCE_NET_SO_RCVTIMEO, &timeout, sizeof(timeout));
-	printf("setTimeout ret is %i\n", ret);
 
 	ret = sceNetSetsockopt(socket,
                      SCE_NET_SOCK_RAW, 
 					 SCE_NET_SO_KEEPALIVE, &timeout, sizeof(timeout));
-	printf("setTimeout ret is %i\n", ret);
 
 	// debug("Waiting from an answer from", host);
 	// Receiving
@@ -196,7 +186,7 @@ int socket_ping(char *host) {
 	ret = sceNetRecvfrom(socket, icmp.icmp_packet, sizeof(IcmpPacket), SCE_NET_MSG_DONTWAIT, &from_addr, (unsigned int*)&from_len);
 	
 	if (ret < 1) {
-		printf("Error: Could not receive ICMP data\n");
+		debug("Error: Could not receive ICMP data\n");
 		return -3;
 	}
 	sceNetSocketClose(socket);

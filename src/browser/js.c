@@ -200,7 +200,7 @@ static duk_ret_t keyboard_send_string(duk_context *ctx)
 
 */
 static duk_ret_t keyboard_send_string(duk_context *ctx) {
-  const char *str = duk_get_string(ctx, 0);
+  char *str = (char *)duk_get_string(ctx, 0);
   debug("keyboard_send_string called with: ", NULL);
   debug(str, NULL);
   int ret = vita_keyboard_send_string(str);
@@ -360,7 +360,7 @@ static duk_ret_t quark_ping(duk_context *ctx) {
   char *host;
   int ret;
 
-  host = duk_get_string(ctx, 0);
+  host = (char *)duk_get_string(ctx, 0);
   ret = socket_ping(host);
   duk_pop(ctx);
   duk_push_int(ctx, ret);

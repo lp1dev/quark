@@ -14,7 +14,7 @@ int main(int argc, const char *argv[])
     debug("Document parsed.", NULL);
     graph_init();
     debug("Graph init done, rendering.", NULL);
-    render_document(document, css);
+    render_document(document, css, NULL);
     (void) lxb_html_document_destroy(document);
     (void) lxb_css_stylesheet_destroy(css, true);
     return EXIT_SUCCESS;

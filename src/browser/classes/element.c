@@ -98,51 +98,51 @@ Node    *Element_get_attribute(Element *element, char *key) {
     return NamedNodeMap_get(&element->attributes, key);
 } 
 
-Node     *Element_get_style_int(Element *element, char *name) {
-    Node *new_node;
+/*
+
+Node     *Element_get_style_int(Element *element, char *name)
+
+        Get a Node's style value (int)
+
+*/
+Node *Element_get_style_int(Element *element, char *name) {
+    static Node scratch;        /* reused; valid only until the next call */
     Node *node;
     float value;
 
     node = Element_get_style(element, name);
-    new_node = malloc(sizeof(Node));
+    if (node == NULL)
+        return NULL;
 
-    if (node != NULL) {
-        process_style_numeric_value(node);
+    process_style_numeric_value(node);   /* sets int_value=raw, str_value=unit, once */
 
-        if (strncmp(node->str_value, "px", 2) == 0) {
-            return node;
-        }
-        else if (strncmp(node->str_value, "%", 1) == 0) {
-            if (strncmp(name, "width", 5) == 0) {
-                if (element->parent != NULL) {
-                    value = (float) element->parent->width;
-                } else {
-                    value = (float) SCREEN_WIDTH;
-                }
-                new_node->int_value = (value / 100.0) * node->int_value;
-            } else if (strncmp(name, "height", 6) == 0) {
-                if (element->parent != NULL) {
-                    value = (float) element->parent->height;
-                } else {
-                    value = (float) SCREEN_HEIGHT;
-                }
-                new_node->int_value = ((value / 100.0) * node->int_value);
-            }
-            new_node->key = name;
-            new_node->str_value = node->str_value;
-            return new_node;
-        }
-        else if (strncmp(node->str_value, "vh", 2) == 0) {
-            node->int_value = (SCREEN_HEIGHT / 100) * node->int_value;
-        }
-        else if (strncmp(node->str_value, "vw", 2) == 0) {
-            node->int_value = (SCREEN_WIDTH / 100) * node->int_value;
-        }
+    if (node->str_value == NULL || strncmp(node->str_value, "px", 2) == 0)
+        return node;
 
+    if (node->str_value[0] == '%') {
+        if (strncmp(name, "width", 5) == 0)
+            value = element->parent ? (float) element->parent->width  : (float) SCREEN_WIDTH;
+        else if (strncmp(name, "height", 6) == 0)
+            value = element->parent ? (float) element->parent->height : (float) SCREEN_HEIGHT;
+        else
+            return NULL;
+        scratch = *node;                                  /* don't touch the stored node */
+        scratch.int_value = (int)((value / 100.0f) * node->int_value);
+        return &scratch;
     }
-    //
-    free(node);
-    free(new_node);
+
+    if (strncmp(node->str_value, "vh", 2) == 0) {
+        scratch = *node;
+        scratch.int_value = (SCREEN_HEIGHT / 100) * node->int_value;
+        return &scratch;
+    }
+
+    if (strncmp(node->str_value, "vw", 2) == 0) {
+        scratch = *node;
+        scratch.int_value = (SCREEN_WIDTH / 100) * node->int_value;
+        return &scratch;
+    }
+
     return NULL;
 }
 
@@ -349,13 +349,17 @@ void process_style_numeric_value(Node *node) {
     int set_num_value;
     int j;
 
-    if (node->int_value != -123456789) {
+    if (node && node->int_value != -123456789) {
+        return;
+    }
+    if (node && node->str_value == NULL) {
         return;
     }
     j = 0;
     set_num_value = 0;
+
     buffer = malloc(sizeof(char) * (strlen(node->str_value) + 1));
-    for (int i = 0; node->str_value[i] != '\0'; i++) {
+    for (int i = 0; node->str_value && node->str_value[i] != '\0'; i++) {
         if (node->str_value[i] < '0' || node->str_value[i] > '9') {
             if (!set_num_value) {
                 buffer[i] = '\0';
@@ -369,7 +373,8 @@ void process_style_numeric_value(Node *node) {
         }
     }
     buffer[j] = '\0';
-    node->str_value = buffer;
+    strncpy(node->str_value, buffer, strlen(buffer));
+    free(buffer);
 }
 
 void    Element_print(Element *element) {

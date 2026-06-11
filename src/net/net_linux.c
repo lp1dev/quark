@@ -44,7 +44,7 @@ int socket_create_tcp(char *name) {
 	// Necessary here
     if (socketfd == -1) {
 		// Cannot call debug here, we'd be in an infinite loop!
-		printf("Could not create new socket.\n");
+		debug("Error", "Could not create new socket.\n");
         exit(-1);
     }
 	//

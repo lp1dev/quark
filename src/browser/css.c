@@ -11,7 +11,11 @@ css_property *create_css_property(css_property *prev, char *name, char *str_valu
         css_property *prop = (css_property *) malloc(sizeof(css_property));
         prop->prev = prev;
         prop->name = name;
-        prop->str_value = str_value;
+        //
+        prop->str_value = malloc(sizeof(char) * (strlen(str_value) + 1));
+        strncpy(prop->str_value, str_value, strlen(str_value));
+        prop->str_value[strlen(str_value)] = '\0';
+        //
         prop->important = important;
         prop->primary = primary;
         prop->next = NULL;
@@ -64,7 +68,7 @@ css_color parse_color(char *color)
                 buffer[0] = color[5];
                 buffer[1] = color[6];
                 output.b = strtol(buffer, NULL, 16);
-                if (strlen(color) == 9) {
+                if (color && strlen(color) == 9) {
                         buffer[0] = color[7];
                         buffer[1] = color[8];
                         output.a = strtol(buffer, NULL, 16);

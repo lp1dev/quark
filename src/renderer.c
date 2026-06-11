@@ -139,6 +139,10 @@ SDL_Rect render_text(Element *el, char *text)
       fonts_head = font;
     }
     
+
+    if (el->width == -123456789) {
+        return;
+    }
     surfaceMessage = TTF_RenderUTF8_Blended_Wrapped(font->font, text, sdl_color, el->width);
 
     text_rect.w = surfaceMessage->w;
@@ -268,7 +272,7 @@ static duk_ret_t get_element_style(duk_context *ctx) {
     duk_push_number(ctx, el->internal_id);
     duk_put_prop_string(ctx, -2, "internalId");
     while (node != NULL) {
-        if (node->int_value != -123456789) { // This is the uninitialized value
+        if (node->str_value && node->int_value != -123456789) { // This is the uninitialized int value
             size = snprintf(NULL, 0 ,"%i%s\n", node->int_value, node->str_value);
             tmp = malloc((size + 1) * sizeof(char));
             snprintf(tmp, size + 1 ,"%i %s\n", node->int_value, node->str_value);
@@ -277,7 +281,9 @@ static duk_ret_t get_element_style(duk_context *ctx) {
         } else {
             duk_push_string(ctx, node->str_value);
         }
-        duk_put_prop_string(ctx, -2, node->key);
+        if (node->key != NULL) {
+            duk_put_prop_string(ctx, -2, node->key);
+        }
         node = node->next;
     }
     return (duk_ret_t) 1;
@@ -734,12 +740,12 @@ void handle_click(duk_context *ctx, int x, int y) {
 
 
 /* 
-void render_loop(dux_context *ctx)
+void render_loop(dux_context *ctx, void *extra_js_callback)
 
     The main rendering loop
 
 */
-void render_loop(duk_context *ctx) {
+void render_loop(duk_context *ctx, void (*extra_js_callback)(void*)) {
     SDL_Event event;
     int go_on;
     int timer;
@@ -755,6 +761,9 @@ void render_loop(duk_context *ctx) {
             duk_destroy_heap(ctx);
             ctx = js_init();
             init_dom(ctx);
+            if (extra_js_callback != NULL) {
+                extra_js_callback(ctx);
+            }
             must_reinit_js = 0;
         }
         // Element_draw_graph(body, 0);
@@ -772,6 +781,7 @@ void render_loop(duk_context *ctx) {
                 if (event.tfinger.touchId == 1) {
                     handle_click(ctx, SCREEN_WIDTH * event.tfinger.x, SCREEN_HEIGHT * event.tfinger.y);
                 }
+                // TODO: Add handling of the 2nd panel.
             } else if (event.type == SDL_KEYDOWN) {
                 trigger_js_event_int(ctx, "keydown", event.key.keysym.sym);
             } else if (event.type == SDL_CONTROLLERBUTTONDOWN) {
@@ -799,11 +809,12 @@ void render_loop(duk_context *ctx) {
 }
 
 /*
-void render_document(html_document *document)
+void render_document(lxb_html_document_t *parsed_document, lxb_css_stylesheet_t *parsed_css, void* extra_js_callback)
 
-    Rendering the DOM document item
+    Rendering the DOM document item and calling (if it is defined) 
+    extra_js_callback when initializing the JS context
 */
-void render_document(lxb_html_document_t *parsed_document, lxb_css_stylesheet_t *parsed_css) {
+void render_document(lxb_html_document_t *parsed_document, lxb_css_stylesheet_t *parsed_css, void* extra_js_callback) {
     duk_context *ctx;
     //
     css = parsed_css;
@@ -821,7 +832,7 @@ void render_document(lxb_html_document_t *parsed_document, lxb_css_stylesheet_t 
     ctx = js_init();
     init_dom(ctx);
 
-    render_loop(ctx);
+    render_loop(ctx, extra_js_callback);
     duk_destroy_heap(ctx);
     SDL_DestroyRenderer(gRenderer);
     audio_shutdown();

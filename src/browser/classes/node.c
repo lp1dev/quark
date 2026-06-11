@@ -7,24 +7,31 @@ Node *Node_create(char *key, char* value) {
     Node *node;
     node = malloc(sizeof(Node));
     node->str_value = NULL;
+    int key_len;
+    
     if (node == NULL) return NULL;
 
     // Deep-copy key
     if (key != NULL) {
-        node->key = malloc(strlen(key) + 1);
-        if (node->key != NULL) strcpy(node->key, key);
+        key_len = strlen(key);
+        node->key = malloc(key_len + 1);
+        if (node->key != NULL) {
+            strncpy(node->key, key, key_len);
+            node->key[key_len] = '\0';
+        }
     } else {
         node->key = NULL;
     }
 
-    // Deep-copy value (the critical fix)
+    // Deep-copy value
     if (value != NULL) {
-        node->str_value = malloc(strlen(value) + 1);
-        if (node->str_value != NULL) strcpy(node->str_value, value);
-    } else {
-        node->str_value = NULL;   // explicitly NULL if no value
+        free(node->str_value);
+        node->str_value = malloc(sizeof(char) * (strlen(value) + 1));
+        memset(node->str_value, 0, strlen(value) + 1);
+        if (node->str_value != NULL) {
+            strncpy(node->str_value, value, strlen(value));
+        }
     }
-
     node->int_value = -123456789;
     node->next = NULL;
     return node;
@@ -133,7 +140,7 @@ Node *NamedNodeMap_get(NamedNodeMap *map, char *key) {
 
     node = map->first;
 
-    while (node != NULL) {
+    while (node != NULL && node->key != NULL) {
         if (strcmp(node->key, key) == 0) {
             return node;
         }

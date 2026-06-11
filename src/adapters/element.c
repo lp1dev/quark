@@ -2,7 +2,7 @@
 #include "../helpers.h"
 
 /*
-int style_callback(char *data, void *ctx)
+int style_callback(char *data, size_t len, void *ctx)
 
     callback used by data->serialize for each item.
     I would have prefered an iterative process, but that's what
@@ -17,8 +17,15 @@ style_callback(const lxb_char_t *data, size_t len, void *ctx)
     char *tmp;
 
     node = (Node *) ctx;
-    data_str = (char *) data;
-    value_length = strlen(node->str_value);
+    // data_str = (char *) data;
+    data_str = malloc(sizeof(char) * len + 1); // + 1 for the NULL terminator
+    strncpy(data_str, data, len);
+    data_str[len] = '\0'; // lxb_char_t are not NULL terminated
+    // But node->str_value could be unitialized here
+    value_length = 0;
+    if (node && node->str_value) {
+        value_length = strlen(node->str_value);
+    }
 
     if (is_empty(data_str)) {
         return LXB_STATUS_OK;
@@ -32,7 +39,15 @@ style_callback(const lxb_char_t *data, size_t len, void *ctx)
         }
     }
     tmp[len + value_length] = 0;
-    node->str_value = tmp;
+    //
+    
+    node->str_value = malloc(sizeof(char) * (len + value_length + 1));
+    memset(node->str_value, 0, len + value_length + 1);
+    strncpy(node->str_value, tmp, len + value_length);
+    
+    node->str_value[len + value_length] = '\0';
+    free(tmp);
+    // node->str_value = tmp;
     return LXB_STATUS_OK;
 
 }
