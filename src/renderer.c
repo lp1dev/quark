@@ -140,9 +140,6 @@ SDL_Rect render_text(Element *el, char *text)
     }
     
 
-    if (el->width == -123456789) {
-        return;
-    }
     surfaceMessage = TTF_RenderUTF8_Blended_Wrapped(font->font, text, sdl_color, el->width);
 
     text_rect.w = surfaceMessage->w;

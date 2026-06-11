@@ -145,7 +145,7 @@ int socket_ping(char *host) {
 		socket = sceNetSocket("ping", SCE_NET_AF_INET, SCE_NET_SOCK_RAW, SCE_NET_IPPROTO_ICMP);
 	}
 	if (socket < 0) {
-		debug("Error: Could not create ICMP socket.\n");
+		debug("Error", "Could not create ICMP socket.\n");
 		return -1;
 	}
 	icmp.icmp_struct.hdr.type = SCE_NET_ICMP_TYPE_ECHO_REQUEST; /* set icmp type to echo request */
@@ -164,7 +164,7 @@ int socket_ping(char *host) {
 	ret = sceNetSendto(socket, icmp.icmp_packet, sizeof(IcmpPacket), 0, (SceNetSockaddr*)&serv_addr, sizeof(SceNetSockaddr));
 	// debug("Sending data to", host);
 	if (ret < 1) {
-		debug("Error: Could not send PING data.\n");
+		debug("Error", "Could not send PING data.\n");
 		sceNetSocketClose(socket);
 		return -2;
 	}
@@ -186,7 +186,7 @@ int socket_ping(char *host) {
 	ret = sceNetRecvfrom(socket, icmp.icmp_packet, sizeof(IcmpPacket), SCE_NET_MSG_DONTWAIT, &from_addr, (unsigned int*)&from_len);
 	
 	if (ret < 1) {
-		debug("Error: Could not receive ICMP data\n");
+		debug("Error", "Could not receive ICMP data\n");
 		return -3;
 	}
 	sceNetSocketClose(socket);
