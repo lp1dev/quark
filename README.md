@@ -99,6 +99,12 @@ Once you're done you can connect to `127.0.0.1:5900` using the password you spec
 
 Those libraries are installed by `setup.sh`.
 
+- SDL2
+- SDL2_ttf
+- SDL2_image
+
+You will need to install these yourself on your machine.
+
 ### GNU/Linux Setup
 
 Run `./setup.sh` which will setup source code dependencies.
