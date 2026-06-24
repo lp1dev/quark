@@ -1,31 +1,39 @@
-#include "keyboard_vita.h"
+#include "keyboard.h"
 
 /*
 This is not actually supported on Linux at the moment, 
 these are just empty stubs.
 
 */
-int vita_keyboard_init(void)
+int keyboard_init(void)
 {
     return 0;
 }
 
-int vita_keyboard_shutdown(void)
+int keyboard_shutdown(void)
 {
     return 0;
 }
 
-int vita_keyboard_send_char(unsigned short c)
+int keyboard_send_char(unsigned short c)
 {
     return 0;
 }
 
-int vita_keyboard_send_string(const char* str)
+int keyboard_send_string(const char* str)
 {
     return 0;
 }
 
-int vita_keyboard_send_modifier_key(char modifier, char key)
+int keyboard_send_modifier_key(char modifier, char key)
+{
+    return 0;
+}
+
+int keyboard_prompt(const char *title,
+                             const char *initial,
+                             char *out, unsigned int out_len,
+                             int max_chars)
 {
     return 0;
 }

@@ -4,7 +4,9 @@
 #include "../net/tcp_debugger.h"
 #include "../net/net.h"
 #include "../audio/audio.h"
-#include "../usb/keyboard_vita.h"
+#include "../usb/keyboard.h"
+#include "../filesystem/fs.h"
+#include "../platform/platform.h"
 //#include "../exploits/python.h"
 
 static void error_handler(void *udata, const char *msg) {
@@ -187,8 +189,8 @@ static duk_ret_t keyboard_init(duk_context *ctx)
 
 */
 
-static duk_ret_t keyboard_init(duk_context *ctx) {
-  int ret = vita_keyboard_init();
+static duk_ret_t js_keyboard_init(duk_context *ctx) {
+  int ret = keyboard_init();
   debug("keyboard_init returned", NULL);
   duk_push_int(ctx, ret);
   return (duk_ret_t) 1;
@@ -199,12 +201,12 @@ static duk_ret_t keyboard_init(duk_context *ctx) {
 static duk_ret_t keyboard_send_string(duk_context *ctx)
 
 */
-static duk_ret_t keyboard_send_string(duk_context *ctx) {
+static duk_ret_t js_keyboard_send_string(duk_context *ctx) {
   char *str = (char *)duk_get_string(ctx, 0);
   debug("keyboard_send_string called with: ", NULL);
   debug(str, NULL);
-  int ret = vita_keyboard_send_string(str);
-  debug("vita_keyboard_send_string returned", NULL);
+  int ret = keyboard_send_string(str);
+  debug("keyboard_send_string returned", NULL);
   duk_push_int(ctx, ret);
   return (duk_ret_t) 1;
 }
@@ -212,11 +214,11 @@ static duk_ret_t keyboard_send_string(duk_context *ctx) {
 
 /*
 
-static duk_ret_t keyboard_shutdown(duk_context *ctx)
+static duk_ret_t js_keyboard_shutdown(duk_context *ctx)
 
 */
-static duk_ret_t keyboard_shutdown(duk_context *ctx) {
-  vita_keyboard_shutdown();
+static duk_ret_t js_keyboard_shutdown(duk_context *ctx) {
+  keyboard_shutdown();
   return (duk_ret_t) 0;
 }
 
@@ -226,12 +228,12 @@ static duk_ret_t keyboard_shutdown(duk_context *ctx) {
  * Sends a raw HID keycode with optional modifier. JS-side constants live
  * in keyboard.js — this binding only handles the syscall plumbing.
  */
-static duk_ret_t keyboard_send_key(duk_context *ctx)
+static duk_ret_t js_keyboard_send_key(duk_context *ctx)
 {
     unsigned char modifier = (unsigned char)duk_require_uint(ctx, 0);
     unsigned char hid_code = (unsigned char)duk_require_uint(ctx, 1);
  
-    int ret = vita_keyboard_send_modifier_key((char)modifier, (char)hid_code);
+    int ret = keyboard_send_modifier_key((char)modifier, (char)hid_code);
     duk_push_int(ctx, ret);
     return 1;
 }
@@ -398,6 +400,87 @@ static duk_ret_t quark_get_device_info(duk_context *ctx) {
   return (duk_ret_t) 1;
 }
 
+
+/*
+
+*/
+static duk_ret_t js_keyboard_prompt(duk_context *ctx) {
+    const char *title;
+    const char *initial;
+    int max_chars;
+
+    title = duk_get_string_default(ctx, 0, "");
+    initial = duk_get_string_default(ctx, 1, "");
+    max_chars = (int)duk_get_int_default(ctx, 2, 64);
+
+    unsigned int buf_len = (unsigned int)(max_chars * 3 + 4);
+    char *buf = (char *) malloc(sizeof(char) * buf_len);
+    if (!buf) return duk_error(ctx, DUK_ERR_ERROR, "out of memory");
+ 
+    int rc = keyboard_prompt(title, initial, buf, buf_len, max_chars);
+ 
+    if (rc == 0) {
+        duk_push_string(ctx, buf);
+    } else if (rc == 1) {
+        duk_push_null(ctx);
+    } else {
+        free(buf);
+        return duk_error(ctx, DUK_ERR_ERROR, "ime prompt failed (%d)", rc);
+    }
+ 
+    free(buf);
+    return 1;
+}
+
+
+static duk_ret_t js_listdir(duk_context *ctx) {
+  const char *path;
+  char **files;
+  duk_idx_t array_index;
+
+  path = duk_get_string_default(ctx, 0, "");
+  files = list_directory((char*)path);
+  array_index = duk_push_array(ctx);
+  for (int i = 0; files[i] > 0; i++) {
+    duk_push_string(ctx, files[i]);
+    duk_put_prop_index(ctx, array_index, i); // Adding the string to the array
+
+  }
+  free(files);
+  return 1;
+}
+
+static duk_ret_t js_get_platform(duk_context *ctx) {
+  duk_push_int(ctx, get_platform());
+  return 1;
+}
+
+static duk_ret_t js_read_file(duk_context *ctx) {
+  const char *path;
+  char *output;
+
+  path = duk_get_string(ctx, 0);
+  printf("Reading %s\n", path);
+  output = read_file((char*)path);
+  duk_push_string(ctx, output);
+  free(output);
+  return 1;
+}
+
+static duk_ret_t js_write_file(duk_context *ctx) {
+  const char *data;
+  const char *path;
+  int output;
+
+
+  data = duk_get_string(ctx, 0);
+  path = duk_get_string(ctx, 1);
+
+  output = write_file(data, path);
+  duk_push_int(ctx, output);
+  return 1;
+}
+
 /* 
 
 void init_js_globals(duk_context *ctx)
@@ -415,16 +498,20 @@ void init_js_globals(duk_context *ctx) {
     duk_push_c_function(ctx, quark_python_call, 2);
     duk_put_global_string(ctx, "c_pythonCall");*/
 
-    duk_push_c_function(ctx, keyboard_init, 0);
+/* In the binding registration block: */
+    duk_push_c_function(ctx, js_keyboard_prompt, 3);
+    duk_put_global_string(ctx, "prompt");
+
+    duk_push_c_function(ctx, js_keyboard_init, 0);
     duk_put_global_string(ctx, "keyboard_init");
 
-    duk_push_c_function(ctx, keyboard_send_string, 1);
+    duk_push_c_function(ctx, js_keyboard_send_string, 1);
     duk_put_global_string(ctx, "keyboard_send_string");
 
-    duk_push_c_function(ctx, keyboard_send_key, 2);
+    duk_push_c_function(ctx, js_keyboard_send_key, 2);
     duk_put_global_string(ctx, "keyboard_send_key");
 
-    duk_push_c_function(ctx, keyboard_shutdown, 0);
+    duk_push_c_function(ctx, js_keyboard_shutdown, 0);
     duk_put_global_string(ctx, "keyboard_shutdown");
 
     duk_push_c_function(ctx, get_controllers, 0);
@@ -462,7 +549,19 @@ void init_js_globals(duk_context *ctx) {
 
     duk_push_c_function(ctx, js_audio_note_off, 1);
     duk_put_global_string(ctx, "quark_audio_note_off");
-    
+
+    duk_push_c_function(ctx, js_listdir, 1);
+    duk_put_global_string(ctx, "quark_listdir");
+
+    duk_push_c_function(ctx, js_read_file, 1);
+    duk_put_global_string(ctx, "quark_readfile");
+
+    duk_push_c_function(ctx, js_write_file, 2);
+    duk_put_global_string(ctx, "quark_writefile");
+
+    duk_push_c_function(ctx, js_get_platform, 0);
+    duk_put_global_string(ctx, "quark_get_platform");    
+
     duk_push_c_function(ctx, quark_exit, 0);
     duk_put_global_string(ctx, "c_exit");
 }
