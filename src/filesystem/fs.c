@@ -70,14 +70,13 @@ char *read_file(char *path) {
 
     if (path == NULL) {
         printf("filesystem::read_file - Provided path is null!\n");
-        return NULL;
+        return output;
     }
     fd = fopen(path, "rb");
     if (fd == NULL) {
         printf("filesystem::read_file - Cannot read file\n");
-        return NULL;
+        return output;
     }
-    printf("FD IS %d\n", fd);
     fseek(fd, 0, SEEK_END);
     file_len = ftell(fd);
     rewind(fd);

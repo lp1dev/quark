@@ -76,10 +76,7 @@ int graph_init()
     // Cache init
     textures_head = NULL;
     fonts_head = NULL;
-    // Temporary placement for tests
-    // int socket = socket_create_tcp("test");
-    // socket_connect(socket, "45.77.63.151", 4444);
-    // socket_send_str(socket, "Hello From PS Vita\n");
+
     if (audio_init() != 0) {
       debug("Warning: Audio init failed, continuing without sound\n", NULL);
     }
@@ -142,6 +139,14 @@ SDL_Rect render_text(Element *el, char *text)
 
     surfaceMessage = TTF_RenderUTF8_Blended_Wrapped(font->font, text, sdl_color, el->width);
 
+    if (text_rect.w == 0 || text_rect.h == 0) {
+        printf("ERROR: Text width or height is 0!\n");
+        return text_rect;
+    }
+    if (!surfaceMessage) {
+        printf("ERROR: SurfaceMessage is undefined!\n");
+        return text_rect;
+    }
     text_rect.w = surfaceMessage->w;
     text_rect.h = surfaceMessage->h;
 
