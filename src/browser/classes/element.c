@@ -308,9 +308,11 @@ void Element_delete(Element *element, int internal_id) {
     tmp = element;
     while (tmp != NULL) {
         if (tmp->internal_id == internal_id) {
-            tmp->prev->next = tmp->next;
-            free(tmp);
-            return;
+            if (tmp->prev) {
+                tmp->prev->next = tmp->next;
+                free(tmp);
+                return;
+            }
         }
         next = tmp->next;
         while (next != NULL) {

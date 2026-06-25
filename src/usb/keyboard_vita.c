@@ -133,9 +133,9 @@ static int utf16_to_utf8_bmp(const uint16_t *src, char *out, int max_bytes)
         else
             needed = 3;   /* cp <= 0xFFFF, already excluded surrogates */
 
-        /* Check for buffer overflow */
-        if (count + needed > max_bytes)
-            return -1;
+        /* Stop if there is no room left for these bytes plus the NUL */
+        if (count + needed > max_bytes - 1)
+            break;
 
         /* Encode codepoint */
         if (needed == 1) {
@@ -152,6 +152,7 @@ static int utf16_to_utf8_bmp(const uint16_t *src, char *out, int max_bytes)
         src++;
     }
 
+    out[count] = '\0';   /* always NUL-terminate */
     return count;
 }
 
@@ -164,31 +165,31 @@ int keyboard_prompt(const char *title,
     if (!out || out_len < 2 || max_chars <= 0) return -1;
     if (max_chars > SCE_IME_DIALOG_MAX_TEXT_LENGTH)
         max_chars = SCE_IME_DIALOG_MAX_TEXT_LENGTH;
- 
+
     out[0] = '\0';
- 
+
     /* Title and initial text need to be UTF-16. Fixed buffers are fine —
      * the IME has its own limits on these. */
     SceWChar16 title_w[SCE_IME_DIALOG_MAX_TITLE_LENGTH + 1];
     SceWChar16 initial_w[SCE_IME_DIALOG_MAX_TEXT_LENGTH + 1];
     memset(title_w, 0, sizeof(title_w));
     memset(initial_w, 0, sizeof(initial_w));
- 
+
     if (title)
         utf8_to_utf16_bmp(title, title_w, SCE_IME_DIALOG_MAX_TITLE_LENGTH + 1);
     if (initial)
         utf8_to_utf16_bmp(initial, initial_w, SCE_IME_DIALOG_MAX_TEXT_LENGTH + 1);
- 
+
     /* Result buffer: max_chars + 1 for NUL */
     SceWChar16 *result_w = (SceWChar16 *)malloc((max_chars + 1) * sizeof(SceWChar16));
     if (!result_w) return -2;
     memset(result_w, 0, (max_chars + 1) * sizeof(SceWChar16));
- 
+
     /* Common dialog must be configured before any common dialog can run. */
     SceCommonDialogConfigParam config;
     sceCommonDialogConfigParamInit(&config);
     sceCommonDialogSetConfigParam(&config);
- 
+
     SceImeDialogParam param;
     sceImeDialogParamInit(&param);
     param.supportedLanguages   = 0;                              /* allow all */
@@ -200,24 +201,24 @@ int keyboard_prompt(const char *title,
     param.maxTextLength        = (SceUInt32)max_chars;
     param.initialText          = initial_w;
     param.inputTextBuffer      = result_w;
- 
+
     if (sceImeDialogInit(&param) < 0) {
         free(result_w);
         return -3;
     }
- 
+
     /* Drive the common dialog system until the IME closes.
      * We blit the currently-displayed framebuffer back so the OS overlay
      * (the keyboard UI itself) is composited on top of it. */
     for (;;) {
         int status = sceImeDialogGetStatus();
         if (status == SCE_COMMON_DIALOG_STATUS_FINISHED) break;
- 
+
         SceDisplayFrameBuf fb;
         memset(&fb, 0, sizeof(fb));
         fb.size = sizeof(fb);
         sceDisplayGetFrameBuf(&fb, SCE_DISPLAY_SETBUF_NEXTFRAME);
- 
+
         SceCommonDialogUpdateParam up;
         memset(&up, 0, sizeof(up));
         up.renderTarget.colorFormat     = SCE_GXM_COLOR_FORMAT_A8B8G8R8;
@@ -227,14 +228,18 @@ int keyboard_prompt(const char *title,
         up.renderTarget.strideInPixels  = fb.pitch;
         up.renderTarget.colorSurfaceData = fb.base;
         sceCommonDialogUpdate(&up);
- 
-        sceKernelDelayThread(16000); /* ~60 Hz */
+
+        /* Present the buffer we just composited the dialog into, otherwise
+         * on a double-buffered display the dialog is drawn to a buffer that
+         * never gets shown and the title flickers. */
+        sceDisplaySetFrameBuf(&fb, SCE_DISPLAY_SETBUF_NEXTFRAME);
+        sceDisplayWaitVblankStart();
     }
- 
+
     SceImeDialogResult res;
     memset(&res, 0, sizeof(res));
     sceImeDialogGetResult(&res);
- 
+
     int rc = -4;
     if (res.button == SCE_IME_DIALOG_BUTTON_ENTER) {
         utf16_to_utf8_bmp(result_w, out, out_len);
@@ -244,7 +249,7 @@ int keyboard_prompt(const char *title,
         out[0] = '\0';
         rc = 1;
     }
- 
+
     sceImeDialogTerm();
     free(result_w);
     return rc;
