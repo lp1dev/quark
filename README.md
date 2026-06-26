@@ -2,15 +2,23 @@
 
 ![](./quark_logo.png)
 
-Quark is a C-written framework to build universal apps using web technologies.
+Quark is a framework made to build universal apps using HTML/CSS and JavaScript.
 
 The goal of this project is to make desktop/console development accessible to anyone with (even little) knowledge in web development.
 
-Right now it can be used to write **ps vita** and **GNU/Linux** apps using **HTML/CSS** and **JavaScript**.
+Right now it can be used to write **PS vita** and **GNU/Linux** apps using **HTML/CSS** and **JavaScript**.
 
 Example apps are available in the *examples* directory.
 
 > **Note** : It is a very early version and some things **will** break and not be supported. Please write issues and pull requests if you encounter bugs or can help participate in the project!
+
+--- 
+
+## Projects built with quark
+
+- https://github.com/lp1dev/vita_ports_scanner
+- https://github.com/lp1dev/vita_virtualkeyboard/
+- https://github.com/lp1dev/VipperZero
 
 ---
 
@@ -94,20 +102,16 @@ Once you're done you can connect to `127.0.0.1:5900` using the password you spec
 
 #### External Libraries Required
 
+Auto install with `scripts/setup.sh` (the script was made to be run in quark's main directory):
+
 - lexbor (HTML Parsing)
 - duktape (JavaScript Engine)
 
-Those libraries are installed by `setup.sh`.
+Install manually on your system:
 
 - SDL2
 - SDL2_ttf
 - SDL2_image
-
-You will need to install these yourself on your machine.
-
-### GNU/Linux Setup
-
-Run `./setup.sh` which will setup source code dependencies.
 
 ### Vita lib install
 
@@ -154,49 +158,14 @@ You will also need to have `Sans.ttf` and `quark.js` in the same directory as th
 
 ---
 
-## What works
+## Implemented CSS/HTML/JS APIs
 
-### HTML
-
-- div
-- p
-- body
-- head
-- h1,h2,h3,h4
-- img
-- script (only direct scripts in the tags, the *src* attribute isn't supported at the moment)
-
-### JS
-
-- document.getElementById
-- document.addEventListener
-- element.style (not all style attributes)
-- element.innerText
-- element.innerHTML
-- element.attributes (not all attributes)
-- onclick
-- setInterval
-- setTimeout
-- window.location (set)
-- Keyboard, touchscreen, click and gamepad events
-
-### CSS
-
-- display: inline and block
-- font-size
-- color
-- background-color
-- padding
-- margin
-- height
-- width
-- text-align
-- vertical-align
-- position: 
+A list of what is currently working on quark's API is available [here](./API.md).
 
 ---
 
 ## To Do
+
 
 - Add image cache (different from texture cache)
 - Support external resources loading in HTML (such as JSON/JS/CSS files)
@@ -206,6 +175,7 @@ You will also need to have `Sans.ttf` and `quark.js` in the same directory as th
 ## Known bugs
 
 - Negative padding (and probably margin) crashes Quark
+- Setting an undefined or null value in an element might cause a crash 
 
 ---
 
@@ -214,3 +184,33 @@ You will also need to have `Sans.ttf` and `quark.js` in the same directory as th
 Enhance JS/HTML support to support projects like :
 
 - https://github.com/burakcan/jsgs/blob/master/src/Screen/index.js
+
+Overall, have more people create cool projects for the PS Vita.
+
+---
+
+## AI philosophy for the project
+
+I'd like to keep *quark*'s codebase as "written-by-humans" as possible.
+
+I've been using Claude for some obscure parts of this project for which documentation was scarce (in the PS Vita's USB and TCP/IP implementations) and unfortunately, I still have some non-original code that I still need to replace in the PS Vita's USB section.
+
+It will be replaced by handmade and more readable code that I fully master as soon as possible. 
+
+Same goes for the project's "logo".
+
+If you add code to the project, please make sure it's your own, readable and that you fully understand what it does.
+
+That being said, I do not mind example projects or documentations being AI-written, the current [API reference](./API.md) was actually written by Claude.
+
+Thanks for your understanding!
+
+---
+
+## License
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
